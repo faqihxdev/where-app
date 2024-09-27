@@ -27,5 +27,6 @@ dist-ssr
 .env
 /dev-dist
 .cursorignore
+.cursorrules
 /.firebase
 package-lock.json
