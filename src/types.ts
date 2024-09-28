@@ -1,7 +1,8 @@
 export interface User {
   uid: string;
   email: string;
-  displayName?: string;
+  preferences?: {
+    name?: string;
+  }
   createdAt?: Date;
-  // Add any other user-related fields here
 }

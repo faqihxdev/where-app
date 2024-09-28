@@ -1,7 +1,7 @@
 import { atom } from 'jotai';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import { User } from '../types/user';
+import { User } from '../types';
 
 export const userDataAtom = atom<User | null>(null);
 

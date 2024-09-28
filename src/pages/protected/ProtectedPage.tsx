@@ -3,7 +3,7 @@ import { authUserAtom, logoutAtom } from "../../stores/authStore";
 import { userDataAtom, updateUserDataAtom } from "../../stores/userStore";
 import { Button, Input } from "@chakra-ui/react";
 import { useState } from "react";
-import { User } from "../../types/user";
+import { User } from "../../types";
 
 export default function ProtectedPage() {
   const [authUser] = useAtom(authUserAtom);

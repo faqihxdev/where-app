@@ -5,7 +5,7 @@ import { auth } from '../firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { fetchUserDataAtom } from './userStore';
-import { User } from '../types/user';
+import { User } from '../types';
 
 export const authUserAtom = atomWithStorage<FirebaseUser | null>('authUser', null);
 
