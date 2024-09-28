@@ -33,13 +33,29 @@ export interface ListingLocation {
   longitude: number;
 }
 
+// Contains the firestore docId under the Images collection
+export interface ListingImages {
+  main: {
+    id: string,
+    src?: string,
+  };
+  alt1?: {
+    id?: string,
+    src?: string,
+  };
+  alt2?: {
+    id?: string,
+    src?: string,
+  };
+}
+
 export interface Listing {
   id: string;
   type: 'lost' | 'found';
   userId: string;
   title: string;
   description: string;
-  images: string[];
+  images: ListingImages;
   createdAt: Date;
   updatedAt: Date;
   expiresAt: Date;
