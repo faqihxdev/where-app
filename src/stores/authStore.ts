@@ -1,6 +1,6 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -8,10 +8,23 @@ import { fetchUserDataAtom } from './userStore';
 import { User } from '../types';
 
 export const authUserAtom = atomWithStorage<FirebaseUser | null>('authUser', null);
+export const authLoadingAtom = atom(true);
 
 export const isAuthenticatedAtom = atom(
   (get) => get(authUserAtom) !== null
 );
+
+export const initializeAuthAtom = atom(null, (get, set) => {
+  set(authLoadingAtom, true);
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    set(authUserAtom, user);
+    if (user) {
+      set(fetchUserDataAtom, user.uid);
+    }
+    set(authLoadingAtom, false);
+  });
+  return unsubscribe;
+});
 
 export const loginAtom = atom(
   null,

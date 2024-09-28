@@ -75,6 +75,7 @@ export default function AuthPage() {
           description: "Welcome back!",
           bgColor: "bg-green-500",
         });
+        navigate("/");
       } else {
         await register({ email, password });
         showCustomToast({
@@ -83,7 +84,7 @@ export default function AuthPage() {
           bgColor: "bg-green-500",
         });
       }
-      navigate("/listing");
+      navigate("/");
     } catch (error) {
       console.error("Authentication error:", error);
       showCustomToast({
@@ -104,7 +105,7 @@ export default function AuthPage() {
               className={`flex-1 py-2 text-sm font-medium rounded-md ${
                 isLogin
                   ? "text-gray-950 bg-white"
-                  : "text-gray-500 bg-transparent hover:bg-white hover:text-gray-950"
+                  : "text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950"
               }`}
               onClick={() => setIsLogin(true)}
             >
@@ -115,7 +116,7 @@ export default function AuthPage() {
               className={`flex-1 py-2 text-sm font-medium rounded-md ${
                 !isLogin
                   ? "text-gray-950 bg-white"
-                  : "text-gray-500 bg-transparent hover:bg-white hover:text-gray-950"
+                  : "text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950"
               }`}
               onClick={() => setIsLogin(false)}
             >
