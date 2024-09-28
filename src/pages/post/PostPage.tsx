@@ -21,6 +21,7 @@ import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { addListingAtom } from '../../stores/listingStore';
 import { showCustomToast } from '../../components/CustomToast';
 import { ListingCategory, ListingStatus, ListingLocation } from '../../types';
+import { DocumentArrowUpIcon } from '@heroicons/react/24/outline';
 
 const PostPage: React.FC = () => {
   
@@ -169,140 +170,172 @@ const PostPage: React.FC = () => {
 
   return (
     <div className="min-h-full bg-white p-4">
-      <h1 className="text-2xl font-bold mb-4">Create a New Listing</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <VStack align="stretch" spacing={4}>
-          <Box>
-            <FormLabel>Listing Type</FormLabel>
-            <RadioGroup value={type} onChange={(value: "lost" | "found") => setType(value)}>
-              <Stack direction="row">
-                <Radio value="lost">Lost Item</Radio>
-                <Radio value="found">Found Item</Radio>
-              </Stack>
-            </RadioGroup>
-          </Box>
+      <h1 className="text-xl font-bold mb-4">Create a New Listing</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Box className="bg-gray-50/50 border border-gray-200 rounded-lg p-4">
+          <h1 className="font-bold mb-3">Item Details</h1>
+          <VStack align="stretch" spacing={3}>
+            <FormControl>
+              <FormLabel fontSize="sm">Listing Type</FormLabel>
+              <RadioGroup value={type} onChange={(value: "lost" | "found") => setType(value)}>
+                <Stack direction="row">
+                  <Radio value="lost" size="sm">Lost Item</Radio>
+                  <Radio value="found" size="sm">Found Item</Radio>
+                </Stack>
+              </RadioGroup>
+            </FormControl>
 
-          <FormControl isInvalid={!!errors.title}>
-            <FormLabel>Title</FormLabel>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={(e) => handleBlur('title', e.target.value)}
-              placeholder="Enter a title for your listing"
-            />
-            <FormErrorMessage>{errors.title}</FormErrorMessage>
-          </FormControl>
+            <FormControl isInvalid={!!errors.title}>
+              <FormLabel fontSize="sm">Title</FormLabel>
+              <Input
+                size="sm"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onBlur={(e) => handleBlur('title', e.target.value)}
+                placeholder="Enter a title for your listing"
+                bg="white"
+              />
+              <FormErrorMessage fontSize="xs">{errors.title}</FormErrorMessage>
+            </FormControl>
 
-          <FormControl isInvalid={!!errors.description}>
-            <FormLabel>Description</FormLabel>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onBlur={(e) => handleBlur('description', e.target.value)}
-              placeholder="Describe the item"
-            />
-            <FormErrorMessage>{errors.description}</FormErrorMessage>
-          </FormControl>
+            <FormControl>
+              <FormLabel fontSize="sm">Category</FormLabel>
+              <Select 
+                size="sm" 
+                value={category} 
+                onChange={(e) => setCategory(e.target.value as ListingCategory)}
+                bg="white"
+              >
+                {Object.values(ListingCategory).map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </Select>
+            </FormControl>
 
-          <FormControl>
-            <FormLabel>Category</FormLabel>
-            <Select value={category} onChange={(e) => setCategory(e.target.value as ListingCategory)}>
-              {Object.values(ListingCategory).map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </Select>
-          </FormControl>
+            <FormControl isInvalid={!!errors.description}>
+              <FormLabel fontSize="sm">Description</FormLabel>
+              <Textarea
+                size="sm"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                onBlur={(e) => handleBlur('description', e.target.value)}
+                placeholder="Describe the item"
+                bg="white"
+              />
+              <FormErrorMessage fontSize="xs">{errors.description}</FormErrorMessage>
+            </FormControl>
+          </VStack>
+        </Box>
 
-          <Box>
-            <FormLabel>Locations</FormLabel>
+        <Box className="bg-gray-50/50 border border-gray-200 rounded-lg p-4">
+          <h1 className="font-bold mb-3">Upload Image</h1>
+          <VStack align="stretch" spacing={3}>
+            <FormControl isInvalid={!!errors.images}>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                multiple
+              />
+              <button
+                className="bg-gray-200 text-sm px-2 py-2 space-x-1 rounded flex items-center font-semibold"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <DocumentArrowUpIcon className="w-4 h-4 ml-1 stroke-[2.5]" />
+                <span>Upload Images</span>
+              </button>
+              <FormErrorMessage fontSize="xs">{errors.images}</FormErrorMessage>
+            </FormControl>
+
+            {imagesPreviews.length > 0 && (
+              <HStack spacing={3} wrap="wrap">
+                {imagesPreviews.map((preview, index) => (
+                  <Box key={index} position="relative">
+                    <img src={preview} alt={`Preview ${index + 1}`} className="w-20 h-20 object-cover" />
+                    <IconButton
+                      aria-label="Remove image"
+                      icon={<TrashIcon className="h-3 w-3" />}
+                      size="xs"
+                      position="absolute"
+                      top={0}
+                      right={0}
+                      onClick={() => removeImage(index)}
+                    />
+                  </Box>
+                ))}
+              </HStack>
+            )}
+          </VStack>
+        </Box>
+
+        <Box className="bg-gray-50/50 border border-gray-200 rounded-lg p-4">
+          <h1 className="font-bold mb-3">Item Location</h1>
+          <VStack align="stretch" spacing={3}>
             {locations.map((location, index) => (
-              <VStack key={index} spacing={2} align="stretch" mb={4}>
+              <VStack key={index} spacing={2} align="stretch" mb={3}>
                 <FormControl isInvalid={!!errors[`location${index}`]}>
                   <Input
+                    size="sm"
                     placeholder="Location name"
                     value={location.name}
                     onChange={(e) => handleLocationChange(index, 'name', e.target.value)}
                     onBlur={(e) => handleBlur('locationName', e.target.value)}
+                    bg="white"
                   />
                 </FormControl>
                 <HStack>
                   <FormControl isInvalid={!!errors[`location${index}`]}>
                     <Input
+                      size="sm"
                       placeholder="Latitude"
                       value={location.latitude}
                       onChange={(e) => handleLocationChange(index, 'latitude', e.target.value)}
                       onBlur={(e) => handleBlur('latitude', e.target.value)}
+                      bg="white"
                     />
                   </FormControl>
                   <FormControl isInvalid={!!errors[`location${index}`]}>
                     <Input
+                      size="sm"
                       placeholder="Longitude"
                       value={location.longitude}
                       onChange={(e) => handleLocationChange(index, 'longitude', e.target.value)}
                       onBlur={(e) => handleBlur('longitude', e.target.value)}
+                      bg="white"
                     />
                   </FormControl>
                   {index > 0 && (
                     <IconButton
                       aria-label="Remove location"
-                      icon={<TrashIcon />}
+                      icon={<TrashIcon className="h-4 w-4" />}
+                      size="sm"
                       onClick={() => removeLocation(index)}
                     />
                   )}
                 </HStack>
-                <FormErrorMessage>{errors[`location${index}`]}</FormErrorMessage>
+                <FormErrorMessage fontSize="xs">{errors[`location${index}`]}</FormErrorMessage>
               </VStack>
             ))}
             {locations.length < 3 && (
-              <Button leftIcon={<PlusIcon />} onClick={addLocation} size="sm">
-                Add Location
-              </Button>
+              <button
+                className="bg-gray-200 text-sm px-2 py-2 space-x-1 rounded flex items-center justify-center font-semibold"
+                onClick={addLocation}
+              >
+                <PlusIcon className="w-4 h-4 ml-1 stroke-[2.5]" />
+                <span>Add Location</span>
+              </button>
             )}
-          </Box>
+          </VStack>
+        </Box>
 
-          <FormControl isInvalid={!!errors.images}>
-            <FormLabel>Images (Max 3)</FormLabel>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              multiple
-            />
-            <Button onClick={() => fileInputRef.current?.click()}>
-              Upload Images
-            </Button>
-            <FormErrorMessage>{errors.images}</FormErrorMessage>
-          </FormControl>
-
-          {imagesPreviews.length > 0 && (
-            <HStack spacing={4} wrap="wrap">
-              {imagesPreviews.map((preview, index) => (
-                <Box key={index} position="relative">
-                  <img src={preview} alt={`Preview ${index + 1}`} className="w-24 h-24 object-cover" />
-                  <IconButton
-                    aria-label="Remove image"
-                    icon={<TrashIcon />}
-                    size="xs"
-                    position="absolute"
-                    top={0}
-                    right={0}
-                    onClick={() => removeImage(index)}
-                  />
-                </Box>
-              ))}
-            </HStack>
-          )}
-        </VStack>
-
-        <Button type="submit" colorScheme="blue" width="full" mt={6}>
+        <Button type="submit" colorScheme="blue" width="full" mt={4} size="sm">
           Create Listing
         </Button>
       </form>
     </div>
   );
 };
-
 
 export default PostPage;
