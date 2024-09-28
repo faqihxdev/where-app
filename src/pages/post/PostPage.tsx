@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
+
 import {
   Button,
   FormControl,
@@ -14,14 +15,15 @@ import {
   Stack,
   VStack,
   HStack,
-  Box,
   IconButton,
 } from '@chakra-ui/react';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+
+import { PlusIcon, TrashIcon, ClipboardDocumentIcon, PhotoIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { addListingAtom } from '../../stores/listingStore';
 import { showCustomToast } from '../../components/CustomToast';
-import { ListingCategory, ListingStatus, ListingLocation } from '../../types';
-import { DocumentArrowUpIcon } from '@heroicons/react/24/outline';
+import { ListingCategory, Listing, ListingStatus, ListingLocation } from '../../types';
+import { userDataAtom } from '../../stores/userStore';
+import { compressImage } from '../../utils/imageUtils';
 
 const PostPage: React.FC = () => {
   
@@ -29,6 +31,7 @@ const PostPage: React.FC = () => {
     [key: string]: string;
   }
 
+  const [userData] = useAtom(userDataAtom);
   const [, addListing] = useAtom(addListingAtom);
   const navigate = useNavigate();
 
@@ -43,33 +46,35 @@ const PostPage: React.FC = () => {
   const [errors, setErrors] = useState<PostFormError>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validateField = (field: string, value: string | File | null): string => {
+  const validateField = (field: string, value: string | File[] | null): string => {
     switch (field) {
       case 'title':
         return value && (value as string).length >= 3 ? '' : 'Title must be at least 3 characters long';
       case 'description':
         return value && (value as string).length >= 10 ? '' : 'Description must be at least 10 characters long';
+      case 'images':
+        if (!value || (value as File[]).length === 0) return 'At least one image is required';
+        if ((value as File[]).some(img => img.size > (1024 * 1024) * 3)) return 'Each image must be less than 3 MB';
+        return '';
       case 'locationName':
         return value ? '' : 'Location name is required';
       case 'latitude':
-        return /^-?([1-8]?[1-9]|[1-9]0)\.{1}\d{1,6}$/.test(value as string) ? '' : 'Invalid latitude';
+        return value ? (/^-?([1-8]?\d(\.\d{1,6})?|90(\.0{1,6})?)$/.test(value as string) ? '' : 'Invalid latitude (-90 to 90)') : '';
       case 'longitude':
-        return /^-?(([-+]?)([\d]{1,3})((\.)(\d+))?)$/.test(value as string) ? '' : 'Invalid longitude';
-      case 'images':
-        if (images.length === 0) return 'At least one image is required';
-        if (images.some(img => img.size > 1024 * 1024)) return 'Each image must be less than 1 MB';
-        return '';
+        return value ? (/^-?((1[0-7]\d|[1-9]?\d)(\.\d{1,6})?|180(\.0{1,6})?)$/.test(value as string) ? '' : 'Invalid longitude (-180 to 180)') : '';
       default:
         return '';
     }
   };
 
-  const handleBlur = (field: string, value: string | File | null) => {
-    const error = validateField(field, value);
-    setErrors(prev => ({ ...prev, [field]: error }));
+  const handleBlur = (field: string, value: string | File[] | null) => {
+    if (field !== 'images') {
+      const error = validateField(field, value);
+      setErrors(prev => ({ ...prev, [field]: error }));
+    }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + images.length > 3) {
       showCustomToast({
@@ -79,16 +84,27 @@ const PostPage: React.FC = () => {
       });
       return;
     }
-    setImages(prev => [...prev, ...files]);
-    handleBlur('images', files[0]);
-    
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagesPreviews(prev => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+
+    try {
+      const compressedFiles = await Promise.all(files.map(file => compressImage(file)));
+      setImages(prev => [...prev, ...compressedFiles]);
+      setErrors(prev => ({ ...prev, images: '' })); // Clear any previous image errors
+      
+      compressedFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagesPreviews(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    } catch (error) {
+      console.error('[PostPage/handleImageChange]: ', error);
+      showCustomToast({
+        title: 'Error',
+        description: 'Failed to process images. Please try again.',
+        bgColor: 'bg-red-500',
+      });
+    }
   };
 
   const removeImage = (index: number) => {
@@ -104,6 +120,20 @@ const PostPage: React.FC = () => {
       newLocations[index][field] = value;
     }
     setLocations(newLocations);
+
+    // Clear the error for this specific field
+    setErrors(prev => ({
+      ...prev,
+      [`location${index}_${field}`]: ''
+    }));
+  };
+
+  const handleLocationBlur = (index: number, field: keyof ListingLocation, value: string) => {
+    const error = validateField(field, value);
+    setErrors(prev => ({
+      ...prev,
+      [`location${index}_${field}`]: error
+    }));
   };
 
   const addLocation = () => {
@@ -118,13 +148,15 @@ const PostPage: React.FC = () => {
     const newErrors: PostFormError = {
       title: validateField('title', title),
       description: validateField('description', description),
-      images: validateField('images', images[0]),
+      images: validateField('images', images),
     };
+
     locations.forEach((loc, index) => {
-      newErrors[`location${index}`] = validateField('locationName', loc.name) ||
-        validateField('latitude', loc.latitude.toString()) ||
-        validateField('longitude', loc.longitude.toString());
+      newErrors[`location${index}_name`] = validateField('locationName', loc.name);
+      newErrors[`location${index}_latitude`] = validateField('latitude', loc.latitude.toString());
+      newErrors[`location${index}_longitude`] = validateField('longitude', loc.longitude.toString());
     });
+
     setErrors(newErrors);
     return Object.values(newErrors).every(error => error === '');
   };
@@ -134,23 +166,22 @@ const PostPage: React.FC = () => {
     if (!validateForm()) return;
 
     try {
-      // In a real application, you would upload the images to a storage service
-      // and get URLs back. For this example, we'll use placeholder URLs.
-      const imageUrls = images.map(() => 'https://picsum.photos/720');
 
-      await addListing({
-        type,
-        userId: 'currentUserId', // Replace with actual user ID
-        title,
-        description,
-        images: imageUrls,
+      const listing: Omit<Listing, 'id' | 'images'> & { images: File[] } = {
+        type: type,
+        userId: userData!.uid,
+        title: title,
+        description: description,
+        images: images,
         createdAt: new Date(),
         updatedAt: new Date(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        locations,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        locations: locations,
         status: ListingStatus.ACTIVE,
-        category,
-      });
+        category: category,
+      }
+
+      await addListing(listing);
 
       showCustomToast({
         title: 'Listing Created',
@@ -172,8 +203,11 @@ const PostPage: React.FC = () => {
     <div className="min-h-full bg-white p-4">
       <h1 className="text-xl font-bold mb-4">Create a New Listing</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Box className="bg-gray-50/50 border border-gray-200 rounded-lg p-4">
-          <h1 className="font-bold mb-3">Item Details</h1>
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center mb-3">
+            <ClipboardDocumentIcon className="w-5 h-5 mr-2 stroke-2" />
+            <h1 className="font-semibold">Item Details</h1>
+          </div>
           <VStack align="stretch" spacing={3}>
             <FormControl>
               <FormLabel fontSize="sm">Listing Type</FormLabel>
@@ -189,6 +223,7 @@ const PostPage: React.FC = () => {
               <FormLabel fontSize="sm">Title</FormLabel>
               <Input
                 size="sm"
+                rounded="md"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 onBlur={(e) => handleBlur('title', e.target.value)}
@@ -202,6 +237,7 @@ const PostPage: React.FC = () => {
               <FormLabel fontSize="sm">Category</FormLabel>
               <Select 
                 size="sm" 
+                rounded="md"
                 value={category} 
                 onChange={(e) => setCategory(e.target.value as ListingCategory)}
                 bg="white"
@@ -216,6 +252,7 @@ const PostPage: React.FC = () => {
               <FormLabel fontSize="sm">Description</FormLabel>
               <Textarea
                 size="sm"
+                rounded="md"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 onBlur={(e) => handleBlur('description', e.target.value)}
@@ -225,12 +262,16 @@ const PostPage: React.FC = () => {
               <FormErrorMessage fontSize="xs">{errors.description}</FormErrorMessage>
             </FormControl>
           </VStack>
-        </Box>
+        </div>
 
-        <Box className="bg-gray-50/50 border border-gray-200 rounded-lg p-4">
-          <h1 className="font-bold mb-3">Upload Image</h1>
-          <VStack align="stretch" spacing={3}>
-            <FormControl isInvalid={!!errors.images}>
+        {/* Image Upload */}
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className={`flex justify-between items-center ${imagesPreviews.length > 0 ? 'mb-3' : ''}`}>
+            <div className="flex items-center">
+              <PhotoIcon className="w-5 h-5 mr-2 stroke-2" />
+              <h1 className="font-semibold">Upload Image</h1>
+            </div>
+            <FormControl className="max-w-fit" isInvalid={!!errors.images}>
               <Input
                 type="file"
                 accept="image/*"
@@ -240,71 +281,98 @@ const PostPage: React.FC = () => {
                 multiple
               />
               <button
-                className="bg-gray-200 text-sm px-2 py-2 space-x-1 rounded flex items-center font-semibold"
+                type="button"
+                className="bg-blue-200 text-sm text-grey-950 pl-2 pr-4 py-2 space-x-1 rounded flex items-center font-semibold"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <DocumentArrowUpIcon className="w-4 h-4 ml-1 stroke-[2.5]" />
-                <span>Upload Images</span>
+                <PlusIcon className="w-4 h-4 ml-1 stroke-[2.5]" />
+                <span>Add</span>
               </button>
               <FormErrorMessage fontSize="xs">{errors.images}</FormErrorMessage>
             </FormControl>
-
+          </div>
+          <VStack align="stretch" spacing={3}>
             {imagesPreviews.length > 0 && (
               <HStack spacing={3} wrap="wrap">
                 {imagesPreviews.map((preview, index) => (
-                  <Box key={index} position="relative">
+                  <div key={index} className="relative border border-gray-200 rounded-lg overflow-clip">
                     <img src={preview} alt={`Preview ${index + 1}`} className="w-20 h-20 object-cover" />
                     <IconButton
                       aria-label="Remove image"
-                      icon={<TrashIcon className="h-3 w-3" />}
+                      icon={<TrashIcon className="h-3 w-3 stroke-[2]" />}
                       size="xs"
                       position="absolute"
-                      top={0}
-                      right={0}
+                      top={1}
+                      right={1}
+                      bg="white"
                       onClick={() => removeImage(index)}
                     />
-                  </Box>
+                  </div>
                 ))}
               </HStack>
             )}
           </VStack>
-        </Box>
-
-        <Box className="bg-gray-50/50 border border-gray-200 rounded-lg p-4">
-          <h1 className="font-bold mb-3">Item Location</h1>
+        </div>
+        
+        {/* Item Location */}
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center">
+              <MapPinIcon className="w-5 h-5 mr-2 stroke-2" />
+              <h1 className="font-semibold">Location</h1>
+            </div>
+            {locations.length < 3 && (
+              <button
+                type="button"
+                className="bg-blue-200 text-sm text-grey-950 pl-2 pr-4 py-2 space-x-1 rounded flex items-center justify-center font-semibold"
+                onClick={addLocation}
+              >
+                <PlusIcon className="w-4 h-4 ml-1 stroke-[2.5]" />
+                <span>Add</span>
+              </button>
+            )}
+          </div>
           <VStack align="stretch" spacing={3}>
             {locations.map((location, index) => (
               <VStack key={index} spacing={2} align="stretch" mb={3}>
-                <FormControl isInvalid={!!errors[`location${index}`]}>
+                <FormControl isInvalid={!!errors[`location${index}_name`]}>
                   <Input
                     size="sm"
+                    rounded="md"
                     placeholder="Location name"
                     value={location.name}
                     onChange={(e) => handleLocationChange(index, 'name', e.target.value)}
-                    onBlur={(e) => handleBlur('locationName', e.target.value)}
+                    onBlur={(e) => handleLocationBlur(index, 'name', e.target.value)}
                     bg="white"
                   />
+                  <FormErrorMessage fontSize="xs">{errors[`location${index}_name`]}</FormErrorMessage>
                 </FormControl>
                 <HStack>
-                  <FormControl isInvalid={!!errors[`location${index}`]}>
+                  <FormControl isInvalid={!!errors[`location${index}_latitude`]}>
                     <Input
                       size="sm"
+                      type="text"
+                      rounded="md"
                       placeholder="Latitude"
                       value={location.latitude}
                       onChange={(e) => handleLocationChange(index, 'latitude', e.target.value)}
-                      onBlur={(e) => handleBlur('latitude', e.target.value)}
+                      onBlur={(e) => handleLocationBlur(index, 'latitude', e.target.value)}
                       bg="white"
                     />
+                    <FormErrorMessage fontSize="xs">{errors[`location${index}_latitude`]}</FormErrorMessage>
                   </FormControl>
-                  <FormControl isInvalid={!!errors[`location${index}`]}>
+                  <FormControl isInvalid={!!errors[`location${index}_longitude`]}>
                     <Input
                       size="sm"
+                      type="text"
+                      rounded="md"
                       placeholder="Longitude"
                       value={location.longitude}
                       onChange={(e) => handleLocationChange(index, 'longitude', e.target.value)}
-                      onBlur={(e) => handleBlur('longitude', e.target.value)}
+                      onBlur={(e) => handleLocationBlur(index, 'longitude', e.target.value)}
                       bg="white"
                     />
+                    <FormErrorMessage fontSize="xs">{errors[`location${index}_longitude`]}</FormErrorMessage>
                   </FormControl>
                   {index > 0 && (
                     <IconButton
@@ -315,20 +383,10 @@ const PostPage: React.FC = () => {
                     />
                   )}
                 </HStack>
-                <FormErrorMessage fontSize="xs">{errors[`location${index}`]}</FormErrorMessage>
               </VStack>
             ))}
-            {locations.length < 3 && (
-              <button
-                className="bg-gray-200 text-sm px-2 py-2 space-x-1 rounded flex items-center justify-center font-semibold"
-                onClick={addLocation}
-              >
-                <PlusIcon className="w-4 h-4 ml-1 stroke-[2.5]" />
-                <span>Add Location</span>
-              </button>
-            )}
           </VStack>
-        </Box>
+        </div>
 
         <Button type="submit" colorScheme="blue" width="full" mt={4} size="sm">
           Create Listing
