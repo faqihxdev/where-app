@@ -21,7 +21,7 @@ export const isAuthenticatedAtom = atom(
  * @description Initialize the auth state and fetch user data
  * @returns {Function} - The unsubscribe function
  */
-export const initializeAuthAtom = atom(null, (get, set) => {
+export const initializeAuthAtom = atom(null, (_, set) => {
   console.log('[authStore/initializeAuthAtom]: called');
   set(authLoadingAtom, true);
   const unsubscribe = onAuthStateChanged(auth, (user) => {
