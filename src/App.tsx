@@ -1,12 +1,12 @@
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { isAuthenticatedAtom, initializeAuthAtom, authLoadingAtom } from './stores/authStore';
-import AuthPage from './pages/auth/AuthPage';
-import ListingPage from './pages/listing/ListingPage';
-import MapPage from './pages/map/MapPage';
-import ProfilePage from './pages/profile/ProfilePage';
-import PostPage from './pages/post/PostPage';
-import NotificationPage from './pages/notification/NotificationPage';
+import AuthPage from './pages/AuthPage';
+import ListingPage from './pages/ListingPage';
+import MapPage from './pages/MapPage';
+import ProfilePage from './pages/ProfilePage';
+import PostPage from './pages/PostPage';
+import NotificationPage from './pages/NotificationPage';
 import MainLayout from './components/MainLayout';
 import LoadingSpinner from './components/LoadingSpinner';
 import { useEffect } from 'react';
@@ -17,7 +17,11 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   if (authLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
