@@ -63,3 +63,13 @@ export interface Listing {
   status: ListingStatus;
   category: ListingCategory;
 }
+
+export interface SearchParams {
+  keyword: string;
+  type: string;
+  category: ListingCategory | '';
+  status: ListingStatus | '';
+  sortBy: keyof Listing;
+  sortOrder: 'ascending' | 'descending';
+  location: { lat: number; lng: number; radius: number } | null;
+}
