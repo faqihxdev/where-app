@@ -1,3 +1,10 @@
+# Notes
+
+- Profile logout
+- Custom toast fixed colours
+- Redo Icon (Account for Circular Crop)
+- Third-party login
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

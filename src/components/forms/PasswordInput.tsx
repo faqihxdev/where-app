@@ -34,6 +34,8 @@ export function PasswordInput({ value, onChange, onBlur, error, label, placehold
           onChange={onChange}
           onBlur={onBlur}
           required
+          variant="filled"
+          bg="gray.100"
         />
         <InputRightElement width='4.5rem'>
           <Button h='1.75rem' size='sm' onClick={handleClick}>
