@@ -2,10 +2,12 @@ import { atom } from 'jotai';
 import { Listing, ListingImages } from '../types';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
-import { addImage, deleteImage } from '../utils/imageUtils';
+import { addImage, deleteImage, getImage } from '../utils/imageUtils';
 
 // Updated listingsAtom
 export const listingsAtom = atom<Record<string, Listing>>({});
+export const listingsLoadingAtom = atom<boolean>(false);
+export const listingsFetchedAtom = atom<boolean>(false);
 
 /**
  * @description Fetch all listings from Firestore
@@ -13,24 +15,38 @@ export const listingsAtom = atom<Record<string, Listing>>({});
  */
 export const fetchListingsAtom = atom(
   null,
-  async (get, set) => {
+  async (_, set) => {
     console.log('[listingStore/fetchListingsAtom]: called');
+    set(listingsLoadingAtom, true);
     try {
       const querySnapshot = await getDocs(collection(db, 'Listings'));
       const listings: Record<string, Listing> = {};
-      querySnapshot.docs.forEach(doc => {
+      for (const doc of querySnapshot.docs) {
         const data = doc.data();
-        listings[doc.id] = {
+        const listing: Listing = {
           id: doc.id,
           ...data,
           createdAt: data.createdAt.toDate(),
           updatedAt: data.updatedAt.toDate(),
           expiresAt: data.expiresAt.toDate()
         } as Listing;
-      });
+
+        // Fetch the main image if it's not already loaded
+        if (listing.images.main.id && !listing.images.main.src) {
+          const imageDoc = await getImage(listing.images.main.id);
+          if (imageDoc) {
+            listing.images.main.src = imageDoc.src;
+          }
+        }
+
+        listings[doc.id] = listing;
+      }
       set(listingsAtom, listings);
+      set(listingsFetchedAtom, true);
     } catch (error) {
       console.error('[listingStore/fetchListingsAtom]: error:', error);
+    } finally {
+      set(listingsLoadingAtom, false);
     }
   }
 );
@@ -42,7 +58,7 @@ export const fetchListingsAtom = atom(
  */
 export const addListingAtom = atom(
   null,
-  async (get, set, newListing: Omit<Listing, 'id' | 'images'> & { images: File[] }) => {
+  async (_, set, newListing: Omit<Listing, 'id' | 'images'> & { images: File[] }) => {
     console.log('[listingStore/addListingAtom]: newListing:', JSON.stringify(newListing));
     try {
       const imageIds: ListingImages = { main: { id: '' } };
@@ -89,7 +105,7 @@ export const addListingAtom = atom(
  */
 export const updateListingAtom = atom(
   null,
-  async (get, set, updatedListing: Listing) => {
+  async (_, set, updatedListing: Listing) => {
     console.log('[listingStore/updateListingAtom]: updatedListing:', JSON.stringify(updatedListing));
     try {
       const { id, ...updateData } = updatedListing;
@@ -126,6 +142,40 @@ export const deleteListingAtom = atom(
       });
     } catch (error) {
       console.error('[listingStore/deleteListingAtom]: error:', error);
+    }
+  }
+);
+
+/**
+ * @description Update a listing's image
+ * @param {string} listingId - The ID of the listing to update
+ * @param {keyof ListingImages} imageKey - The key of the image to update
+ * @param {string} imageSrc - The new source of the image
+ * @returns {Promise<void>} - A promise that resolves when the listing's image is updated
+ */
+export const updateListingImageAtom = atom(
+  null,
+  async (get, set, payload: { listingId: string; imageKey: keyof ListingImages; imageSrc: string }) => {
+    const { listingId, imageKey, imageSrc } = payload;
+    const listings = get(listingsAtom);
+    const listing = listings[listingId];
+
+    if (listing) {
+      const updatedListing = {
+        ...listing,
+        images: {
+          ...listing.images,
+          [imageKey]: {
+            ...listing.images[imageKey],
+            src: imageSrc
+          }
+        }
+      };
+
+      set(listingsAtom, {
+        ...listings,
+        [listingId]: updatedListing
+      });
     }
   }
 );
