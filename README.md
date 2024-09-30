@@ -1,8 +1,6 @@
 # Notes
 
-- Profile logout
-- Custom toast fixed colours
-- Redo Icon (Account for Circular Crop)
+- Edit posts
 - Third-party login
 
 # React + TypeScript + Vite
