@@ -1,36 +1,51 @@
 import { useState, useEffect } from 'react';
-import { useAtom } from 'jotai';
-import { Listing, User } from '../types';
+import { Listing } from '../types';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { listingsAtom, updateListingImageAtom } from '../stores/listingStore';
+import { fetchUserListingsAtom, listingUsersAtom } from '../stores/userStore';
+import { markersAtom, fetchMarker } from '../stores/markerStore';
+import { getImage } from '../stores/imageStore';
 import { ExclamationCircleIcon, MagnifyingGlassCircleIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Avatar } from '@chakra-ui/react';
-import { format, isValid } from 'date-fns';
-import { getImage } from '../utils/imageUtils';
-import { userDataAtom, fetchUserDataAtom } from '../stores/userStore';
-import { updateListingImageAtom } from '../stores/listingStore';
+import { format } from 'date-fns';
 import LoadingSpinner from './LoadingSpinner';
+import { Button } from '@chakra-ui/react';
+import { getAvatarUrl } from '../utils/userUtils';
 
 interface ListingCardProps {
   listing: Listing;
 }
 
 export default function ListingCard({ listing }: ListingCardProps) {
-  const [isImageLoading, setIsImageLoading] = useState(!listing.images.main.src);
-  const [userData] = useAtom(userDataAtom);
-  const [, fetchUserData] = useAtom(fetchUserDataAtom);
-  const [, updateListingImage] = useAtom(updateListingImageAtom);
+  const setListings = useSetAtom(listingsAtom);
+  const fetchUserListings = useSetAtom(fetchUserListingsAtom);
+  const updateListingImage = useSetAtom(updateListingImageAtom);
+  const [isImageLoading, setIsImageLoading] = useState(!listing.images.main.data);
+  const markers = useAtomValue(markersAtom);
+  const listingUsers = useAtomValue(listingUsersAtom);
 
   useEffect(() => {
     const fetchMainImage = async () => {
-      if (listing.images.main.id && !listing.images.main.src) {
+      if (listing.images.main.id && !listing.images.main.data) {
         setIsImageLoading(true);
         try {
           const imageDoc = await getImage(listing.images.main.id);
           if (imageDoc) {
-            updateListingImage({ 
-              listingId: listing.id, 
-              imageKey: 'main', 
-              imageSrc: imageDoc.src 
-            });
+
+            // Update the local listings state
+            setListings(prev => ({
+              ...prev,
+              [listing.id]: {
+                ...prev[listing.id],
+                images: {
+                  ...prev[listing.id].images,
+                  main: {
+                    ...prev[listing.id].images.main,
+                    data: imageDoc.data
+                  }
+                }
+              }
+            }));
           }
         } catch (error) {
           console.error('[ListingCard/fetchMainImage]: ', error);
@@ -39,28 +54,50 @@ export default function ListingCard({ listing }: ListingCardProps) {
         }
       }
     };
+    
     fetchMainImage();
 
-    // Fetch user data if not already available
-    if (!userData || userData.uid !== listing.userId) {
-      fetchUserData(listing.userId);
-    }
-  }, [listing.id, listing.images.main.id, listing.userId, userData, fetchUserData, updateListingImage]);
+    // Fetch user data for the listing
+    const fetchUser = async () => {
+      try {
+        await fetchUserListings(listing.userId);
+      } catch (error) {
+        console.error('[ListingCard/fetchUser]: ', error);
+      }
+    };
+    
+    fetchUser();
+
+    // Fetch markers for the listing
+    const fetchMarkersListing = async () => {
+      try {
+        await Promise.all(listing.markers.map(m => fetchMarker(m.id, markers)));
+      } catch (error) {
+        console.error('[ListingCard/fetchMarkers]: ', error);
+      }
+    };
+
+    fetchMarkersListing();
+
+  }, [listing, markers, fetchUserListings, updateListingImage, setListings]);
 
   // Function to safely format the date
-  const formatDate = (date: Date | number) => {
-    if (isValid(date)) {
-      return format(date, 'yyyy-MM-dd');
-    }
-    return 'Invalid Date';
+  const formatDate = (date: Date) => {
+    return format(date, 'yyyy-MM-dd hh:mm a');
   };
 
-  // Function to get the display name
-  const getDisplayName = (user: User | null) => {
+  // Updated getDisplayName function
+  const getDisplayName = (userId: string) => {
+    const user = listingUsers[userId];
     if (user) {
       return user.preferences?.name || user.email;
     }
-    return 'Unknown User';
+    return '';
+  };
+
+  // Helper function to safely get marker name
+  const getMarkerName = (markerId: string) => {
+    return markers[markerId]?.name || 'Loading location...';
   };
 
   return (
@@ -71,8 +108,8 @@ export default function ListingCard({ listing }: ListingCardProps) {
             <div className="w-full h-full flex items-center justify-center bg-gray-100">
               <div className="scale-50"><LoadingSpinner /></div>
             </div>
-          ) : listing.images.main.src ? (
-            <img src={listing.images.main.src} alt={listing.title} className="w-full h-full object-cover" />
+          ) : listing.images.main.data ? (
+            <img src={listing.images.main.data} alt={listing.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
               No Image
@@ -93,8 +130,8 @@ export default function ListingCard({ listing }: ListingCardProps) {
             {listing.type === 'lost' ? 'Lost' : 'Found'}
           </div>
           <div className="flex items-center gap-2 mb-1">
-            <Avatar size="xs" name={getDisplayName(userData)} />
-            <span className="text-xs font-medium">{getDisplayName(userData)}</span>
+            <Avatar size="xs" name={getDisplayName(listing.userId)} src={getAvatarUrl(listingUsers[listing.userId])} />
+            <span className="text-xs font-medium">{getDisplayName(listing.userId)}</span>
           </div>
           <h4 className="font-semibold text-sm mb-1 mt-2 truncate">{listing.title}</h4>
           <p className="text-xs text-gray-600 line-clamp-2">{listing.description}</p>
@@ -102,13 +139,26 @@ export default function ListingCard({ listing }: ListingCardProps) {
       </div>
       <div className="flex justify-between items-center p-2 bg-gray-100 text-xs">
         <div className="text-gray-700 font-medium">
+          <p>
+            {listing.markers.length > 0
+              ? getMarkerName(listing.markers[0].id)
+              : 'No location'}
+          </p>
           <p>{formatDate(listing.createdAt)}</p>
-          <p>{listing.locations[0].name}</p>
         </div>
-        <button className="bg-blue-600 text-white text-xs font-medium px-2 pl-3 py-2 rounded flex items-center">
+        <Button
+          size='sm'
+          fontWeight="medium"
+          bg='primary.600'
+          color='white'
+          rightIcon={
+            <ChevronRightIcon className="w-3 h-3 ml-1 stroke-[3]" />
+          }
+          _hover={{ bg: 'primary.700' }}
+          _active={{ bg: 'primary.800' }}
+        >
           View
-          <ChevronRightIcon className="w-3 h-3 ml-1 stroke-2" />
-        </button>
+        </Button>
       </div>
     </div>
   );
