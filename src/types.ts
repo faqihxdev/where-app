@@ -1,11 +1,6 @@
-export interface User {
-  uid: string;
-  email: string;
-  preferences?: {
-    name?: string;
-  }
-  createdAt?: Date;
-}
+import { Timestamp } from 'firebase/firestore';
+
+// <<< ENUMS >>>
 
 export enum ListingCategory {
   ELECTRONICS = 'Electronics',
@@ -27,26 +22,30 @@ export enum ListingStatus {
   ARCHIVED = 'archived',
 }
 
-export interface ListingLocation {
+// <<< CLIENT SIDE TYPES >>>
+
+export interface User {
+  uid: string;
+  email: string;
+  preferences?: {
+    name?: string;
+  }
+  createdAt?: Date;
+}
+
+export interface ListingImages {
+  main:  { id: string,  listingId: string,  data: string };
+  alt1?: { id?: string, listingId?: string, data?: string };
+  alt2?: { id?: string, listingId?: string, data?: string };
+}
+
+export interface Marker {
+  id: string;
+  listingId: string;
   name: string;
   latitude: number;
   longitude: number;
-}
-
-// Contains the firestore docId under the Images collection
-export interface ListingImages {
-  main: {
-    id: string,
-    src?: string,
-  };
-  alt1?: {
-    id?: string,
-    src?: string,
-  };
-  alt2?: {
-    id?: string,
-    src?: string,
-  };
+  radius: number;
 }
 
 export interface Listing {
@@ -55,14 +54,43 @@ export interface Listing {
   userId: string;
   title: string;
   description: string;
-  images: ListingImages;
+  status: ListingStatus;
+  category: ListingCategory;
   createdAt: Date;
   updatedAt: Date;
   expiresAt: Date;
-  locations: ListingLocation[];
+  images: ListingImages;
+  markers: Marker[];
+}
+
+// <<< DATABASE COLLECTION TYPES >>>
+
+export interface ListingDB {
+  id: string;
+  type: 'lost' | 'found';
+  userId: string;
+  title: string;
+  description: string;
   status: ListingStatus;
   category: ListingCategory;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  expiresAt: Timestamp;
+  images: {
+    mainId: string;
+    alt1Id?: string;
+    alt2Id?: string;
+  };
+  markerIds: string[];
 }
+
+export interface ImageDB {
+  id: string;
+  listingId: string;
+  data: string;
+}
+
+// <<< OTHER TYPES >>>
 
 export interface SearchParams {
   keyword: string;
