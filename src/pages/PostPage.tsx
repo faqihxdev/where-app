@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useAtom } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -12,14 +12,16 @@ import {
   VStack,
   HStack,
   IconButton,
+  Button,
 } from '@chakra-ui/react';
 
 import { PlusIcon, TrashIcon, ClipboardDocumentIcon, PhotoIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { addListingAtom } from '../stores/listingStore';
 import { showCustomToast } from '../components/CustomToast';
-import { ListingCategory, Listing, ListingStatus, ListingLocation } from '../types';
+import { Listing, ListingCategory, ListingStatus, Marker } from '../types';
 import { userDataAtom } from '../stores/userStore';
-import { compressImage } from '../utils/imageUtils';
+import { compressImage } from '../stores/imageStore';
+import MapSelector from '../components/map/MapSelector';
 
 const PostPage: React.FC = () => {
   
@@ -27,17 +29,18 @@ const PostPage: React.FC = () => {
     [key: string]: string;
   }
 
-  const [userData] = useAtom(userDataAtom);
-  const [, addListing] = useAtom(addListingAtom);
+  const userData = useAtomValue(userDataAtom);
+  const addListing = useSetAtom(addListingAtom);
   const navigate = useNavigate();
 
+  const [isLoading, setIsLoading] = useState(false);
   const [type, setType] = useState<'lost' | 'found'>('lost');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<ListingCategory>(ListingCategory.OTHER);
-  const [locations, setLocations] = useState<ListingLocation[]>([{ name: '', latitude: 0, longitude: 0 }]);
   const [images, setImages] = useState<File[]>([]);
   const [imagesPreviews, setImagesPreviews] = useState<string[]>([]);
+  const [markers, setMarkers] = useState<Omit<Marker, 'id' | 'listingId'>[]>([]);
 
   const [errors, setErrors] = useState<PostFormError>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,10 +57,16 @@ const PostPage: React.FC = () => {
         return '';
       case 'locationName':
         return value ? '' : 'Location name is required';
-      case 'latitude':
-        return value ? (/^-?([1-8]?\d(\.\d{1,6})?|90(\.0{1,6})?)$/.test(value as string) ? '' : 'Invalid latitude (-90 to 90)') : '';
-      case 'longitude':
-        return value ? (/^-?((1[0-7]\d|[1-9]?\d)(\.\d{1,6})?|180(\.0{1,6})?)$/.test(value as string) ? '' : 'Invalid longitude (-180 to 180)') : '';
+      case 'latitude': {
+        console.log(value);
+        const lat = parseFloat(value as string);
+        return isNaN(lat) || lat < -90 || lat > 90 ? 'Invalid latitude (-90 to 90)' : '';
+      }
+      case 'longitude': {
+        console.log(value);
+        const lon = parseFloat(value as string);
+        return isNaN(lon) || lon < -180 || lon > 180 ? 'Invalid longitude (-180 to 180)' : '';
+      }     
       default:
         return '';
     }
@@ -76,7 +85,7 @@ const PostPage: React.FC = () => {
       showCustomToast({
         title: 'Error',
         description: 'You can upload a maximum of 3 images.',
-        bgColor: 'bg-red-500',
+        color: 'danger',
       });
       return;
     }
@@ -84,7 +93,7 @@ const PostPage: React.FC = () => {
     try {
       const compressedFiles = await Promise.all(files.map(file => compressImage(file)));
       setImages(prev => [...prev, ...compressedFiles]);
-      setErrors(prev => ({ ...prev, images: '' })); // Clear any previous image errors
+      setErrors(prev => ({ ...prev, images: '' }));
       
       compressedFiles.forEach(file => {
         const reader = new FileReader();
@@ -98,7 +107,7 @@ const PostPage: React.FC = () => {
       showCustomToast({
         title: 'Error',
         description: 'Failed to process images. Please try again.',
-        bgColor: 'bg-red-500',
+        color: 'danger',
       });
     }
   };
@@ -108,36 +117,8 @@ const PostPage: React.FC = () => {
     setImagesPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleLocationChange = (index: number, field: keyof ListingLocation, value: string) => {
-    const newLocations = [...locations];
-    if (field === 'latitude' || field === 'longitude') {
-      newLocations[index][field] = parseFloat(value);
-    } else {
-      newLocations[index][field] = value;
-    }
-    setLocations(newLocations);
-
-    // Clear the error for this specific field
-    setErrors(prev => ({
-      ...prev,
-      [`location${index}_${field}`]: ''
-    }));
-  };
-
-  const handleLocationBlur = (index: number, field: keyof ListingLocation, value: string) => {
-    const error = validateField(field, value);
-    setErrors(prev => ({
-      ...prev,
-      [`location${index}_${field}`]: error
-    }));
-  };
-
-  const addLocation = () => {
-    setLocations(prev => [...prev, { name: '', latitude: 0, longitude: 0 }]);
-  };
-
-  const removeLocation = (index: number) => {
-    setLocations(prev => prev.filter((_, i) => i !== index));
+  const handleLocationsChange = (newMarkers: Omit<Marker, 'id' | 'listingId'>[]) => {
+    setMarkers(newMarkers);
   };
 
   const validateForm = (): boolean => {
@@ -147,42 +128,49 @@ const PostPage: React.FC = () => {
       images: validateField('images', images),
     };
 
-    locations.forEach((loc, index) => {
+    markers.forEach((loc, index) => {
       newErrors[`location${index}_name`] = validateField('locationName', loc.name);
       newErrors[`location${index}_latitude`] = validateField('latitude', loc.latitude.toString());
       newErrors[`location${index}_longitude`] = validateField('longitude', loc.longitude.toString());
     });
 
     setErrors(newErrors);
+    console.log(newErrors);
     return Object.values(newErrors).every(error => error === '');
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!validateForm()) return;
-
+    
     try {
+      setIsLoading(true);
 
-      const listing: Omit<Listing, 'id' | 'images'> & { images: File[] } = {
+      const newListing: Omit<Listing, 'id' | 'images' | 'markers'> = {
         type: type,
         userId: userData!.uid,
         title: title,
         description: description,
-        images: images,
         createdAt: new Date(),
         updatedAt: new Date(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        locations: locations,
         status: ListingStatus.ACTIVE,
         category: category,
-      }
+      };
 
-      await addListing(listing);
+      const newMarkers: Omit<Marker, 'id' | 'listingId'>[] = markers.map(marker => ({
+        name: marker.name,
+        latitude: marker.latitude,
+        longitude: marker.longitude,
+        radius: marker.radius,
+      }));
+
+      await addListing({ newListing, imageFiles: images, markers: newMarkers });
 
       showCustomToast({
         title: 'Listing Created',
         description: 'Your listing has been successfully created.',
-        bgColor: 'bg-green-500',
+        color: 'success',
       });
       navigate('/');
     } catch (error) {
@@ -190,8 +178,10 @@ const PostPage: React.FC = () => {
       showCustomToast({
         title: 'Error',
         description: 'Failed to create listing. Please try again.',
-        bgColor: 'bg-red-500',
+        color: 'danger',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -332,80 +322,21 @@ const PostPage: React.FC = () => {
         
         {/* Item Location */}
         <div className="border border-gray-200 rounded-lg p-4">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center text-blue-600">
-              <MapPinIcon className="w-5 h-5 mr-2 stroke-2" />
-              <h1 className="font-semibold">Location</h1>
-            </div>
-            {locations.length < 3 && (
-              <button
-                type="button"
-                className="bg-blue-600 text-white pl-2 pr-4 py-1 space-x-1 rounded flex items-center justify-center"
-                onClick={addLocation}
-              >
-                <PlusIcon className="w-4 h-4 ml-1 stroke-[2.5]" />
-                <span>Add</span>
-              </button>
-            )}
+          <div className="flex items-center mb-4 text-blue-600">
+            <MapPinIcon className="w-5 h-5 mr-2 stroke-2" />
+            <h1 className="font-semibold">Location</h1>
           </div>
-          <VStack align="stretch" spacing={3}>
-            {locations.map((location, index) => (
-              <VStack key={index} spacing={2} align="stretch" mb={3}>
-                <FormControl isInvalid={!!errors[`location${index}_name`]}>
-                  <Input
-                    rounded="md"
-                    placeholder="Location name"
-                    value={location.name}
-                    onChange={(e) => handleLocationChange(index, 'name', e.target.value)}
-                    onBlur={(e) => handleLocationBlur(index, 'name', e.target.value)}
-                    variant="filled"
-                    bg="gray.100"
-                  />
-                  <FormErrorMessage fontSize="xs">{errors[`location${index}_name`]}</FormErrorMessage>
-                </FormControl>
-                <HStack>
-                  <FormControl isInvalid={!!errors[`location${index}_latitude`]}>
-                    <Input
-                      type="text"
-                      rounded="md"
-                      placeholder="Latitude"
-                      value={location.latitude}
-                      onChange={(e) => handleLocationChange(index, 'latitude', e.target.value)}
-                      onBlur={(e) => handleLocationBlur(index, 'latitude', e.target.value)}
-                      variant="filled"
-                      bg="gray.100"
-                    />
-                    <FormErrorMessage fontSize="xs">{errors[`location${index}_latitude`]}</FormErrorMessage>
-                  </FormControl>
-                  <FormControl isInvalid={!!errors[`location${index}_longitude`]}>
-                    <Input
-                      type="text"
-                      rounded="md"
-                      placeholder="Longitude"
-                      value={location.longitude}
-                      onChange={(e) => handleLocationChange(index, 'longitude', e.target.value)}
-                      onBlur={(e) => handleLocationBlur(index, 'longitude', e.target.value)}
-                      variant="filled"
-                      bg="gray.100"
-                    />
-                    <FormErrorMessage fontSize="xs">{errors[`location${index}_longitude`]}</FormErrorMessage>
-                  </FormControl>
-                  {index > 0 && (
-                    <IconButton
-                      aria-label="Remove location"
-                      icon={<TrashIcon className="h-4 w-4" />}
-                      onClick={() => removeLocation(index)}
-                    />
-                  )}
-                </HStack>
-              </VStack>
-            ))}
-          </VStack>
+          <MapSelector
+            mode="create"
+            onMarkersChange={handleLocationsChange}
+            maxMarkers={3}
+            initialMarkers={markers}
+          />
         </div>
-
-        <button type="submit" className="w-full mt-4 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-150 ease-in-out">
+        
+        <Button type="submit" isLoading={isLoading} loadingText="Creating Listing..." w="full" fontWeight="medium" bg="primary.600" color="white" _hover={{ bg: 'primary.700' }} _active={{ bg: 'primary.800' }}>
           Create Listing
-        </button>
+        </Button>
       </form>
     </div>
   );
