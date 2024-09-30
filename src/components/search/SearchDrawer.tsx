@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Drawer,
   DrawerBody,
@@ -8,10 +8,11 @@ import {
   DrawerContent,
   DrawerCloseButton,
   VStack,
+  Button
 } from '@chakra-ui/react';
-import { SearchParams } from '../../types';
+import { SearchParams, Marker } from '../../types';
 import SearchForm from './SearchForm';
-import LocationSearch from './LocationSearch';
+import MapSelector from '../map/MapSelector';
 
 interface SearchDrawerProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   onResetSearch 
 }) => {
   const [localSearchParams, setLocalSearchParams] = React.useState<SearchParams>(searchParams);
+  const [locationFilter, setLocationFilter] = useState<Omit<Marker, 'id' | 'listingId'> | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,12 +39,25 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   }, [isOpen, searchParams]);
 
   const handleApplySearch = () => {
-    onApplySearch(localSearchParams);
+    const updatedSearchParams = {
+      ...localSearchParams,
+      location: locationFilter ? {
+        lat: locationFilter.latitude,
+        lng: locationFilter.longitude,
+        radius: locationFilter.radius
+      } : null
+    };
+    onApplySearch(updatedSearchParams);
   };
 
   const handleResetSearch = () => {
     onResetSearch();
     setLocalSearchParams(searchParams);
+    setLocationFilter(null);
+  };
+
+  const handleLocationChange = (markers: Omit<Marker, 'id' | 'listingId'>[]) => {
+    setLocationFilter(markers[0] || null);
   };
 
   return (
@@ -55,26 +70,25 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         <DrawerBody>
           <VStack spacing={4} align="stretch">
             <SearchForm searchParams={localSearchParams} setSearchParams={setLocalSearchParams} />
-            <LocationSearch
-              location={localSearchParams.location}
-              setLocation={(location) => setLocalSearchParams({ ...localSearchParams, location })}
+            <MapSelector
+              mode="filter"
+              onMarkersChange={handleLocationChange}
+              maxMarkers={1}
+              initialMarkers={locationFilter ? [locationFilter] : []}
             />
           </VStack>
         </DrawerBody>
 
-        <DrawerFooter>
-          <button
-            className="px-4 py-2 mr-3 border border-gray-300 rounded-md hover:bg-gray-100"
-            onClick={handleResetSearch}
-          >Reset</button>
-          <button
-            className="px-4 py-2 mr-3 border border-gray-300 rounded-md hover:bg-gray-100"
-            onClick={onClose}
-          >Cancel</button>
-          <button
-            className="h-full w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            onClick={handleApplySearch}
-          >Apply</button>
+        <DrawerFooter className="space-x-2">
+          <Button onClick={handleResetSearch} paddingX={7} fontWeight="medium" variant="outline">
+            Reset
+          </Button>
+          <Button onClick={onClose} paddingX={7} fontWeight="medium" variant="outline">
+            Cancel
+          </Button>
+          <Button onClick={handleApplySearch} w="full" bg="primary.600" color="white" fontWeight="medium" variant="outline" _hover={{ bg: 'primary.700' }} _active={{ bg: 'primary.800' }}>
+            Apply
+          </Button>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
