@@ -1,26 +1,48 @@
-import React, { useState } from "react";
-import { useAtom } from "jotai";
-import { loginAtom, registerAtom } from "../stores/authStore";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { loginAtom, registerAtom, initializeAuthAtom } from "../stores/authStore";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   FormControl,
   FormLabel,
   FormErrorMessage,
   Input,
+  Button,
 } from "@chakra-ui/react";
 import { showCustomToast } from "../components/CustomToast";
 import { PasswordInput } from "../components/forms/PasswordInput";
 import logo from "../assets/logo.png";
+import { useAtomValue, useSetAtom } from "jotai";
+import { isAuthenticatedAtom } from "../stores/authStore";
 
 export default function AuthPage() {
+  const login = useSetAtom(loginAtom);
+  const register = useSetAtom(registerAtom);
+  const initializeAuth = useSetAtom(initializeAuthAtom);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [, login] = useAtom(loginAtom);
-  const [, register] = useAtom(registerAtom);
+  const [displayName, setDisplayName] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const isAuthenticated = useAtomValue(isAuthenticatedAtom);
+  const location = useLocation();
+  
+  useEffect(() => {
+    const init = async () => {
+      await initializeAuth();
+      setIsLoading(false);
+    };
+    init();
+  }, [initializeAuth]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const intendedPath = (location.state as { from?: Location })?.from?.pathname || '/';
+      navigate(intendedPath);
+    }
+  }, [isAuthenticated, navigate, location]);
 
   const validateField = (field: string, value: string) => {
     let error = "";
@@ -44,6 +66,11 @@ export default function AuthPage() {
           error = "Passwords don't match";
         }
         break;
+      case "displayName":
+        if (!isLogin && !value) {
+          error = "Display name is required";
+        }
+        break;
     }
     return error;
   };
@@ -58,6 +85,7 @@ export default function AuthPage() {
       email: validateField("email", email),
       password: validateField("password", password),
       confirmPassword: isLogin ? "" : validateField("confirmPassword", confirmPassword),
+      displayName: isLogin ? "" : validateField("displayName", displayName),
     };
     setErrors(newErrors);
     return Object.values(newErrors).every(error => error === "");
@@ -67,31 +95,35 @@ export default function AuthPage() {
     event.preventDefault();
     if (!validateForm()) return;
 
+    setIsLoading(true);
+
     try {
       if (isLogin) {
         await login({ email, password });
         showCustomToast({
           title: "Login Successful",
           description: "Welcome back!",
-          bgColor: "bg-green-500",
+          color: "success",
         });
         navigate("/");
       } else {
-        await register({ email, password });
+        await register({ email, password, displayName });
         showCustomToast({
           title: "Registration Successful",
           description: "Your account has been created.",
-          bgColor: "bg-green-500",
+          color: "success",
         });
+        navigate("/");
       }
-      navigate("/");
     } catch (error) {
-      console.error("Authentication error:", error);
+      console.error("[AuthPage] Authentication error:", error);
       showCustomToast({
         title: "Authentication Failed",
         description: "Please check your credentials and try again.",
-        bgColor: "bg-red-500",
+        color: "danger",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -133,6 +165,21 @@ export default function AuthPage() {
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
+            {!isLogin && (
+              <FormControl isInvalid={!!errors.displayName}>
+                <FormLabel>Name</FormLabel>
+                <Input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  onBlur={(e) => handleBlur("displayName", e.target.value)}
+                  placeholder="Display Name"
+                  required={!isLogin}
+                  variant="filled"
+                />
+                <FormErrorMessage>{errors.displayName}</FormErrorMessage>
+              </FormControl>
+            )}
             <FormControl isInvalid={!!errors.email}>
               <FormLabel>Email</FormLabel>
               <Input
@@ -165,12 +212,19 @@ export default function AuthPage() {
               />
             )}
             <div className="pt-4">
-              <button
+              <Button
+                isLoading={isLoading}
+                loadingText={isLogin ? "Logging in..." : "Registering..."}
                 type="submit"
-                className="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                w="full"
+                fontWeight="normal"
+                bg="primary.600"
+                color="white"
+                _hover={{ bg: 'primary.700' }}
+                _active={{ bg: 'primary.800' }}
               >
                 {isLogin ? "Login" : "Register"}
-              </button>
+              </Button>
             </div>
           </div>
         </form>
