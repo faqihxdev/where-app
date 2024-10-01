@@ -1,6 +1,18 @@
 # Notes
 
-- Edit posts
+- Hmm
+- Handling all local or cloud fetch is in the store, pass in param if refresh
+- I'll do the expiry and matching
+- Templates for the others
+
+  - View page
+  - Inbox
+    - Matches
+    - Expiry
+  - Profile
+    - Preferences
+    - Your listings
+      - Edit / Delete Listings
 - Third-party login
 
 # React + TypeScript + Vite

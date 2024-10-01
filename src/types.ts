@@ -3,23 +3,34 @@ import { Timestamp } from 'firebase/firestore';
 // <<< ENUMS >>>
 
 export enum ListingCategory {
-  ELECTRONICS = 'Electronics',
-  CLOTHING_AND_ACCESSORIES = 'Clothing & Accessories',
-  BAGS_AND_WALLETS = 'Bags & Wallets',
-  PERSONAL_IDENTIFICATION_AND_DOCUMENTS = 'Personal Identification & Documents',
-  PETS = 'Pets',
-  SPORTS_AND_FITNESS = 'Sports & Fitness',
-  TOYS_AND_CHILDREN_ITEMS = 'Toys & Children Items',
-  EYEWEAR = 'Eyewear',
-  VEHICLES = 'Vehicles',
-  MISCELLANEOUS = 'Miscellaneous',
-  OTHER = 'Other',
+  electronics = 'Electronics',
+  clothing_and_accessories = 'Clothing & Accessories',
+  bags_and_wallets = 'Bags & Wallets',
+  personal_documents = 'Personal Documents',
+  pets = 'Pets',
+  sports_and_fitness = 'Sports & Fitness',
+  toys_and_children_items = 'Toys & Children Items',
+  eyewear = 'Eyewear',
+  vehicles = 'Vehicles',
+  miscellaneous = 'Miscellaneous',
+  other = 'Other',
 }
 
 export enum ListingStatus {
-  ACTIVE = 'active',
-  RESOLVED = 'resolved',
-  ARCHIVED = 'archived',
+  active = 'Active',
+  resolved = 'Resolved',
+  archived = 'Archived',
+}
+
+export enum ListingKeyNames {
+  title = 'Title',
+  description = 'Description',
+  category = 'Category',
+  status = 'Status',
+  type = 'Type',
+  createdAt = 'Date Posted',
+  updatedAt = 'Last Updated',
+  location = 'Location',
 }
 
 // <<< CLIENT SIDE TYPES >>>
@@ -94,8 +105,8 @@ export interface ImageDB {
 
 export interface SearchParams {
   keyword: string;
-  type: string;
-  category: ListingCategory | '';
+  type: 'all' | 'lost' | 'found';
+  category: string;
   status: ListingStatus | '';
   sortBy: keyof Listing;
   sortOrder: 'ascending' | 'descending';
