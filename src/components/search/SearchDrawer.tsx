@@ -31,10 +31,17 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 }) => {
   const [localSearchParams, setLocalSearchParams] = React.useState<SearchParams>(searchParams);
   const [locationFilter, setLocationFilter] = useState<Omit<Marker, 'id' | 'listingId'> | null>(null);
+  const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
       setLocalSearchParams(searchParams);
+      setLocationFilter(searchParams.location ? {
+        name: 'Selected Location',
+        latitude: searchParams.location.lat,
+        longitude: searchParams.location.lng,
+        radius: searchParams.location.radius
+      } : null);
     }
   }, [isOpen, searchParams]);
 
@@ -52,8 +59,9 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   const handleResetSearch = () => {
     onResetSearch();
-    setLocalSearchParams(searchParams);
+    setLocalSearchParams({...searchParams, location: null});
     setLocationFilter(null);
+    setResetKey(prevKey => prevKey + 1);
   };
 
   const handleLocationChange = (markers: Omit<Marker, 'id' | 'listingId'>[]) => {
@@ -70,12 +78,17 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         <DrawerBody>
           <VStack spacing={4} align="stretch">
             <SearchForm searchParams={localSearchParams} setSearchParams={setLocalSearchParams} />
-            <MapSelector
-              mode="filter"
-              onMarkersChange={handleLocationChange}
-              maxMarkers={1}
-              initialMarkers={locationFilter ? [locationFilter] : []}
-            />
+            <div>
+              <div className="font-medium mb-3">Location</div>
+              <MapSelector
+                key={resetKey}
+                mode="filter"
+                onMarkersChange={handleLocationChange}
+                maxMarkers={1}
+                initialMarkers={locationFilter ? [locationFilter] : []}
+                showRemoveButton={true}
+              />
+            </div>
           </VStack>
         </DrawerBody>
 

@@ -72,9 +72,9 @@ const SearchForm: React.FC<SearchFormProps> = ({ searchParams, setSearchParams }
             onChange={(e) => setSearchParams({ ...searchParams, sortBy: e.target.value as keyof Listing })}
           >
             <option value="title">Title</option>
-            <option value="createdAt">Created At</option>
-            <option value="updatedAt">Updated At</option>
-            <option value="expiresAt">Expires At</option>
+            <option value="createdAt">Date Posted</option>
+            <option value="updatedAt">Last Updated</option>
+            <option value="expiresAt">Date Expired</option>
           </Select>
           <Select
             variant="filled"
