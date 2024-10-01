@@ -19,7 +19,6 @@ export const addMarker = async (
     const docRef = await addDoc(collection(db, 'Markers'), newMarker);
     console.log('[markerStore/addMarker] 🔥');
     const marker: Marker = { id: docRef.id, ...newMarker };
-    // Update the markersAtom
     set(markersAtom, (prev) => ({ ...prev, [docRef.id]: marker }));
     return marker;
   } catch (error) {
@@ -40,6 +39,11 @@ export const fetchMarker = async (
   existingMarkers: Record<string, Marker>
 ): Promise<Marker | null> => {
   console.log('[markerStore/fetchMarker]: markerId:', markerId);
+  if (!markerId) {
+    console.error('[markerStore/fetchMarker]: Invalid markerId');
+    return null;
+  }
+
   if (existingMarkers[markerId]) {
     return existingMarkers[markerId];
   }

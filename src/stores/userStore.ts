@@ -95,3 +95,17 @@ export const fetchUserListingsAtom = atom(
     return null;
   }
 );
+
+/**
+ * @description Get the avatar URL for the user
+ * @param {string} name - The name of the user
+ * @returns {string} - The avatar URL
+ */
+export const getAvatarUrl = (name: string): string => {
+  if (name) {
+    const encodedName = encodeURIComponent(name);
+    return `https://api.dicebear.com/9.x/initials/svg?backgroundType=gradientLinear&seed=${encodedName}`;
+  } else {
+    return 'https://api.dicebear.com/9.x/glass/svg?backgroundColor=1A5FFF';
+  }
+}

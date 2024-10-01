@@ -2,7 +2,7 @@ import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { Listing, ListingDB, ListingImages, Marker } from '../types';
 import { db } from '../firebaseConfig';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { addImage, deleteImage, getImage } from './imageStore';
 import { markersAtom, addMarker, fetchMarker } from './markerStore';
 
@@ -10,35 +10,16 @@ export const listingsAtom = atomWithStorage<Record<string, Listing>>('listings',
 export const listingsFetchedAtom = atomWithStorage<boolean>('listingsFetched', false);
 
 /**
- * @description Convert a ListingDB to a Listing
- * @param {ListingDB} listingDB - The ListingDB object
- * @param {Marker[]} markers - The markers for the listing
- * @returns {Listing} - The converted Listing object
- */
-const convertListingDBToListing = (listingDB: ListingDB, markers: Marker[]): Listing => ({
-  ...listingDB,
-  createdAt: listingDB.createdAt.toDate(),
-  updatedAt: listingDB.updatedAt.toDate(),
-  expiresAt: listingDB.expiresAt.toDate(),
-  images: {
-    main: { id: listingDB.images.mainId, listingId: listingDB.id, data: '' },
-    alt1: listingDB.images.alt1Id ? { id: listingDB.images.alt1Id, listingId: listingDB.id, data: '' } : undefined,
-    alt2: listingDB.images.alt2Id ? { id: listingDB.images.alt2Id, listingId: listingDB.id, data: '' } : undefined,
-  },
-  markers,
-});
-
-/**
  * @description Fetch all listings from Firestore
  * @returns {Promise<void>} - A promise that resolves when the listings are fetched
  */
-export const fetchListingsAtom = atom(
+export const fetchAllListingsAtom = atom(
   null,
   async (get, set): Promise<Record<string, Listing>> => {
-    console.log("[listingStore/fetchListingsAtom] called");
+    console.log("[listingStore/fetchAllListingsAtom] called");
     try {
       const querySnapshot = await getDocs(collection(db, 'Listings'));
-      console.log('[listingStore/fetchListingsAtom] 🔥');
+      console.log('[listingStore/fetchAllListingsAtom] 🔥');
       const listings: Record<string, Listing> = {};
       const existingMarkers = get(markersAtom);
 
@@ -77,6 +58,62 @@ export const fetchListingsAtom = atom(
       return listings;
     } catch (error) {
       console.error('[listingStore] Error fetching listings:', error);
+      throw error;
+    }
+  }
+);
+
+/**
+ * @description Fetch listings by userId
+ * @param {string} userId - The ID of the user to fetch listings for
+ * @returns {Promise<Listing[]>} - A promise that resolves when the listings are fetched
+ */
+export const fetchListingsByUserIdAtom = atom(
+  null,
+  async (get, set, userId: string): Promise<Listing[]> => {
+    console.log('[listingStore/fetchListingsByUserIdAtom] called');
+    try {
+      const querySnapshot = await getDocs(query(collection(db, 'Listings'), where('userId', '==', userId)));
+      console.log('[listingStore/fetchListingsByUserIdAtom] 🔥');
+      const listings: Listing[] = [];
+      const existingMarkers = get(markersAtom);
+      const existingListings = get(listingsAtom);
+
+      for (const doc of querySnapshot.docs) {
+        const listingDB = doc.data() as ListingDB;
+        const markerIds = listingDB.markerIds;
+
+        // Fetch markers using the fetchMarker function
+        const markers = await Promise.all(
+          markerIds.map(async (markerId) => {
+            const marker = await fetchMarker(markerId, existingMarkers);
+            if (marker) {
+              // Update markersAtom with the new marker
+              set(markersAtom, (prev) => ({ ...prev, [markerId]: marker }));
+            }
+            return marker;
+          })
+        );
+
+        const listing = convertListingDBToListing({ ...listingDB, id: doc.id }, markers.filter(m => m !== null) as Marker[]);
+
+        // Fetch the main image if it's not already loaded
+        if (listing.images.main.id && !listing.images.main.data) {
+          const imageDoc = await getImage(listing.images.main.id);
+          if (imageDoc) {
+            listing.images.main.data = imageDoc.data;
+          }
+        }
+
+        listings.push(listing);
+        existingListings[doc.id] = listing;
+      }
+      
+      set(listingsAtom, existingListings);
+      
+      return listings;
+    } catch (error) {
+      console.error('[listingStore] Error fetching listings by userId:', error);
       throw error;
     }
   }
@@ -172,10 +209,9 @@ export const addListingAtom = atom(
               }
             : undefined,
         },
-        markers: markers.map((m, index) => ({
-          ...m,
-          id: markerIds[index],
-          listingId,
+        markers: await Promise.all(markerIds.map(async (id) => {
+          const marker = await fetchMarker(id, get(markersAtom));
+          return marker as Marker;
         })),
       };
 
@@ -289,3 +325,30 @@ export const updateListingImageAtom = atom(
     }
   }
 );
+
+
+
+/* ########## HELPER FUNCTIONS ########## */
+
+/**
+ * @description Convert a ListingDB to a Listing
+ * @param {ListingDB} listingDB - The ListingDB object
+ * @param {Marker[]} markers - The markers for the listing
+ * @returns {Listing} - The converted Listing object
+ */
+const convertListingDBToListing = (listingDB: ListingDB, markers: Marker[]): Listing => ({
+  ...listingDB,
+  createdAt: listingDB.createdAt.toDate(),
+  updatedAt: listingDB.updatedAt.toDate(),
+  expiresAt: listingDB.expiresAt.toDate(),
+  images: {
+    main: { id: listingDB.images.mainId, listingId: listingDB.id, data: '' },
+    alt1: listingDB.images.alt1Id ? { id: listingDB.images.alt1Id, listingId: listingDB.id, data: '' } : undefined,
+    alt2: listingDB.images.alt2Id ? { id: listingDB.images.alt2Id, listingId: listingDB.id, data: '' } : undefined,
+  },
+  markers,
+});
+
+/**
+ * @description Check if 2 listings 
+ */
