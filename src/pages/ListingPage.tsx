@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAtom } from 'jotai';
-import { listingsAtom, fetchListingsAtom, listingsFetchedAtom } from '../stores/listingStore';
+import { listingsAtom, fetchAllListingsAtom, listingsFetchedAtom } from '../stores/listingStore';
 import { Listing, ListingStatus, SearchParams } from '../types';
-import { MagnifyingGlassIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ArrowPathIcon, InboxIcon } from '@heroicons/react/24/outline';
 import { showCustomToast } from '../components/CustomToast';
 import ListingCard from '../components/ListingCard';
 import SearchDrawer from '../components/search/SearchDrawer';
 import ActiveFilters from '../components/search/ActiveFilters';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PullToRefresh from 'react-simple-pull-to-refresh';
+import { areCoordinatesWithinDistance } from '../utils/utils';
 
 const defaultSearchParams: SearchParams = {
   keyword: '',
@@ -23,7 +24,7 @@ const defaultSearchParams: SearchParams = {
 export default function ListingPage() {
   const [listings, setListings] = useAtom(listingsAtom);
   const [listingsFetched, setListingsFetched] = useAtom(listingsFetchedAtom);
-  const [, fetchListings] = useAtom(fetchListingsAtom);
+  const [, fetchAllListings] = useAtom(fetchAllListingsAtom);
   const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found'>('all');
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
   const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
@@ -35,7 +36,7 @@ export default function ListingPage() {
     setIsLoading(true);
     setListingsFetched(false);
     try {
-      await fetchListings();
+      await fetchAllListings();
     } catch (error) {
       console.error('[ListingPage] Error refreshing listings:', error);
       showCustomToast({
@@ -46,7 +47,7 @@ export default function ListingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [setListingsFetched, fetchListings]);
+  }, [setListingsFetched, fetchAllListings]);
 
   const PullDownContent = () => (
     <div className="flex items-center justify-center space-x-2 text-blue-600 mt-8">
@@ -68,7 +69,7 @@ export default function ListingPage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        await fetchListings();
+        await fetchAllListings();
       } catch (error) {
         console.error('[ListingPage] Error fetching listings:', error);
         showCustomToast({
@@ -87,18 +88,33 @@ export default function ListingPage() {
     } else {
       setIsLoading(false);
     }
-  }, [listings, listingsFetched, setListings, setListingsFetched, fetchListings]);
+  }, [listings, listingsFetched, setListings, setListingsFetched, fetchAllListings]);
 
   // On mount, fetch listings
   useEffect(() => {
 
     // Filter listings based on active tab and search params
     const filtered = Object.values(listings).filter(listing => 
-      (activeTab === 'all' || listing.type === activeTab) &&
-      (searchParams.keyword === '' || listing.title.toLowerCase().includes(searchParams.keyword.toLowerCase()) ||
-       listing.description.toLowerCase().includes(searchParams.keyword.toLowerCase())) &&
-      (searchParams.category === '' || listing.category === searchParams.category) &&
-      (searchParams.status === '' || listing.status === searchParams.status)
+      (activeTab === 'all'
+        || listing.type === activeTab)
+      && (searchParams.keyword === ''
+        || listing.title.toLowerCase().includes(searchParams.keyword.toLowerCase())
+        || listing.description.toLowerCase().includes(searchParams.keyword.toLowerCase()))
+      && (searchParams.category === ''
+        || listing.category === searchParams.category)
+      && (searchParams.status === ''
+        || listing.status === searchParams.status)
+      && (searchParams.location === null
+        || listing.markers.some(marker => 
+          searchParams.location === null
+            ? true
+            : areCoordinatesWithinDistance(
+                { lat: marker.latitude, lng: marker.longitude },
+                { lat: searchParams.location.lat, lng: searchParams.location.lng },
+                searchParams.location.radius
+              )
+          )
+      )
     );
 
     // Sort the filtered listings
@@ -116,6 +132,24 @@ export default function ListingPage() {
     setFilteredListings(filtered);
   }, [listings, activeTab, searchParams]);
 
+  const handleRemoveFilter = (key: keyof SearchParams) => {
+    setSearchParams(prev => {
+      const newParams = { ...prev };
+      if (key === 'location') {
+        newParams.location = null;
+      } else if (key === 'keyword' || key === 'category' || key === 'status') {
+        newParams[key] = '';
+      } else if (key === 'sortBy') {
+        newParams[key] = 'createdAt';
+      } else if (key === 'sortOrder') {
+        newParams[key] = 'descending';
+      } else if (key === 'type') {
+        newParams[key] = 'all';
+      }
+      return newParams;
+    });
+  };
+
   const handleApplySearch = (newSearchParams: SearchParams) => {
     setSearchParams(newSearchParams);
     setActiveTab(newSearchParams.type as 'all' | 'lost' | 'found');
@@ -127,24 +161,22 @@ export default function ListingPage() {
     setSearchParams(prev => ({ ...prev, type: tab }));
   };
 
-  const handleRemoveFilter = (key: keyof SearchParams) => {
-    setSearchParams(prev => ({ ...prev, [key]: defaultSearchParams[key] }));
-  };
-
   const handleResetSearch = () => {
     setSearchParams(defaultSearchParams);
     setActiveTab('all');
+    setIsSearchDrawerOpen(false);
   };
 
   return (
     <PullToRefresh
       onRefresh={handleRefresh}
-      pullDownThreshold={70}
-      maxPullDownDistance={95}
+      pullDownThreshold={80}
+      maxPullDownDistance={90}
+      resistance={3}
       pullingContent={<PullDownContent />}
       refreshingContent={<RefreshContent />}
     >
-      <div className="min-h-full bg-white p-4">
+      <div className="min-h-full bg-white p-4 relative">
         <div className="max-w-4xl mx-auto space-y-4">
           <div className="flex justify-between mb-4 space-x-2">
             <div className="flex grow rounded-md bg-gray-100 p-1.5" role="group">
@@ -221,6 +253,15 @@ export default function ListingPage() {
 }
 
 function ListingGrid({ listings }: { listings: Listing[] }) {
+  if (listings.length === 0) {
+    return (
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center">
+        <InboxIcon className="w-16 h-16 text-blue-600 mb-2 stroke-1.5" />
+        <p className="text-gray-600 text-lg">No Listings Found</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {listings.map(listing => (
