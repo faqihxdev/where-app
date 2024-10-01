@@ -6,11 +6,13 @@ import ListingPage from './pages/ListingPage';
 import MapPage from './pages/MapPage';
 import ProfilePage from './pages/ProfilePage';
 import PostPage from './pages/PostPage';
-import NotificationPage from './pages/NotificationPage';
+import InboxPage from './pages/InboxPage';
 import MainLayout from './components/MainLayout';
 import LoadingSpinner from './components/LoadingSpinner';
 import { useEffect, useState } from 'react';
 import { Provider } from 'jotai';
+import ViewListingPage from './pages/ViewListingPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAtomValue(isAuthenticatedAtom);
@@ -57,9 +59,11 @@ function App() {
             <Route path="/" element={<ListingPage />} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/post" element={<PostPage />} />
-            <Route path="/notifications" element={<NotificationPage />} />
+            <Route path="/inbox" element={<InboxPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/view/:listingId" element={<ViewListingPage />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
     </Provider>
