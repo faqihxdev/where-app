@@ -1,15 +1,15 @@
 /**
- * @description Checks if two coordinates are within a specified distance of each other
+ * @description Checks if two coordinates are within a specified distance of each other and calculates the actual distance
  * @param coord1 The first coordinate object with lat and lng properties
  * @param coord2 The second coordinate object with lat and lng properties
  * @param maxDistance The maximum distance in meters
- * @returns A boolean indicating whether the coordinates are within the specified distance
+ * @returns An array containing a boolean indicating whether the coordinates are within the specified distance and the actual distance in meters
  */
 export const areCoordinatesWithinDistance = (
   coord1: { lat: number; lng: number },
   coord2: { lat: number; lng: number },
   maxDistance: number
-): boolean => {
+): [boolean, number] => {
   const toRad = (value: number) => (value * Math.PI) / 180;
   const R = 6371000; // Earth radius in meters
   const dLat = toRad(coord2.lat - coord1.lat);
@@ -21,7 +21,7 @@ export const areCoordinatesWithinDistance = (
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
 
-  return distance <= maxDistance;
+  return [distance <= maxDistance, distance];
 }
 
 /**

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom, fetchAllListingsAtom } from '../stores/listingStore';
 import { listingUsersAtom, fetchUserListingsAtom } from '../stores/userStore';
@@ -9,10 +9,13 @@ import { Listing } from '../types';
 import { Button } from '@chakra-ui/react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PullToRefresh from 'react-simple-pull-to-refresh';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 const ViewListingPage: React.FC = () => {
   const { listingId } = useParams<{ listingId: string }>();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const from = searchParams.get('from') || 'home';
   const [listings, setListings] = useAtom(listingsAtom);
   const fetchAllListings = useSetAtom(fetchAllListingsAtom);
   const listingUsers = useAtomValue(listingUsersAtom);
@@ -85,6 +88,32 @@ const ViewListingPage: React.FC = () => {
     await fetchListingData();
   };
 
+  const handleBack = () => {
+    if (from === 'inbox') {
+      navigate('/inbox');
+    } else {
+      navigate('/');
+    }
+  };
+
+  const truncateBase64 = (base64: string) => {
+    return base64.substring(0, 50) + '...';
+  };
+
+  const PullDownContent = () => (
+    <div className="flex items-center justify-center space-x-2 text-blue-600 mt-8">
+      <ArrowPathIcon className="w-5 h-5 animate-spin" />
+      <span>Pull down to refresh...</span>
+    </div>
+  );
+
+  const RefreshContent = () => (
+    <div className="flex items-center justify-center space-x-2 text-blue-600 mt-8">
+      <ArrowPathIcon className="w-5 h-5 animate-spin" />
+      <span>Refreshing...</span>
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -131,24 +160,6 @@ const ViewListingPage: React.FC = () => {
     );
   }
 
-  const truncateBase64 = (base64: string) => {
-    return base64.substring(0, 50) + '...';
-  };
-
-  const PullDownContent = () => (
-    <div className="flex items-center justify-center space-x-2 text-blue-600 mt-8">
-      <ArrowPathIcon className="w-5 h-5 animate-spin" />
-      <span>Pull down to refresh...</span>
-    </div>
-  );
-
-  const RefreshContent = () => (
-    <div className="flex items-center justify-center space-x-2 text-blue-600 mt-8">
-      <ArrowPathIcon className="w-5 h-5 animate-spin" />
-      <span>Refreshing...</span>
-    </div>
-  );
-
   return (
     <PullToRefresh
       onRefresh={handleRefresh}
@@ -159,7 +170,15 @@ const ViewListingPage: React.FC = () => {
       refreshingContent={<RefreshContent />}
     >
       <div className="min-h-full bg-white p-4">
-        <h1 className="text-2xl font-semibold mb-4">View Listing</h1>
+        <div className="flex justify-start items-center mb-4">
+          <button
+            onClick={handleBack}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+          </button>
+          <h1 className="text-xl font-semibold ml-3">View Listing</h1>
+        </div>
         <pre className="whitespace-pre-wrap break-words bg-gray-100 p-4 rounded-md">
           {JSON.stringify(
             {

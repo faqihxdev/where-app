@@ -112,7 +112,7 @@ export default function ListingPage() {
                 { lat: marker.latitude, lng: marker.longitude },
                 { lat: searchParams.location.lat, lng: searchParams.location.lng },
                 searchParams.location.radius
-              )
+              )[0]
           )
       )
     );

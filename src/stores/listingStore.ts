@@ -4,7 +4,7 @@ import { Listing, ListingDB, ListingImages, Marker } from '../types';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { addImage, deleteImage, getImage } from './imageStore';
-import { markersAtom, addMarker, fetchMarker } from './markerStore';
+import { markersAtom, addMarker, fetchMarker, deleteMarker, updateMarker } from './markerStore';
 
 export const listingsAtom = atomWithStorage<Record<string, Listing>>('listings', {});
 export const listingsFetchedAtom = atomWithStorage<boolean>('listingsFetched', false);
@@ -215,7 +215,6 @@ export const addListingAtom = atom(
         })),
       };
 
-      // Update the client-side state
       console.log('[listingStore/addListing]: listingsAtom:', get(listingsAtom));
       const updatedListings = { ...get(listingsAtom), [listingId]: listing };
       set(listingsAtom, updatedListings);
@@ -235,15 +234,121 @@ export const addListingAtom = atom(
  */
 export const updateListingAtom = atom(
   null,
-  async (_, set, updatedListing: Listing): Promise<void> => {
+  async (get, set, payload: { updatedListing: Listing; imageFiles?: File[] }): Promise<void> => {
+    const { updatedListing, imageFiles } = payload;
     console.log('[listingStore/updateListingAtom]: updatedListing:', JSON.stringify(updatedListing));
     try {
       const { id, ...updateData } = updatedListing;
-      await updateDoc(doc(db, 'Listings', id), updateData);
+      const originalListing = get(listingsAtom)[id];
+
+      // Handle image updates
+      const updatedImages: ListingImages = { ...originalListing.images };
+      if (imageFiles && imageFiles.length > 0) {
+        // Delete old images that are not in the new set
+        if (updatedImages.main && !imageFiles.includes(updatedImages.main as unknown as File)) {
+          await deleteImage(updatedImages.main.id);
+          updatedImages.main = { id: '', listingId: id, data: '' };
+        }
+        if (updatedImages.alt1 && !imageFiles.includes(updatedImages.alt1 as unknown as File)) {
+          await deleteImage(updatedImages.alt1.id as string);
+          updatedImages.alt1 = undefined;
+        }
+        if (updatedImages.alt2 && !imageFiles.includes(updatedImages.alt2 as unknown as File)) {
+          await deleteImage(updatedImages.alt2.id as string);
+          updatedImages.alt2 = undefined;
+        }
+
+        // Add new images
+        for (let i = 0; i < imageFiles.length; i++) {
+          const file = imageFiles[i];
+          const reader = new FileReader();
+          const imageData = await new Promise<string>((resolve) => {
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          const imageId = await addImage(imageData, id);
+          if (i === 0) {
+            updatedImages.main = { id: imageId, listingId: id, data: imageData };
+          } else if (i === 1) {
+            updatedImages.alt1 = { id: imageId, listingId: id, data: imageData };
+          } else if (i === 2) {
+            updatedImages.alt2 = { id: imageId, listingId: id, data: imageData };
+          }
+        }
+      }
+
+      // Handle marker updates
+      const existingMarkers = get(markersAtom);
+      const updatedMarkerIds = await Promise.all(
+        updatedListing.markers.map(async (marker) => {
+          if (marker.id) {
+            // Update existing marker
+            await updateMarker(marker, existingMarkers, set);
+            return marker.id;
+          } else {
+            // Add new marker
+            const addedMarker = await addMarker(set, { ...marker, listingId: id });
+            return addedMarker.id;
+          }
+        })
+      );
+
+      // Remove markers that are no longer associated with the listing
+      const markersToRemove = originalListing.markers.filter(
+        (marker) => !updatedMarkerIds.includes(marker.id)
+      );
+      await Promise.all(markersToRemove.map((marker) => deleteMarker(marker.id, existingMarkers, set)));
+
+      const listingImageIds: {
+        mainId: string;
+        alt1Id?: string;
+        alt2Id?: string;
+      } = { mainId: '' };
+
+      if (updatedImages.main) {
+        listingImageIds.mainId = updatedImages.main.id;
+      }
+      if (updatedImages.alt1) {
+        listingImageIds.alt1Id = updatedImages.alt1.id;
+      }
+      if (updatedImages.alt2) {
+        listingImageIds.alt2Id = updatedImages.alt2.id;
+      }
+
+      // Update the listing with new markerIds and images
+      const listingUpdate: Partial<ListingDB> = {
+        type: updateData.type,
+        userId: updateData.userId,
+        title: updateData.title,
+        description: updateData.description,
+        status: updateData.status,
+        category: updateData.category,
+        updatedAt: Timestamp.fromDate(new Date()),
+        markerIds: updatedMarkerIds,
+        images: listingImageIds,
+      };
+
+      console.log('[listingStore/updateListingAtom]: listingUpdate:', listingUpdate);
+
+      await updateDoc(doc(db, 'Listings', id), listingUpdate);
       console.log('[listingStore/updateListingAtom] 🔥');
-      set(listingsAtom, prev => ({ ...prev, [id]: updatedListing }));
+
+      // Update the client-side state
+      set(listingsAtom, (prev) => ({
+        ...prev,
+        [id]: {
+          ...updatedListing,
+          images: updatedImages,
+          markers: updatedListing.markers.map((marker, index) => ({
+            ...marker,
+            id: updatedMarkerIds[index],
+            listingId: id,
+          })),
+        },
+      }));
     } catch (error) {
       console.error('[listingStore/updateListingAtom]: error:', error);
+      throw error;
     }
   }
 );
@@ -265,6 +370,16 @@ export const deleteListingAtom = atom(
       if (listing.images.alt1?.id) await deleteImage(listing.images.alt1.id);
       if (listing.images.alt2?.id) await deleteImage(listing.images.alt2.id);
 
+      // Delete associated markers
+      if (listing.markers.length > 0) {
+        for (const marker of listing.markers) {
+          await deleteMarker(marker.id, get(markersAtom), set);
+        }
+      }
+
+      // Delete associated match
+
+      // Delete the listing document
       await deleteDoc(doc(db, 'Listings', listingId));
       console.log('[listingStore/deleteListingAtom] 🔥');
       set(listingsAtom, prev => {

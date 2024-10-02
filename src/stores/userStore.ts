@@ -8,7 +8,7 @@ import { atomWithStorage } from 'jotai/utils';
 export const userDataAtom = atomWithStorage<User | null>('userData', null);
 
 // Store the user data for the users of the listings
-export const listingUsersAtom = atom<Record<string, User>>({});
+export const listingUsersAtom = atomWithStorage<Record<string, User>>('listingUsers', {});
 
 /**
  * @description Fetch user data from Firestore
