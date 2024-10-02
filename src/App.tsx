@@ -12,7 +12,9 @@ import LoadingSpinner from './components/LoadingSpinner';
 import { useEffect, useState } from 'react';
 import { Provider } from 'jotai';
 import ViewListingPage from './pages/ViewListingPage';
+import EditListingPage from './pages/EditListingPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ResolvePage from './pages/ResolvePage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAtomValue(isAuthenticatedAtom);
@@ -62,6 +64,8 @@ function App() {
             <Route path="/inbox" element={<InboxPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/view/:listingId" element={<ViewListingPage />} />
+            <Route path="/edit/:listingId" element={<EditListingPage />} />
+            <Route path="/resolve" element={<ResolvePage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
