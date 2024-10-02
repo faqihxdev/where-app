@@ -60,7 +60,9 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
       case 'description':
         return value && (value as string).length >= 10 ? '' : 'Description must be at least 10 characters long';
       case 'images':
-        if (!value || (value as File[]).length === 0) return 'At least one image is required';
+        if ((!value || (value as File[]).length === 0) && imagesPreviews.length === 0) {
+          return 'At least one image is required';
+        }
         if ((value as File[]).some(img => img.size > (1024 * 1024) * 3)) return 'Each image must be less than 3 MB';
         return '';
       case 'locationName':
@@ -85,7 +87,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + images.length > 3) {
+    if (files.length + images.length + imagesPreviews.length > 3) {
       showCustomToast({
         title: 'Error',
         description: 'You can upload a maximum of 3 images.',
@@ -117,8 +119,15 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
   };
 
   const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImagesPreviews(prev => prev.filter((_, i) => i !== index));
+    if (index < imagesPreviews.length - images.length) {
+      // Removing an existing image
+      setImagesPreviews(prev => prev.filter((_, i) => i !== index));
+    } else {
+      // Removing a newly added image
+      const adjustedIndex = index - (imagesPreviews.length - images.length);
+      setImages(prev => prev.filter((_, i) => i !== adjustedIndex));
+      setImagesPreviews(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleLocationsChange = (newMarkers: Omit<Marker, 'id' | 'listingId'>[]) => {
@@ -290,9 +299,12 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
             <Button
               leftIcon={<PlusIcon className="w-4 h-4 stroke-[2.5]" />}
               onClick={() => fileInputRef.current?.click()}
-              bg="blue.600"
+              bg="primary.600"
               color="white"
-              _hover={{ bg: 'blue.700' }}
+              fontWeight="medium"
+              _hover={{ bg: 'primary.700' }}
+              _active={{ bg: 'primary.800' }}
+              isDisabled={imagesPreviews.length >= 3}
             >
               Add
             </Button>

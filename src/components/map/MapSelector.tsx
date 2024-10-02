@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, useMap, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -21,7 +21,7 @@ import { reverseGeocode } from '../../utils/utils';
 
 // Create custom icon
 const customIcon = new L.Icon({
-  iconUrl: 'marker.png',
+  iconUrl: '/marker.png', // Update this line
   iconSize: [30, 37],
   iconAnchor: [15, 37],
 });
@@ -65,12 +65,15 @@ const MapSelector: React.FC<MapSelectorProps> = ({
   }, []);
 
   useEffect(() => {
-    if (markers.length > 0) {
-      setMapCenter([markers[0].latitude, markers[0].longitude]);
+    if (initialMarkers.length > 0 && markers.length === 0) {
+      setMarkers(initialMarkers);
+      if (initialMarkers[0]) {
+        setMapCenter([initialMarkers[0].latitude, initialMarkers[0].longitude]);
+      }
     }
-  }, [markers]);
+  }, [initialMarkers, markers]);
 
-  const addMarker = async (lat: number, lng: number) => {
+  const addMarker = useCallback(async (lat: number, lng: number) => {
     setIsAddingMarker(true);
     const tempMarker: Omit<MarkerType, 'id' | 'listingId'> = {
       name: 'Loading...',
@@ -96,20 +99,19 @@ const MapSelector: React.FC<MapSelectorProps> = ({
     } finally {
       setIsAddingMarker(false);
     }
-  };
+  }, [markers, mode, onMarkersChange]);
 
-  const handleMapClick = (e: L.LeafletMouseEvent) => {
-    if (!isAddingMarker && (mode === 'filter' || (mode === 'create' && markers.length < maxMarkers))) {
+  const handleMapClick = useCallback((e: L.LeafletMouseEvent) => {
+    if (!isAddingMarker && (mode === 'filter' || (mode === 'create' || mode === 'edit') && markers.length < maxMarkers)) {
       const { lat, lng } = e.latlng;
       addMarker(lat, lng);
     }
-  };
+  }, [isAddingMarker, mode, markers.length, maxMarkers, addMarker]);
 
   const updateMarker = (index: number, updates: Partial<Omit<MarkerType, 'id' | 'listingId'>>) => {
     const updatedMarkers = markers.map((marker, i) => {
       if (i === index) {
         const updatedMarker = { ...marker, ...updates };
-        // Handle null or NaN radius
         if (updates.radius !== undefined) {
           updatedMarker.radius = isNaN(updates.radius) || updates.radius === null ? 5 : Math.max(5, updates.radius);
         }
@@ -189,28 +191,6 @@ const MapSelector: React.FC<MapSelectorProps> = ({
                 onChange={(e) => updateMarker(index, { name: e.target.value })}
               />
             </FormControl>
-            {/* Latitude and Longitude inputs are commented out
-            <HStack>
-              <FormControl>
-                <FormLabel>Latitude</FormLabel>
-                <Input
-                  variant="filled"
-                  bg="gray.100"
-                  value={marker.latitude}
-                  onChange={(e) => updateMarker(index, { latitude: parseFloat(e.target.value) })}
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Longitude</FormLabel>
-                <Input
-                  variant="filled"
-                  bg="gray.100"
-                  value={marker.longitude}
-                  onChange={(e) => updateMarker(index, { longitude: parseFloat(e.target.value) })}
-                />
-              </FormControl>
-            </HStack>
-            */}
             <FormControl>
               <FormLabel>Radius (meters)</FormLabel>
               <NumberInput

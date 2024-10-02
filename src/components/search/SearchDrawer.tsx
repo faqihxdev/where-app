@@ -49,6 +49,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     const updatedSearchParams = {
       ...localSearchParams,
       location: locationFilter ? {
+        name: locationFilter.name,
         lat: locationFilter.latitude,
         lng: locationFilter.longitude,
         radius: locationFilter.radius
