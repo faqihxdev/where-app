@@ -13,6 +13,7 @@
     - Preferences
     - Your listings
       - Edit / Delete Listings
+- Resolve listings (be both from matches or your listings) both click resolve, for match, show the listing id of matched, for basic listing, just resolve, after any of the 2 go to resolve page to resolve them.
 - Third-party login
 
 # React + TypeScript + Vite
