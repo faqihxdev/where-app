@@ -15,8 +15,20 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
 
   const isTabActive = (tab: typeof tabs[0]) => {
+    const searchParams = new URLSearchParams(location.search);
+    const from = searchParams.get('from');
+
     if (tab.path === '/') {
-      return location.pathname === '/' || location.pathname.startsWith('/view/');
+      return (location.pathname === '/' || 
+              (location.pathname.startsWith('/view/') && (!from || from === 'home')) ||
+              (location.pathname.startsWith('/edit/') && (!from || from === 'home'))) &&
+              from !== 'inbox';
+    }
+    if (tab.path === '/inbox') {
+      return location.pathname === '/inbox' || 
+             location.pathname === '/resolve' || 
+             (location.pathname.startsWith('/view/') && from === 'inbox') ||
+             (location.pathname.startsWith('/edit/') && from === 'inbox');
     }
     return location.pathname.startsWith(tab.path);
   };
