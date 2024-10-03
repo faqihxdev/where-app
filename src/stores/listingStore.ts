@@ -1,67 +1,90 @@
-import { atom } from 'jotai';
-import { atomWithStorage } from 'jotai/utils';
-import { Listing, ListingDB, ListingImages, Marker } from '../types';
-import { db } from '../firebaseConfig';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import { addImage, deleteImage, getImage } from './imageStore';
-import { markersAtom, addMarker, fetchMarker, deleteMarker, updateMarker } from './markerStore';
+import { atom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
+import { Listing, ListingDB, ListingImages, Marker } from '../types'
+import { db } from '../firebaseConfig'
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  where,
+  Timestamp,
+} from 'firebase/firestore'
+import { addImage, deleteImage, getImage } from './imageStore'
+import { markersAtom, addMarker, fetchMarkerById, deleteMarker, updateMarker } from './markerStore'
 
-export const listingsAtom = atomWithStorage<Record<string, Listing>>('listings', {});
-export const listingsFetchedAtom = atomWithStorage<boolean>('listingsFetched', false);
+// The listings atom is used to store the listings in the client-side state
+export const listingsAtom = atomWithStorage<Record<string, Listing>>('listings', {})
+
+// The listingsFetched atom is used to store the boolean value indicating if the listings have been fetched from Firestore
+export const listingsFetchedAtom = atomWithStorage<boolean>('listingsFetched', false)
 
 /**
+ * @TODO Add the MATCH and EXPIRY functionality
  * @description Fetch all listings from Firestore
  * @returns {Promise<void>} - A promise that resolves when the listings are fetched
  */
 export const fetchAllListingsAtom = atom(
   null,
   async (get, set): Promise<Record<string, Listing>> => {
-    console.log("[listingStore/fetchAllListingsAtom] called");
+    console.log('[listingStore/fetchAllListingsAtom] Called')
     try {
-      const querySnapshot = await getDocs(collection(db, 'Listings'));
-      console.log('[listingStore/fetchAllListingsAtom] 🔥');
-      const listings: Record<string, Listing> = {};
-      const existingMarkers = get(markersAtom);
+      // Get all listings from the Listings collection
+      console.log('🔥[listingStore/fetchAllListingsAtom]')
+      const querySnapshot = await getDocs(collection(db, 'Listings'))
+      const listings: Record<string, Listing> = {}
 
+      // Loop through each listing and fetch the markers
       for (const doc of querySnapshot.docs) {
-        const listingDB = doc.data() as ListingDB;
-        const markerIds = listingDB.markerIds;
+        const listingDB = doc.data() as ListingDB
+        const markerIds = listingDB.markerIds
 
-        // Fetch markers using the fetchMarker function
+        // Fetch markers using the fetchMarkerById function & update the markersAtom
         const markers = await Promise.all(
           markerIds.map(async (markerId) => {
-            const marker = await fetchMarker(markerId, existingMarkers);
+            const marker = await fetchMarkerById(markerId, get(markersAtom))
             if (marker) {
-              // Update markersAtom with the new marker
-              set(markersAtom, (prev) => ({ ...prev, [markerId]: marker }));
+              set(markersAtom, (prev) => ({ ...prev, [markerId]: marker }))
             }
-            return marker;
+            return marker
           })
-        );
+        )
 
-        const listing = convertListingDBToListing({ ...listingDB, id: doc.id }, markers.filter(m => m !== null) as Marker[]);
+        // Convert the listingDB to a Listing
+        const listing = convertListingDBToListing(
+          { ...listingDB, id: doc.id },
+          markers.filter((m) => m !== null) as Marker[]
+        )
 
         // Fetch the main image if it's not already loaded
         if (listing.images.main.id && !listing.images.main.data) {
-          const imageDoc = await getImage(listing.images.main.id);
+          const imageDoc = await getImage(listing.images.main.id)
           if (imageDoc) {
-            listing.images.main.data = imageDoc.data;
+            listing.images.main.data = imageDoc.data
           }
         }
 
-        listings[doc.id] = listing;
+        // Add the listing to the listingsAtom
+        listings[doc.id] = listing
       }
-      
-      set(listingsAtom, listings);
-      set(listingsFetchedAtom, true);
-      
-      return listings;
+
+      // Check for matches and expiry
+      await checkForMatchesAndExpiry(Object.values(listings))
+
+      // Update the listingsAtom with the new listings
+      set(listingsAtom, listings)
+      set(listingsFetchedAtom, true)
+
+      return listings
     } catch (error) {
-      console.error('[listingStore] Error fetching listings:', error);
-      throw error;
+      console.error(`[listingStore] Error fetching listings: ${error}`)
+      throw error
     }
   }
-);
+)
 
 /**
  * @description Fetch listings by userId
@@ -71,53 +94,63 @@ export const fetchAllListingsAtom = atom(
 export const fetchListingsByUserIdAtom = atom(
   null,
   async (get, set, userId: string): Promise<Listing[]> => {
-    console.log('[listingStore/fetchListingsByUserIdAtom] called');
+    console.log('[listingStore/fetchListingsByUserIdAtom] Called')
     try {
-      const querySnapshot = await getDocs(query(collection(db, 'Listings'), where('userId', '==', userId)));
-      console.log('[listingStore/fetchListingsByUserIdAtom] 🔥');
-      const listings: Listing[] = [];
-      const existingMarkers = get(markersAtom);
-      const existingListings = get(listingsAtom);
+      // Get all listings from the Listings collection for the given userId
+      console.log('🔥[listingStore/fetchListingsByUserIdAtom]')
+      const querySnapshot = await getDocs(
+        query(collection(db, 'Listings'), where('userId', '==', userId))
+      )
 
+      // Create an array to store the listings
+      const listings: Listing[] = []
+      const existingListings = get(listingsAtom)
+
+      // Loop through each listing and fetch the markers
       for (const doc of querySnapshot.docs) {
-        const listingDB = doc.data() as ListingDB;
-        const markerIds = listingDB.markerIds;
+        const listingDB = doc.data() as ListingDB
+        const markerIds = listingDB.markerIds
 
-        // Fetch markers using the fetchMarker function
+        // Fetch markers using the fetchMarkerById function & update the markersAtom
         const markers = await Promise.all(
           markerIds.map(async (markerId) => {
-            const marker = await fetchMarker(markerId, existingMarkers);
+            const marker = await fetchMarkerById(markerId, get(markersAtom))
             if (marker) {
-              // Update markersAtom with the new marker
-              set(markersAtom, (prev) => ({ ...prev, [markerId]: marker }));
+              set(markersAtom, (prev) => ({ ...prev, [markerId]: marker }))
             }
-            return marker;
+            return marker
           })
-        );
+        )
 
-        const listing = convertListingDBToListing({ ...listingDB, id: doc.id }, markers.filter(m => m !== null) as Marker[]);
+        // Convert the listingDB to a Listing
+        const listing = convertListingDBToListing(
+          { ...listingDB, id: doc.id },
+          markers.filter((m) => m !== null) as Marker[]
+        )
 
         // Fetch the main image if it's not already loaded
         if (listing.images.main.id && !listing.images.main.data) {
-          const imageDoc = await getImage(listing.images.main.id);
+          const imageDoc = await getImage(listing.images.main.id)
           if (imageDoc) {
-            listing.images.main.data = imageDoc.data;
+            listing.images.main.data = imageDoc.data
           }
         }
 
-        listings.push(listing);
-        existingListings[doc.id] = listing;
+        // Add the listing to the listingsAtom
+        listings.push(listing)
+        existingListings[doc.id] = listing
       }
-      
-      set(listingsAtom, existingListings);
-      
-      return listings;
+
+      // Update the listingsAtom with the new listings
+      set(listingsAtom, existingListings)
+
+      return listings
     } catch (error) {
-      console.error('[listingStore] Error fetching listings by userId:', error);
-      throw error;
+      console.error(`[listingStore] Error fetching listings by userId: ${error}`)
+      throw error
     }
   }
-);
+)
 
 /**
  * @description Add a new listing to Firestore
@@ -128,104 +161,121 @@ export const fetchListingsByUserIdAtom = atom(
  */
 export const addListingAtom = atom(
   null,
-  async (get, set, params: {
-    newListing: Omit<Listing, 'id' | 'images' | 'markers'>,
-    imageFiles: File[],
-    markers: Omit<Marker, 'id' | 'listingId'>[]
-  }): Promise<Record<string, Listing>> => {
-    const { newListing, imageFiles, markers } = params;
-    console.log('[listingStore/addListing]: newListing:', JSON.stringify(newListing));
+  async (
+    get,
+    set,
+    params: {
+      newListing: Omit<Listing, 'id' | 'images' | 'markers'>
+      imageFiles: File[]
+      markers: Omit<Marker, 'id' | 'listingId'>[]
+    }
+  ): Promise<Record<string, Listing>> => {
+    const { newListing, imageFiles, markers } = params
+    console.log(`[listingStore/addListing]: Adding Listing: ${newListing}`)
     try {
-      const imageIds: { mainId: string; alt1Id?: string; alt2Id?: string } = { mainId: '' };
-
       // Create the listing document first to get the listingId
       const listingDB: Omit<ListingDB, 'id' | 'images' | 'markerIds'> = {
-        ...newListing,
+        type: newListing.type,
+        userId: newListing.userId,
+        title: newListing.title,
+        description: newListing.description,
+        status: newListing.status,
+        category: newListing.category,
         createdAt: Timestamp.fromDate(newListing.createdAt),
         updatedAt: Timestamp.fromDate(newListing.updatedAt),
         expiresAt: Timestamp.fromDate(newListing.expiresAt),
-      };
-      const docRef = await addDoc(collection(db, 'Listings'), listingDB);
-      console.log('[listingStore/addListing] 🔥');
-      const listingId = docRef.id;
+      }
 
-      // Upload images and get their IDs
+      // Add the listing to the Listings collection
+      console.log('🔥[listingStore/addListing]')
+      const docRef = await addDoc(collection(db, 'Listings'), listingDB)
+      const listingId = docRef.id
+
+      // Create an object to store the image IDs
+      const imageIds: {
+        mainId: string
+        alt1Id?: string
+        alt2Id?: string
+      } = { mainId: '' }
+
+      // Create an object to store the image
+      const images: ListingImages = { main: { id: '', listingId, data: '' } }
+
+      // Upload the images to the Images collection
       for (let i = 0; i < imageFiles.length; i++) {
-        const file = imageFiles[i];
+        const file = imageFiles[i]
         const base64Image = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.readAsDataURL(file)
+        })
 
-        const imageId = await addImage(base64Image, listingId);
+        // Add the image to the Images collection
+        const imageId = await addImage(base64Image, listingId)
+
         if (i === 0) {
-          imageIds.mainId = imageId;
+          imageIds.mainId = imageId
+          images.main = { id: imageId, listingId, data: base64Image }
         } else if (i === 1) {
-          imageIds.alt1Id = imageId;
+          imageIds.alt1Id = imageId
+          images.alt1 = { id: imageId, listingId, data: base64Image }
         } else if (i === 2) {
-          imageIds.alt2Id = imageId;
+          imageIds.alt2Id = imageId
+          images.alt2 = { id: imageId, listingId, data: base64Image }
         }
       }
+
+      // Create an array to store the new markers
+      const newMarkers: Marker[] = []
 
       // Add markers and get their IDs
       const markerIds = await Promise.all(
         markers.map(async (marker) => {
-          const newMarker = { ...marker, listingId };
-          const addedMarker = await addMarker(set, newMarker);
-          return addedMarker.id;
+          const newMarker: Omit<Marker, 'id'> = {
+            listingId,
+            name: marker.name,
+            latitude: marker.latitude,
+            longitude: marker.longitude,
+            radius: marker.radius,
+          }
+          const addedMarker = await addMarker(set, newMarker)
+          newMarkers.push(addedMarker)
+          return addedMarker.id
         })
-      );
+      )
 
       // Update the listing with imageIds and markerIds
       await updateDoc(doc(db, 'Listings', listingId), {
         images: imageIds,
         markerIds,
-      });
-      console.log('[listingStore/addListing] 🔥');
+      })
 
       // Create the full Listing object
       const listing: Listing = {
-        ...newListing,
         id: listingId,
-        images: {
-          main: {
-            id: imageIds.mainId,
-            listingId,
-            data: await getImage(imageIds.mainId).then((img) => img?.data || ''),
-          },
-          alt1: imageIds.alt1Id
-            ? {
-                id: imageIds.alt1Id,
-                listingId,
-                data: await getImage(imageIds.alt1Id).then((img) => img?.data || ''),
-              }
-            : undefined,
-          alt2: imageIds.alt2Id
-            ? {
-                id: imageIds.alt2Id,
-                listingId,
-                data: await getImage(imageIds.alt2Id).then((img) => img?.data || ''),
-              }
-            : undefined,
-        },
-        markers: await Promise.all(markerIds.map(async (id) => {
-          const marker = await fetchMarker(id, get(markersAtom));
-          return marker as Marker;
-        })),
-      };
+        type: newListing.type,
+        userId: newListing.userId,
+        title: newListing.title,
+        description: newListing.description,
+        status: newListing.status,
+        category: newListing.category,
+        createdAt: newListing.createdAt,
+        updatedAt: newListing.updatedAt,
+        expiresAt: newListing.expiresAt,
+        images: images,
+        markers: newMarkers,
+      }
 
-      console.log('[listingStore/addListing]: listingsAtom:', get(listingsAtom));
-      const updatedListings = { ...get(listingsAtom), [listingId]: listing };
-      set(listingsAtom, updatedListings);
-      console.log('[listingStore/addListing]: updatedListings:', updatedListings);
-      return updatedListings;
+      // Update the listingsAtom with the new listing
+      const updatedListings = { ...get(listingsAtom), [listingId]: listing }
+      set(listingsAtom, updatedListings)
+      return updatedListings
     } catch (error) {
-      console.error('[listingStore/addListing]: error:', error);
-      throw error;
+      console.error('[listingStore/addListing]: error:', error)
+      throw error
     }
   }
-);
+)
 
 /**
  * @description Update a listing in Firestore
@@ -235,84 +285,113 @@ export const addListingAtom = atom(
 export const updateListingAtom = atom(
   null,
   async (get, set, payload: { updatedListing: Listing; imageFiles?: File[] }): Promise<void> => {
-    const { updatedListing, imageFiles } = payload;
-    console.log('[listingStore/updateListingAtom]: updatedListing:', JSON.stringify(updatedListing));
+    console.log(`[listingStore/updateListingAtom]: updatedListing: ${payload.updatedListing}`)
+    const { updatedListing, imageFiles } = payload
     try {
-      const { id, ...updateData } = updatedListing;
-      const originalListing = get(listingsAtom)[id];
+      // Extract the listing id and the update data & get the original listing
+      const { id, ...updateData } = updatedListing
+      const originalListing = get(listingsAtom)[id]
 
       // Handle image updates
-      const updatedImages: ListingImages = { ...originalListing.images };
+      const updatedImages: ListingImages = { ...originalListing.images }
+
+      // If there are image files, update the images
+      // If the {main, alt1, alt2} image is not in the new set, delete it
       if (imageFiles && imageFiles.length > 0) {
-        // Delete old images that are not in the new set
         if (updatedImages.main && !imageFiles.includes(updatedImages.main as unknown as File)) {
-          await deleteImage(updatedImages.main.id);
-          updatedImages.main = { id: '', listingId: id, data: '' };
+          await deleteImage(updatedImages.main.id)
+          updatedImages.main = { id: '', listingId: id, data: '' }
         }
         if (updatedImages.alt1 && !imageFiles.includes(updatedImages.alt1 as unknown as File)) {
-          await deleteImage(updatedImages.alt1.id as string);
-          updatedImages.alt1 = undefined;
+          await deleteImage(updatedImages.alt1.id as string)
+          updatedImages.alt1 = undefined
         }
         if (updatedImages.alt2 && !imageFiles.includes(updatedImages.alt2 as unknown as File)) {
-          await deleteImage(updatedImages.alt2.id as string);
-          updatedImages.alt2 = undefined;
+          await deleteImage(updatedImages.alt2.id as string)
+          updatedImages.alt2 = undefined
         }
 
         // Add new images
         for (let i = 0; i < imageFiles.length; i++) {
-          const file = imageFiles[i];
-          const reader = new FileReader();
+          const file = imageFiles[i]
+          const reader = new FileReader()
           const imageData = await new Promise<string>((resolve) => {
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          const imageId = await addImage(imageData, id);
+            reader.onloadend = () => resolve(reader.result as string)
+            reader.readAsDataURL(file)
+          })
+
+          // Add the image to the Images collection
+          const imageId = await addImage(imageData, id)
+
+          // Update the images object
           if (i === 0) {
-            updatedImages.main = { id: imageId, listingId: id, data: imageData };
+            updatedImages.main = { id: imageId, listingId: id, data: imageData }
           } else if (i === 1) {
-            updatedImages.alt1 = { id: imageId, listingId: id, data: imageData };
+            updatedImages.alt1 = { id: imageId, listingId: id, data: imageData }
           } else if (i === 2) {
-            updatedImages.alt2 = { id: imageId, listingId: id, data: imageData };
+            updatedImages.alt2 = { id: imageId, listingId: id, data: imageData }
           }
         }
       }
 
       // Handle marker updates
-      const existingMarkers = get(markersAtom);
+      const existingMarkers = get(markersAtom)
+
+      // Update existing markers or add new markers
       const updatedMarkerIds = await Promise.all(
         updatedListing.markers.map(async (marker) => {
           if (marker.id) {
             // Update existing marker
-            await updateMarker(marker, existingMarkers, set);
-            return marker.id;
+            await updateMarker(
+              {
+                id: marker.id,
+                listingId: id,
+                name: marker.name,
+                latitude: marker.latitude,
+                longitude: marker.longitude,
+                radius: marker.radius,
+              },
+              existingMarkers,
+              set
+            )
+            return marker.id
           } else {
             // Add new marker
-            const addedMarker = await addMarker(set, { ...marker, listingId: id });
-            return addedMarker.id;
+            const addedMarker = await addMarker(set, {
+              listingId: id,
+              name: marker.name,
+              latitude: marker.latitude,
+              longitude: marker.longitude,
+              radius: marker.radius,
+            })
+            return addedMarker.id
           }
         })
-      );
+      )
 
       // Remove markers that are no longer associated with the listing
       const markersToRemove = originalListing.markers.filter(
         (marker) => !updatedMarkerIds.includes(marker.id)
-      );
-      await Promise.all(markersToRemove.map((marker) => deleteMarker(marker.id, existingMarkers, set)));
+      )
+      await Promise.all(
+        markersToRemove.map((marker) => deleteMarker(marker.id, existingMarkers, set))
+      )
 
+      // Create an object to store the image IDs
       const listingImageIds: {
-        mainId: string;
-        alt1Id?: string;
-        alt2Id?: string;
-      } = { mainId: '' };
+        mainId: string
+        alt1Id?: string
+        alt2Id?: string
+      } = { mainId: '' }
 
       if (updatedImages.main) {
-        listingImageIds.mainId = updatedImages.main.id;
+        listingImageIds.mainId = updatedImages.main.id
       }
       if (updatedImages.alt1) {
-        listingImageIds.alt1Id = updatedImages.alt1.id;
+        listingImageIds.alt1Id = updatedImages.alt1.id
       }
       if (updatedImages.alt2) {
-        listingImageIds.alt2Id = updatedImages.alt2.id;
+        listingImageIds.alt2Id = updatedImages.alt2.id
       }
 
       // Update the listing with new markerIds and images
@@ -324,14 +403,13 @@ export const updateListingAtom = atom(
         status: updateData.status,
         category: updateData.category,
         updatedAt: Timestamp.fromDate(new Date()),
+        expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
         markerIds: updatedMarkerIds,
         images: listingImageIds,
-      };
+      }
 
-      console.log('[listingStore/updateListingAtom]: listingUpdate:', listingUpdate);
-
-      await updateDoc(doc(db, 'Listings', id), listingUpdate);
-      console.log('[listingStore/updateListingAtom] 🔥');
+      console.log('🔥 [listingStore/updateListingAtom] ')
+      await updateDoc(doc(db, 'Listings', id), listingUpdate)
 
       // Update the client-side state
       set(listingsAtom, (prev) => ({
@@ -345,103 +423,55 @@ export const updateListingAtom = atom(
             listingId: id,
           })),
         },
-      }));
+      }))
     } catch (error) {
-      console.error('[listingStore/updateListingAtom]: error:', error);
-      throw error;
+      console.error(`[listingStore/updateListingAtom]: error: ${error}`)
+      throw error
     }
   }
-);
+)
 
 /**
+ * @TODO Add the functionality to delete the associated match
  * @description Delete a listing from Firestore & delete the associated images
  * @param {string} listingId - The ID of the listing to delete
  * @returns {Promise<void>} - A promise that resolves when the listing is deleted
  */
-export const deleteListingAtom = atom(
-  null,
-  async (get, set, listingId: string): Promise<void> => {
-    console.log('[listingStore/deleteListingAtom]: listingId:', listingId);
-    try {
-      const listing = get(listingsAtom)[listingId];
+export const deleteListingAtom = atom(null, async (get, set, listingId: string): Promise<void> => {
+  console.log(`[listingStore/deleteListingAtom]: listingId: ${listingId}`)
+  try {
+    // Get the listing to delete
+    const listing = get(listingsAtom)[listingId]
 
-      // Delete associated images
-      if (listing.images.main.id) await deleteImage(listing.images.main.id);
-      if (listing.images.alt1?.id) await deleteImage(listing.images.alt1.id);
-      if (listing.images.alt2?.id) await deleteImage(listing.images.alt2.id);
+    // Delete associated images
+    if (listing.images.main.id) await deleteImage(listing.images.main.id)
+    if (listing.images.alt1?.id) await deleteImage(listing.images.alt1.id)
+    if (listing.images.alt2?.id) await deleteImage(listing.images.alt2.id)
 
-      // Delete associated markers
-      if (listing.markers.length > 0) {
-        for (const marker of listing.markers) {
-          await deleteMarker(marker.id, get(markersAtom), set);
-        }
+    // Delete associated markers
+    if (listing.markers.length > 0) {
+      for (const marker of listing.markers) {
+        await deleteMarker(marker.id, get(markersAtom), set)
       }
-
-      // Delete associated match
-
-      // Delete the listing document
-      await deleteDoc(doc(db, 'Listings', listingId));
-      console.log('[listingStore/deleteListingAtom] 🔥');
-      set(listingsAtom, prev => {
-        const newListings = { ...prev };
-        delete newListings[listingId];
-        return newListings;
-      });
-    } catch (error) {
-      console.error('[listingStore/deleteListingAtom]: error:', error);
     }
+
+    // TODO: Delete associated match
+
+    // Delete the listing document
+    console.log('🔥 [listingStore/deleteListingAtom]')
+    await deleteDoc(doc(db, 'Listings', listingId))
+
+    // Update the client-side state
+    set(listingsAtom, (prev) => {
+      const newListings = { ...prev }
+      delete newListings[listingId]
+      return newListings
+    })
+  } catch (error) {
+    console.error(`[listingStore/deleteListingAtom]: error: ${error}`)
+    throw error
   }
-);
-
-/**
- * @description Update a listing's image
- * @param {string} listingId - The ID of the listing to update
- * @param {keyof ListingImages} imageKey - The key of the image to update
- * @param {string} imageSrc - The new source of the image
- * @returns {Promise<void>} - A promise that resolves when the listing's image is updated
- */
-export const updateListingImageAtom = atom(
-  null,
-  async (get, set, payload: { listingId: string; imageKey: keyof ListingImages; imageSrc: string }): Promise<void> => {
-    const { listingId, imageKey, imageSrc } = payload;
-    const listings = get(listingsAtom);
-    const listing = listings[listingId];
-
-    if (listing) {
-      const updatedListing = {
-        ...listing,
-        images: {
-          ...listing.images,
-          [imageKey]: {
-            ...listing.images[imageKey],
-            src: imageSrc
-          }
-        }
-      };
-
-      try {
-        // Update the listing in Firestore
-        await updateDoc(doc(db, 'Listings', listingId), {
-          [`images.${imageKey}.src`]: imageSrc
-        });
-        console.log('[listingStore/updateListingImageAtom] 🔥');
-
-        // Update the client-side state
-        set(listingsAtom, {
-          ...listings,
-          [listingId]: updatedListing
-        });
-      } catch (error) {
-        console.error('[listingStore/updateListingImage]: error:', error);
-        throw error;
-      }
-    } else {
-      throw new Error(`Listing with id ${listingId} not found`);
-    }
-  }
-);
-
-
+})
 
 /* ########## HELPER FUNCTIONS ########## */
 
@@ -458,12 +488,23 @@ const convertListingDBToListing = (listingDB: ListingDB, markers: Marker[]): Lis
   expiresAt: listingDB.expiresAt.toDate(),
   images: {
     main: { id: listingDB.images.mainId, listingId: listingDB.id, data: '' },
-    alt1: listingDB.images.alt1Id ? { id: listingDB.images.alt1Id, listingId: listingDB.id, data: '' } : undefined,
-    alt2: listingDB.images.alt2Id ? { id: listingDB.images.alt2Id, listingId: listingDB.id, data: '' } : undefined,
+    alt1: listingDB.images.alt1Id
+      ? { id: listingDB.images.alt1Id, listingId: listingDB.id, data: '' }
+      : undefined,
+    alt2: listingDB.images.alt2Id
+      ? { id: listingDB.images.alt2Id, listingId: listingDB.id, data: '' }
+      : undefined,
   },
   markers,
-});
+})
 
 /**
- * @description Check if 2 listings 
+ * @TODO Complete the function
+ * @description For all the listings, check for (1) matches and (2) expiry
+ * @param {Listing[]} listings - The listings to check
+ * @returns {Promise<void>} - A promise that resolves when the listings are checked
  */
+const checkForMatchesAndExpiry = async (listings: Listing[]): Promise<void> => {
+  console.log(`[listingStore/checkForMatchesAndExpiry] ${listings.length} listings to check`)
+  return
+}
