@@ -1,68 +1,157 @@
-# Notes
+# WhereApp - Lost and Found Application
 
-- Optimise: Check for all data fetching ui to only fetch on refresh / first time visit
-- Handling all local or cloud fetch is in the store, pass in param if refresh
-- Check handling of multiple images, especially in view and edit listings (delete works)
-- Templates for the others
+## What is WhereApp?
 
-  - View page
-  - Inbox
-    - Matches
-    - Expiry
-  - Profile
-    - Preferences
-    - Your listings
-      - Edit / Delete Listings
-- Resolve listings (be both from matches or your listings) both click resolve, for match, show the listing id of matched, for basic listing, just resolve, after any of the 2 go to resolve page to resolve them.
-- Third-party login
+WhereApp is a Progressive Web Application (PWA) designed to help people report lost items or request information about lost items. It provides both a list view and a map view for lost items, making it easier for users to locate and recover their belongings.
 
-# React + TypeScript + Vite
+## Why WhereApp?
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Losing personal items can be a stressful experience. WhereApp aims to simplify the process of reporting and finding lost items by providing a user-friendly platform that connects people who have lost items with those who have found them. By leveraging modern web technologies and a robust tech stack, WhereApp offers a seamless and efficient solution to a common problem.
 
-Currently, two official plugins are available:
+## How it Works
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+WhereApp allows users to:
+- Report lost items
+- Post found items
+- Search for lost items
+- View items on a map
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+WhereApp is built using the following technologies:
 
-- Configure the top-level `parserOptions` property like this:
+- **Frontend:**
+  - React
+  - TypeScript
+  - Jotai (for state management)
+  - Tailwind CSS (for styling)
+  - Chakra UI (for specific components)
+  - Heroicons (for icons)
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- **Backend:**
+  - Firebase (Firestore for database)
+
+- **Build & Development:**
+  - Vite (for fast development and building)
+
+- **Deployment:**
+  - Firebase Hosting
+
+- **Progressive Web App:**
+  - Service Workers
+  - Manifest file
+
+## Project Structure
+
+```
+  /src
+  ├── /components               # Reusable components
+  │   └── ListingForm.tsx
+  │   └── ...
+  ├── /stores                   # Jotai atoms and state management
+  │   ├── imageStore.ts
+  │   ├── listingStore.ts
+  │   └── userStore.ts
+  │   └── ...
+  ├── /utils                    # Utility functions
+  │   └── ...
+  ├── /pages                    # Application pages
+  │   ├── EditListingPage.tsx
+  │   ├── PostPage.tsx
+  │   ├── ViewListingPage.tsx
+  │   └── ...
+  ├── /styles                   # Global styles and Tailwind config
+  │   └── ...
+  ├── /types                    # TypeScript type definitions
+  │   └── types.ts
+  │   └── ...
+  ├── App.tsx                   # Main application component
+  └── main.tsx                  # Entry point
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Development Guide
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+### Prerequisites
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+- Node.js (v14 or later)
+- npm or yarn
+- Git
+
+### Setting Up the Development Environment
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/aqilakmal/Where-App.git
+   cd whereapp
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Set up Firebase:
+   - Create a Firebase project at https://console.firebase.google.com/
+   - Add a web app to your Firebase project
+   - Copy the Firebase configuration
+   - Create a `.env` file in the root directory and add your Firebase config:
+     ```
+     VITE_FIREBASE_API_KEY=your_api_key
+     VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+     VITE_FIREBASE_PROJECT_ID=your_project_id
+     VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+     VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+     VITE_FIREBASE_APP_ID=your_app_id
+     ```
+
+4. Start the development server:
+   ```
+   npm run dev
+   ```
+
+5. Open your browser and navigate to `http://localhost:5173` (or the port specified by Vite)
+
+### Development Workflow
+
+1. Create a new branch for your feature or bug fix:
+   ```
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make your changes, following the project's coding standards and structure.
+
+3. Test your changes locally:
+   - Run the development server: `npm run dev`
+   - Check for any console errors or warnings
+   - Ensure the feature works as expected
+   - If you see uncontrollable 🔥in your devtools console, `Ctr+C` on your terminal to terminate the app
+   - If you stopped it in time, you have saved the team from going bankrupt
+
+4. Lint and format your code:
+   ```
+   npm run lint
+   npm run format
+   ```
+
+5. Commit your changes with a descriptive commit message:
+   ```
+   git commit -m "Add feature: description of your changes"
+   ```
+
+6. Push your changes to your branch:
+   ```
+   git push origin feature/your-feature-name
+   ```
+
+7. Create a pull request on GitHub for review.
+
+### Important Development Notes
+
+- Use TypeScript for all new files and components.
+- Utilize Jotai for state management. Add new atoms and selectors in the appropriate files under the `/stores` directory.
+- Style components using Tailwind CSS classes. Use Chakra UI components for "bigger components".
+- Keep components small and focused. Extract reusable logic into custom hooks or utility functions.
+- Update `types.ts` when adding or modifying data structures.
+- Follow the existing patterns in `ListingForm.tsx`, `EditListingPage.tsx`, and `PostPage.tsx` when creating new forms or pages.
+- Use the `imageStore.ts` for handling image-related operations.
+- Refer to `listingStore.ts` and `userStore.ts` for examples of how to structure Firestore interactions.
