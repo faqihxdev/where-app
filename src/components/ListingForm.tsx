@@ -82,13 +82,21 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
   const validateField = (field: string, value: string | File[] | null): string => {
     switch (field) {
       case 'title':
-        return value && (value as string).length >= 3
-          ? ''
-          : 'Title must be at least 3 characters long';
+        if (!value || (value as string).length < 3) {
+          return 'Title must be at least 3 characters long';
+        }
+        if ((value as string).length > 30) {
+          return 'Title cannot exceed 30 characters';
+        }
+        return '';
       case 'description':
-        return value && (value as string).length >= 10
-          ? ''
-          : 'Description must be at least 10 characters long';
+        if (!value || (value as string).length < 10) {
+          return 'Description must be at least 10 characters long';
+        }
+        if ((value as string).length > 200) {
+          return 'Description cannot exceed 200 characters';
+        }
+        return '';
       case 'images':
         if ((!value || (value as File[]).length === 0) && imagesPreviews.length === 0) {
           return 'At least one image is required';
@@ -109,6 +117,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
       default:
         return '';
     }
+
   };
 
   const handleBlur = (field: string, value: string | File[] | null) => {
@@ -233,21 +242,19 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
             <div className='flex rounded-md bg-gray-100 p-1.5' role='group'>
               <button
                 type='button'
-                className={`flex-1 py-1 font-medium rounded-md ${
-                  type === 'lost'
-                    ? 'text-gray-950 bg-white'
-                    : 'text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950'
-                }`}
+                className={`flex-1 py-1 font-medium rounded-md ${type === 'lost'
+                  ? 'text-gray-950 bg-white'
+                  : 'text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950'
+                  }`}
                 onClick={() => setType('lost')}>
                 Lost
               </button>
               <button
                 type='button'
-                className={`flex-1 py-1 font-medium rounded-md ${
-                  type === 'found'
-                    ? 'text-gray-950 bg-white'
-                    : 'text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950'
-                }`}
+                className={`flex-1 py-1 font-medium rounded-md ${type === 'found'
+                  ? 'text-gray-950 bg-white'
+                  : 'text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950'
+                  }`}
                 onClick={() => setType('found')}>
                 Found
               </button>

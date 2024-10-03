@@ -51,8 +51,10 @@ export default function AuthPage() {
       case 'password':
         if (!value) {
           error = 'Password is required';
-        } else if (value.length < 6) {
-          error = 'Password must be at least 6 characters';
+        } else if (value.length < 8) {
+          error = 'Password must be at least 8 characters';
+        } else if (value.length > 64) {
+          error = 'Password cannot exceed 64 characters';
         }
         break;
       case 'confirmPassword':
@@ -63,6 +65,10 @@ export default function AuthPage() {
       case 'displayName':
         if (!isLogin && !value) {
           error = 'Display name is required';
+        } else if (value.length < 3) {
+          error = 'Display name must be at least 3 characters long';
+        } else if (value.length > 15) {
+          error = 'Display name cannot exceed 15 characters';
         }
         break;
     }
