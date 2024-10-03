@@ -1,164 +1,163 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAtomValue, useSetAtom } from 'jotai';
-import { listingsAtom, updateListingAtom, fetchAllListingsAtom } from '../stores/listingStore';
-import { showCustomToast } from '../components/CustomToast';
-import { Listing, Marker } from '../types';
-import ListingForm from '../components/ListingForm';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { fetchMarker } from '../stores/markerStore';
+import React, { useState, useEffect, useCallback } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { listingsAtom, updateListingAtom, fetchAllListingsAtom } from '../stores/listingStore'
+import { showCustomToast } from '../components/CustomToast'
+import { Listing, Marker } from '../types'
+import ListingForm from '../components/ListingForm'
+import LoadingSpinner from '../components/LoadingSpinner'
+import { ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { fetchMarkerById } from '../stores/markerStore'
 
 const EditListingPage: React.FC = () => {
-  const { listingId } = useParams<{ listingId: string }>();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const listings = useAtomValue(listingsAtom);
-  const updateListing = useSetAtom(updateListingAtom);
-  const fetchAllListings = useSetAtom(fetchAllListingsAtom);
-  const [isLoading, setIsLoading] = useState(true);
-  const [listing, setListing] = useState<Listing | null>(null);
+  const { listingId } = useParams<{ listingId: string }>()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const listings = useAtomValue(listingsAtom)
+  const updateListing = useSetAtom(updateListingAtom)
+  const fetchAllListings = useSetAtom(fetchAllListingsAtom)
+  const [isLoading, setIsLoading] = useState(true)
+  const [listing, setListing] = useState<Listing | null>(null)
 
   const fetchListingData = useCallback(async () => {
-    if (!listingId) return;
+    if (!listingId) return
 
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       if (!listings[listingId]) {
-        await fetchAllListings();
+        await fetchAllListings()
       }
 
-      const fetchedListing = listings[listingId];
+      const fetchedListing = listings[listingId]
       if (fetchedListing) {
         // Fetch markers for the listing
         const markers = await Promise.all(
           fetchedListing.markers.map(async (marker) => {
-            const fetchedMarker = await fetchMarker(marker.id, {});
-            return fetchedMarker || marker;
+            const fetchedMarker = await fetchMarkerById(marker.id, {})
+            return fetchedMarker || marker
           })
-        );
+        )
 
         setListing({
           ...fetchedListing,
           markers,
-        });
+        })
       } else {
         showCustomToast({
           title: 'Error',
           description: 'Listing not found.',
           color: 'danger',
-        });
-        navigate('/');
+        })
+        navigate('/')
       }
     } catch (error) {
-      console.error('[EditListingPage]: Error fetching listing data:', error);
+      console.error('[EditListingPage]: Error fetching listing data:', error)
       showCustomToast({
         title: 'Error',
         description: 'An error occurred while fetching the listing data.',
         color: 'danger',
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, [listingId, listings, fetchAllListings, navigate]);
+  }, [listingId, listings, fetchAllListings, navigate])
 
   useEffect(() => {
-    fetchListingData();
-  }, [fetchListingData]);
+    fetchListingData()
+  }, [fetchListingData])
 
   const handleSubmit = async (
     formData: Omit<Listing, 'id' | 'images' | 'markers'>,
     imageFiles: File[],
     markers: Omit<Marker, 'id' | 'listingId'>[]
   ) => {
-    if (!listingId || !listing) return;
+    if (!listingId || !listing) return
 
     try {
-      setIsLoading(true);
-      
+      setIsLoading(true)
+
       const updatedListing: Listing = {
         ...listing,
         ...formData,
         id: listingId,
-        markers: markers.map(m => ({
+        markers: markers.map((m) => ({
           ...m,
-          id: listing.markers.find(existingMarker => 
-            existingMarker.latitude === m.latitude && 
-            existingMarker.longitude === m.longitude
-          )?.id || '',
-          listingId
+          id:
+            listing.markers.find(
+              (existingMarker) =>
+                existingMarker.latitude === m.latitude && existingMarker.longitude === m.longitude
+            )?.id || '',
+          listingId,
         })),
-      };
+      }
 
-      await updateListing({ updatedListing, imageFiles });
-      
+      await updateListing({ updatedListing, imageFiles })
+
       showCustomToast({
         title: 'Listing Updated',
         description: 'Your listing has been successfully updated.',
         color: 'success',
-      });
+      })
 
-      const searchParams = new URLSearchParams(location.search);
-      const from = searchParams.get('from') || 'home';
-      navigate(`/view/${listingId}?from=${from}`);
+      const searchParams = new URLSearchParams(location.search)
+      const from = searchParams.get('from') || 'home'
+      navigate(`/view/${listingId}?from=${from}`)
     } catch (error) {
-      console.error('[EditListingPage/handleSubmit]: ', error);
+      console.error('[EditListingPage/handleSubmit]: ', error)
       showCustomToast({
         title: 'Error',
         description: 'Failed to update listing. Please try again.',
         color: 'danger',
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleBack = () => {
-    const searchParams = new URLSearchParams(location.search);
-    const from = searchParams.get('from') || 'home';
+    const searchParams = new URLSearchParams(location.search)
+    const from = searchParams.get('from') || 'home'
     if (from === 'inbox') {
-      navigate('/inbox');
+      navigate('/inbox')
     } else {
-      navigate('/');
+      navigate('/')
     }
-  };
+  }
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className='flex justify-center items-center h-screen'>
         <LoadingSpinner />
       </div>
-    );
+    )
   }
 
   if (!listing) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <h1 className="text-2xl font-semibold mb-4">Listing not found</h1>
+      <div className='flex flex-col items-center justify-center h-screen'>
+        <h1 className='text-2xl font-semibold mb-4'>Listing not found</h1>
         <button
           onClick={() => navigate('/')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
+          className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
           Go Back To Listings
         </button>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-full bg-white p-4">
-      <div className="flex justify-start items-center mb-4">
+    <div className='min-h-full bg-white p-4'>
+      <div className='flex justify-start items-center mb-4'>
         <button
           onClick={handleBack}
-          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-        >
-          <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+          className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
+          <ArrowLeftIcon className='h-6 w-6 text-gray-600' />
         </button>
-        <h1 className="text-xl font-semibold ml-3">Edit Listing</h1>
+        <h1 className='text-xl font-semibold ml-3'>Edit Listing</h1>
       </div>
       <ListingForm initialData={listing} onSubmit={handleSubmit} isLoading={isLoading} />
     </div>
-  );
-};
+  )
+}
 
-export default EditListingPage;
+export default EditListingPage
