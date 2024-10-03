@@ -1,8 +1,8 @@
 # Notes
 
-- Hmm
+- Optimise: Check for all data fetching ui to only fetch on refresh / first time visit
 - Handling all local or cloud fetch is in the store, pass in param if refresh
-- I'll do the expiry and matching
+- Check handling of multiple images, especially in view and edit listings (delete works)
 - Templates for the others
 
   - View page
