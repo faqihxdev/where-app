@@ -1,10 +1,10 @@
-import React from 'react'
-import { FormControl, FormLabel, Input, Select, VStack, HStack } from '@chakra-ui/react'
-import { ListingCategory, ListingStatus, Listing, SearchParams } from '../../types'
+import React from 'react';
+import { FormControl, FormLabel, Input, Select, VStack, HStack } from '@chakra-ui/react';
+import { ListingCategory, ListingStatus, Listing, SearchParams } from '../../types';
 
 interface SearchFormProps {
-  searchParams: SearchParams
-  setSearchParams: React.Dispatch<React.SetStateAction<SearchParams>>
+  searchParams: SearchParams;
+  setSearchParams: React.Dispatch<React.SetStateAction<SearchParams>>;
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({ searchParams, setSearchParams }) => {
@@ -88,7 +88,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ searchParams, setSearchParams }
         </HStack>
       </FormControl>
     </VStack>
-  )
-}
+  );
+};
 
-export default SearchForm
+export default SearchForm;

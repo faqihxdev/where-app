@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useAtom } from 'jotai'
-import { listingsAtom, fetchAllListingsAtom, listingsFetchedAtom } from '../stores/listingStore'
-import { Listing, ListingStatus, SearchParams } from '../types'
-import { MagnifyingGlassIcon, ArrowPathIcon, InboxIcon } from '@heroicons/react/24/outline'
-import { showCustomToast } from '../components/CustomToast'
-import ListingCard from '../components/ListingCard'
-import SearchDrawer from '../components/search/SearchDrawer'
-import ActiveFilters from '../components/search/ActiveFilters'
-import LoadingSpinner from '../components/LoadingSpinner'
-import PullToRefresh from 'react-simple-pull-to-refresh'
-import { areCoordinatesWithinDistance } from '../utils/utils'
+import { useState, useEffect, useCallback } from 'react';
+import { useAtom } from 'jotai';
+import { listingsAtom, fetchAllListingsAtom, listingsFetchedAtom } from '../stores/listingStore';
+import { Listing, ListingStatus, SearchParams } from '../types';
+import { MagnifyingGlassIcon, ArrowPathIcon, InboxIcon } from '@heroicons/react/24/outline';
+import { showCustomToast } from '../components/CustomToast';
+import ListingCard from '../components/ListingCard';
+import SearchDrawer from '../components/search/SearchDrawer';
+import ActiveFilters from '../components/search/ActiveFilters';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PullToRefresh from 'react-simple-pull-to-refresh';
+import { areCoordinatesWithinDistance } from '../utils/utils';
 
 const defaultSearchParams: SearchParams = {
   keyword: '',
@@ -19,75 +19,75 @@ const defaultSearchParams: SearchParams = {
   sortBy: 'createdAt',
   sortOrder: 'descending',
   location: null,
-}
+};
 
 export default function ListingPage() {
-  const [listings, setListings] = useAtom(listingsAtom)
-  const [listingsFetched, setListingsFetched] = useAtom(listingsFetchedAtom)
-  const [, fetchAllListings] = useAtom(fetchAllListingsAtom)
-  const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found'>('all')
-  const [filteredListings, setFilteredListings] = useState<Listing[]>([])
-  const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false)
-  const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams)
-  const [isLoading, setIsLoading] = useState(true)
+  const [listings, setListings] = useAtom(listingsAtom);
+  const [listingsFetched, setListingsFetched] = useAtom(listingsFetchedAtom);
+  const [, fetchAllListings] = useAtom(fetchAllListingsAtom);
+  const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found'>('all');
+  const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
+  const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
+  const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleRefresh = useCallback(async () => {
-    console.log('[ListingPage] Refreshing listings...')
-    setIsLoading(true)
-    setListingsFetched(false)
+    console.log('[ListingPage] Refreshing listings...');
+    setIsLoading(true);
+    setListingsFetched(false);
     try {
-      await fetchAllListings()
+      await fetchAllListings();
     } catch (error) {
-      console.error('[ListingPage] Error refreshing listings:', error)
+      console.error('[ListingPage] Error refreshing listings:', error);
       showCustomToast({
         title: 'Error Refreshing Listings',
         description: 'Please try again later.',
         color: 'danger',
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [setListingsFetched, fetchAllListings])
+  }, [setListingsFetched, fetchAllListings]);
 
   const PullDownContent = () => (
     <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
       <ArrowPathIcon className='w-5 h-5 animate-spin' />
       <span>Pull down to refresh...</span>
     </div>
-  )
+  );
 
   const RefreshContent = () => (
     <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
       <ArrowPathIcon className='w-5 h-5 animate-spin' />
       <span>Refreshing...</span>
     </div>
-  )
+  );
 
   // On mount, fetch listings
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
-        await fetchAllListings()
+        await fetchAllListings();
       } catch (error) {
-        console.error('[ListingPage] Error fetching listings:', error)
+        console.error('[ListingPage] Error fetching listings:', error);
         showCustomToast({
           title: 'Error Fetching Listings',
           description: 'Please try again later.',
           color: 'danger',
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
     // If listings are not fetched, fetch them
     if (!listingsFetched) {
-      fetchData()
+      fetchData();
     } else {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [listings, listingsFetched, setListings, setListingsFetched, fetchAllListings])
+  }, [listings, listingsFetched, setListings, setListingsFetched, fetchAllListings]);
 
   // On mount, fetch listings
   useEffect(() => {
@@ -110,57 +110,57 @@ export default function ListingPage() {
                   searchParams.location.radius
                 )[0]
           ))
-    )
+    );
 
     // Sort the filtered listings
     filtered.sort((a, b) => {
-      const aValue = a[searchParams.sortBy as keyof Listing]
-      const bValue = b[searchParams.sortBy as keyof Listing]
+      const aValue = a[searchParams.sortBy as keyof Listing];
+      const bValue = b[searchParams.sortBy as keyof Listing];
       if (aValue && bValue) {
-        if (aValue < bValue) return searchParams.sortOrder === 'ascending' ? -1 : 1
-        if (aValue > bValue) return searchParams.sortOrder === 'ascending' ? 1 : -1
+        if (aValue < bValue) return searchParams.sortOrder === 'ascending' ? -1 : 1;
+        if (aValue > bValue) return searchParams.sortOrder === 'ascending' ? 1 : -1;
       }
-      return 0
-    })
+      return 0;
+    });
 
     // Set the filtered listings
-    setFilteredListings(filtered)
-  }, [listings, activeTab, searchParams])
+    setFilteredListings(filtered);
+  }, [listings, activeTab, searchParams]);
 
   const handleRemoveFilter = (key: keyof SearchParams) => {
     setSearchParams((prev) => {
-      const newParams = { ...prev }
+      const newParams = { ...prev };
       if (key === 'location') {
-        newParams.location = null
+        newParams.location = null;
       } else if (key === 'keyword' || key === 'category' || key === 'status') {
-        newParams[key] = ''
+        newParams[key] = '';
       } else if (key === 'sortBy') {
-        newParams[key] = 'createdAt'
+        newParams[key] = 'createdAt';
       } else if (key === 'sortOrder') {
-        newParams[key] = 'descending'
+        newParams[key] = 'descending';
       } else if (key === 'type') {
-        newParams[key] = 'all'
+        newParams[key] = 'all';
       }
-      return newParams
-    })
-  }
+      return newParams;
+    });
+  };
 
   const handleApplySearch = (newSearchParams: SearchParams) => {
-    setSearchParams(newSearchParams)
-    setActiveTab(newSearchParams.type as 'all' | 'lost' | 'found')
-    setIsSearchDrawerOpen(false)
-  }
+    setSearchParams(newSearchParams);
+    setActiveTab(newSearchParams.type as 'all' | 'lost' | 'found');
+    setIsSearchDrawerOpen(false);
+  };
 
   const handleTabChange = (tab: 'all' | 'lost' | 'found') => {
-    setActiveTab(tab)
-    setSearchParams((prev) => ({ ...prev, type: tab }))
-  }
+    setActiveTab(tab);
+    setSearchParams((prev) => ({ ...prev, type: tab }));
+  };
 
   const handleResetSearch = () => {
-    setSearchParams(defaultSearchParams)
-    setActiveTab('all')
-    setIsSearchDrawerOpen(false)
-  }
+    setSearchParams(defaultSearchParams);
+    setActiveTab('all');
+    setIsSearchDrawerOpen(false);
+  };
 
   return (
     <PullToRefresh
@@ -236,7 +236,7 @@ export default function ListingPage() {
         />
       </div>
     </PullToRefresh>
-  )
+  );
 }
 
 function ListingGrid({ listings }: { listings: Listing[] }) {
@@ -246,7 +246,7 @@ function ListingGrid({ listings }: { listings: Listing[] }) {
         <InboxIcon className='w-16 h-16 text-blue-600 mb-2 stroke-1.5' />
         <p className='text-gray-600 text-lg'>No Listings Found</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -255,5 +255,5 @@ function ListingGrid({ listings }: { listings: Listing[] }) {
         <ListingCard key={listing.id} listing={listing} />
       ))}
     </div>
-  )
+  );
 }

@@ -1,19 +1,19 @@
-import React from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import React from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   HomeIcon,
   MapIcon,
   PlusCircleIcon,
   InboxStackIcon,
   UserIcon,
-} from '@heroicons/react/24/outline'
+} from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeSolidIcon,
   MapIcon as MapSolidIcon,
   PlusCircleIcon as PlusCircleSolidIcon,
   InboxStackIcon as InboxStackSolidIcon,
   UserIcon as UserSolidIcon,
-} from '@heroicons/react/24/solid'
+} from '@heroicons/react/24/solid';
 
 const tabs = [
   { name: 'Home', icon: HomeIcon, solidIcon: HomeSolidIcon, path: '/' },
@@ -21,14 +21,14 @@ const tabs = [
   { name: 'Post', icon: PlusCircleIcon, solidIcon: PlusCircleSolidIcon, path: '/post' },
   { name: 'Inbox', icon: InboxStackIcon, solidIcon: InboxStackSolidIcon, path: '/inbox' },
   { name: 'Profile', icon: UserIcon, solidIcon: UserSolidIcon, path: '/profile' },
-]
+];
 
 const MainLayout: React.FC = () => {
-  const location = useLocation()
+  const location = useLocation();
 
   const isTabActive = (tab: (typeof tabs)[0]) => {
-    const searchParams = new URLSearchParams(location.search)
-    const from = searchParams.get('from')
+    const searchParams = new URLSearchParams(location.search);
+    const from = searchParams.get('from');
 
     if (tab.path === '/') {
       return (
@@ -36,7 +36,7 @@ const MainLayout: React.FC = () => {
           (location.pathname.startsWith('/view/') && (!from || from === 'home')) ||
           (location.pathname.startsWith('/edit/') && (!from || from === 'home'))) &&
         from !== 'inbox'
-      )
+      );
     }
     if (tab.path === '/inbox') {
       return (
@@ -44,10 +44,10 @@ const MainLayout: React.FC = () => {
         location.pathname === '/resolve' ||
         (location.pathname.startsWith('/view/') && from === 'inbox') ||
         (location.pathname.startsWith('/edit/') && from === 'inbox')
-      )
+      );
     }
-    return location.pathname.startsWith(tab.path)
-  }
+    return location.pathname.startsWith(tab.path);
+  };
 
   return (
     <div className='flex flex-col h-screen w-screen overflow-hidden'>
@@ -80,7 +80,7 @@ const MainLayout: React.FC = () => {
         </div>
       </nav>
     </div>
-  )
-}
+  );
+};
 
-export default MainLayout
+export default MainLayout;

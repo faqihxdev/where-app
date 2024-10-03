@@ -1,55 +1,55 @@
-import React, { useEffect, useState } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
-import { listingsAtom, fetchListingsByUserIdAtom } from '../stores/listingStore'
-import { matchesAtom, fetchMatchesByUserAtom } from '../stores/matchStore'
-import { userDataAtom } from '../stores/userStore'
-import { Listing } from '../types'
-import ListingCard from '../components/ListingCard'
-import MatchCard from '../components/MatchCard'
-import { InboxIcon } from '@heroicons/react/24/outline'
-import LoadingSpinner from '../components/LoadingSpinner'
+import React, { useEffect, useState } from 'react';
+import { useAtom, useAtomValue } from 'jotai';
+import { listingsAtom, fetchListingsByUserIdAtom } from '../stores/listingStore';
+import { matchesAtom, fetchMatchesByUserAtom } from '../stores/matchStore';
+import { userDataAtom } from '../stores/userStore';
+import { Listing } from '../types';
+import ListingCard from '../components/ListingCard';
+import MatchCard from '../components/MatchCard';
+import { InboxIcon } from '@heroicons/react/24/outline';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const InboxPage: React.FC = () => {
-  const [listings] = useAtom(listingsAtom)
-  const [matches] = useAtom(matchesAtom)
-  const [, fetchListingsByUserId] = useAtom(fetchListingsByUserIdAtom)
-  const [, fetchMatches] = useAtom(fetchMatchesByUserAtom)
-  const userData = useAtomValue(userDataAtom)
-  const [isLoading, setIsLoading] = useState(true)
-  const [userListings, setUserListings] = useState<Listing[]>([])
+  const [listings] = useAtom(listingsAtom);
+  const [matches] = useAtom(matchesAtom);
+  const [, fetchListingsByUserId] = useAtom(fetchListingsByUserIdAtom);
+  const [, fetchMatches] = useAtom(fetchMatchesByUserAtom);
+  const userData = useAtomValue(userDataAtom);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userListings, setUserListings] = useState<Listing[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
         if (userData?.uid) {
-          await fetchListingsByUserId(userData.uid)
-          await fetchMatches(userData.uid)
+          await fetchListingsByUserId(userData.uid);
+          await fetchMatches(userData.uid);
         } else {
-          console.error('[InboxPage] User data not available')
+          console.error('[InboxPage] User data not available');
         }
       } catch (error) {
-        console.error('[InboxPage] Error fetching data:', error)
+        console.error('[InboxPage] Error fetching data:', error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [fetchListingsByUserId, fetchMatches, userData])
+    fetchData();
+  }, [fetchListingsByUserId, fetchMatches, userData]);
 
   useEffect(() => {
     if (userData?.uid) {
-      setUserListings(Object.values(listings).filter((listing) => listing.userId === userData.uid))
+      setUserListings(Object.values(listings).filter((listing) => listing.userId === userData.uid));
     }
-  }, [listings, userData])
+  }, [listings, userData]);
 
   if (isLoading) {
     return (
       <div className='min-h-full bg-white p-4 flex justify-center items-center'>
         <LoadingSpinner />
       </div>
-    )
+    );
   }
 
   return (
@@ -88,7 +88,7 @@ const InboxPage: React.FC = () => {
         </section>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default InboxPage
+export default InboxPage;

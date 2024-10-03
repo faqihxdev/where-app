@@ -1,83 +1,83 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { listingsAtom, updateListingAtom, fetchListingByIdAtom } from '../stores/listingStore'
-import { showCustomToast } from '../components/CustomToast'
-import { Listing, Marker, ImageType } from '../types'
-import ListingForm from '../components/ListingForm'
-import LoadingSpinner from '../components/LoadingSpinner'
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
-import { fetchMarkerById, markersAtom } from '../stores/markerStore'
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { listingsAtom, updateListingAtom, fetchListingByIdAtom } from '../stores/listingStore';
+import { showCustomToast } from '../components/CustomToast';
+import { Listing, Marker, ImageType } from '../types';
+import ListingForm from '../components/ListingForm';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { fetchMarkerById, markersAtom } from '../stores/markerStore';
 
 const EditListingPage: React.FC = () => {
-  const { listingId } = useParams<{ listingId: string }>()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const listings = useAtomValue(listingsAtom)
-  const updateListing = useSetAtom(updateListingAtom)
-  const fetchListingById = useSetAtom(fetchListingByIdAtom)
-  const markers = useAtomValue(markersAtom)
-  const [isLoading, setIsLoading] = useState(true)
-  const [listing, setListing] = useState<Listing | null>(null)
+  const { listingId } = useParams<{ listingId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const listings = useAtomValue(listingsAtom);
+  const updateListing = useSetAtom(updateListingAtom);
+  const fetchListingById = useSetAtom(fetchListingByIdAtom);
+  const markers = useAtomValue(markersAtom);
+  const [isLoading, setIsLoading] = useState(true);
+  const [listing, setListing] = useState<Listing | null>(null);
 
   const fetchListingData = useCallback(async () => {
-    if (!listingId) return // If the listingId is not available, return
-    setIsLoading(true)
+    if (!listingId) return; // If the listingId is not available, return
+    setIsLoading(true);
 
     try {
       if (!listings[listingId]) {
-        await fetchListingById(listingId)
+        await fetchListingById(listingId);
       }
 
-      const fetchedListing = listings[listingId]
+      const fetchedListing = listings[listingId];
 
       if (fetchedListing) {
         // Fetch markers for the listing
         await Promise.all(
           fetchedListing.markers.map(async (m) => {
             if (!markers[m.id]) {
-              const fetchedMarker = await fetchMarkerById(m.id, {})
-              return fetchedMarker || m
+              const fetchedMarker = await fetchMarkerById(m.id, {});
+              return fetchedMarker || m;
             } else {
-              return m
+              return m;
             }
           })
-        )
+        );
 
-        setListing(fetchedListing)
+        setListing(fetchedListing);
       } else {
         showCustomToast({
           title: 'Error',
           description: 'Listing not found.',
           color: 'danger',
-        })
-        navigate('/')
+        });
+        navigate('/');
       }
     } catch (error) {
-      console.error('[EditListingPage]: Error fetching listing data:', error)
+      console.error('[EditListingPage]: Error fetching listing data:', error);
       showCustomToast({
         title: 'Error',
         description: 'An error occurred while fetching the listing data.',
         color: 'danger',
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [listingId, listings, markers, fetchListingById, navigate])
+  }, [listingId, listings, markers, fetchListingById, navigate]);
 
   useEffect(() => {
-    fetchListingData()
-  }, [fetchListingData])
+    fetchListingData();
+  }, [fetchListingData]);
 
   const handleSubmit = async (
     formData: Omit<Listing, 'id' | 'images' | 'markers'>,
     imageUpdates: { [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File } },
     markers: Omit<Marker, 'id' | 'listingId'>[]
   ) => {
-    if (!listingId || !listing) return
+    if (!listingId || !listing) return;
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
 
       const updatedListing: Listing = {
         ...listing,
@@ -92,50 +92,50 @@ const EditListingPage: React.FC = () => {
             )?.id || '',
           listingId,
         })),
-      }
+      };
 
-      console.log('[EditListingPage/handleSubmit]: updatedListing:', updatedListing)
-      console.log('[EditListingPage/handleSubmit]: imageUpdates:', imageUpdates)
+      console.log('[EditListingPage/handleSubmit]: updatedListing:', updatedListing);
+      console.log('[EditListingPage/handleSubmit]: imageUpdates:', imageUpdates);
 
-      await updateListing({ updatedListing, imageUpdates })
+      await updateListing({ updatedListing, imageUpdates });
 
       showCustomToast({
         title: 'Listing Updated',
         description: 'Your listing has been successfully updated.',
         color: 'success',
-      })
+      });
 
-      const searchParams = new URLSearchParams(location.search)
-      const from = searchParams.get('from') || 'home'
-      navigate(`/view/${listingId}?from=${from}`)
+      const searchParams = new URLSearchParams(location.search);
+      const from = searchParams.get('from') || 'home';
+      navigate(`/view/${listingId}?from=${from}`);
     } catch (error) {
-      console.error('[EditListingPage/handleSubmit]: ', error)
+      console.error('[EditListingPage/handleSubmit]: ', error);
       showCustomToast({
         title: 'Error',
         description: 'Failed to update listing. Please try again.',
         color: 'danger',
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleBack = () => {
-    const searchParams = new URLSearchParams(location.search)
-    const from = searchParams.get('from') || 'home'
+    const searchParams = new URLSearchParams(location.search);
+    const from = searchParams.get('from') || 'home';
     if (from === 'inbox') {
-      navigate('/inbox')
+      navigate('/inbox');
     } else {
-      navigate('/')
+      navigate('/');
     }
-  }
+  };
 
   if (isLoading) {
     return (
       <div className='flex justify-center items-center h-screen'>
         <LoadingSpinner />
       </div>
-    )
+    );
   }
 
   if (!listing) {
@@ -148,7 +148,7 @@ const EditListingPage: React.FC = () => {
           Go Back To Listings
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -163,7 +163,7 @@ const EditListingPage: React.FC = () => {
       </div>
       <ListingForm initialData={listing} onSubmit={handleSubmit} isLoading={isLoading} />
     </div>
-  )
-}
+  );
+};
 
-export default EditListingPage
+export default EditListingPage;

@@ -1,18 +1,18 @@
-import React, { useState } from 'react'
-import { useSetAtom, useAtomValue } from 'jotai'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from 'react';
+import { useSetAtom, useAtomValue } from 'jotai';
+import { useNavigate } from 'react-router-dom';
 
-import { addListingAtom } from '../stores/listingStore'
-import { showCustomToast } from '../components/CustomToast'
-import { Listing, Marker, ImageType } from '../types'
-import ListingForm from '../components/ListingForm'
-import { userDataAtom } from '../stores/userStore'
+import { addListingAtom } from '../stores/listingStore';
+import { showCustomToast } from '../components/CustomToast';
+import { Listing, Marker, ImageType } from '../types';
+import ListingForm from '../components/ListingForm';
+import { userDataAtom } from '../stores/userStore';
 
 const PostPage: React.FC = () => {
-  const addListing = useSetAtom(addListingAtom)
-  const userData = useAtomValue(userDataAtom)
-  const navigate = useNavigate()
-  const [isLoading, setIsLoading] = useState(false)
+  const addListing = useSetAtom(addListingAtom);
+  const userData = useAtomValue(userDataAtom);
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (
     formData: Omit<Listing, 'id' | 'images' | 'markers'>,
@@ -24,49 +24,49 @@ const PostPage: React.FC = () => {
         title: 'Error',
         description: 'You must be logged in to create a listing.',
         color: 'danger',
-      })
-      return
+      });
+      return;
     }
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const newListing: Omit<Listing, 'id' | 'images' | 'markers'> = {
         ...formData,
         userId: userData.uid,
-      }
+      };
 
       const imageFiles: File[] = Object.values(imageUpdates)
         .filter(
           (update): update is { action: 'add'; file: File } =>
             update.action === 'add' && !!update.file
         )
-        .map((update) => update.file)
+        .map((update) => update.file);
 
-      await addListing({ newListing, imageFiles, markers })
+      await addListing({ newListing, imageFiles, markers });
       showCustomToast({
         title: 'Listing Created',
         description: 'Your listing has been successfully created.',
         color: 'success',
-      })
-      navigate('/')
+      });
+      navigate('/');
     } catch (error) {
-      console.error('[PostPage/handleSubmit]: ', error)
+      console.error('[PostPage/handleSubmit]: ', error);
       showCustomToast({
         title: 'Error',
         description: 'Failed to create listing. Please try again.',
         color: 'danger',
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className='min-h-full bg-white p-4'>
       <h1 className='text-xl font-semibold mb-4'>Create a New Listing</h1>
       <ListingForm onSubmit={handleSubmit} isLoading={isLoading} />
     </div>
-  )
-}
+  );
+};
 
-export default PostPage
+export default PostPage;

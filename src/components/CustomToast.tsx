@@ -1,25 +1,25 @@
-import { Box, Text, CloseButton } from '@chakra-ui/react'
-import { createStandaloneToast } from '@chakra-ui/react'
+import { Box, Text, CloseButton } from '@chakra-ui/react';
+import { createStandaloneToast } from '@chakra-ui/react';
 
-type ToastColor = 'primary' | 'success' | 'danger' | 'warning'
+type ToastColor = 'primary' | 'success' | 'danger' | 'warning';
 
 interface CustomToastProps {
-  title: string
-  description?: string
-  color: ToastColor
+  title: string;
+  description?: string;
+  color: ToastColor;
 }
 
-const { toast } = createStandaloneToast()
+const { toast } = createStandaloneToast();
 
 const colorMap: Record<ToastColor, string> = {
   primary: 'bg-blue-600',
   success: 'bg-green-600',
   danger: 'bg-red-600',
   warning: 'bg-yellow-600',
-}
+};
 
 export const showCustomToast = ({ title, description, color }: CustomToastProps) => {
-  const bgColor = colorMap[color]
+  const bgColor = colorMap[color];
 
   toast({
     position: 'top',
@@ -39,5 +39,5 @@ export const showCustomToast = ({ title, description, color }: CustomToastProps)
         <CloseButton color='white' onClick={onClose} />
       </Box>
     ),
-  })
-}
+  });
+};

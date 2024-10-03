@@ -1,10 +1,10 @@
-import { atomWithStorage } from 'jotai/utils'
-import { Marker } from '../types'
-import { db } from '../firebaseConfig'
-import { collection, addDoc, doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore'
+import { atomWithStorage } from 'jotai/utils';
+import { Marker } from '../types';
+import { db } from '../firebaseConfig';
+import { collection, addDoc, doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 
 // This marker atom is used to store the markers client-side
-export const markersAtom = atomWithStorage<Record<string, Marker>>('markers', {})
+export const markersAtom = atomWithStorage<Record<string, Marker>>('markers', {});
 
 /**
  * @description Add a new marker to Firestore and update the markers atom
@@ -18,7 +18,7 @@ export const addMarker = async (
   ) => void,
   newMarker: Omit<Marker, 'id'>
 ): Promise<Marker> => {
-  console.log(`[markerStore/addMarker]: Adding marker: ${newMarker}`)
+  console.log(`[markerStore/addMarker]: Adding marker: ${newMarker}`);
   try {
     // Create a new marker object to add to Firestore
     const newMarkerToAdd: Omit<Marker, 'id'> = {
@@ -27,21 +27,21 @@ export const addMarker = async (
       latitude: newMarker.latitude,
       longitude: newMarker.longitude,
       radius: newMarker.radius,
-    }
+    };
 
     // Add the new marker to Firestore
-    console.log('🔥 [markerStore/addMarker]')
-    const docRef = await addDoc(collection(db, 'Markers'), newMarkerToAdd)
+    console.log('🔥 [markerStore/addMarker]');
+    const docRef = await addDoc(collection(db, 'Markers'), newMarkerToAdd);
 
     // Update the markers atom with the new marker
-    const marker: Marker = { id: docRef.id, ...newMarkerToAdd }
-    set(markersAtom, (prev) => ({ ...prev, [docRef.id]: marker }))
-    return marker
+    const marker: Marker = { id: docRef.id, ...newMarkerToAdd };
+    set(markersAtom, (prev) => ({ ...prev, [docRef.id]: marker }));
+    return marker;
   } catch (error) {
-    console.error(`[markerStore/addMarker]: error: ${error}`)
-    throw error
+    console.error(`[markerStore/addMarker]: error: ${error}`);
+    throw error;
   }
-}
+};
 
 /**
  * @description Fetch a marker from Firestore by ID
@@ -53,35 +53,35 @@ export const fetchMarkerById = async (
   markerId: string,
   existingMarkers: Record<string, Marker>
 ): Promise<Marker | null> => {
-  console.log(`[markerStore/fetchMarkerById]: Fetching marker: ${markerId}`)
+  console.log(`[markerStore/fetchMarkerById]: Fetching marker: ${markerId}`);
 
   // Check if the markerId is valid
   if (!markerId) {
-    console.error('[markerStore/fetchMarkerById]: Invalid markerId')
-    return null
+    console.error('[markerStore/fetchMarkerById]: Invalid markerId');
+    return null;
   }
 
   // Check if the marker already exists in the atom
   if (existingMarkers[markerId]) {
-    return existingMarkers[markerId]
+    return existingMarkers[markerId];
   }
 
   try {
     // Fetch the marker from Firestore
-    console.log('🔥 [markerStore/fetchMarkerById]')
-    const markerDoc = await getDoc(doc(db, 'Markers', markerId))
+    console.log('🔥 [markerStore/fetchMarkerById]');
+    const markerDoc = await getDoc(doc(db, 'Markers', markerId));
 
     // If the marker exists, update the markers atom with the new marker
     if (markerDoc.exists()) {
-      const markerData = markerDoc.data() as Omit<Marker, 'id'>
-      const marker: Marker = { id: markerDoc.id, ...markerData }
-      return marker
+      const markerData = markerDoc.data() as Omit<Marker, 'id'>;
+      const marker: Marker = { id: markerDoc.id, ...markerData };
+      return marker;
     }
   } catch (error) {
-    console.error(`[markerStore/fetchMarkerById]: error: ${error}`)
+    console.error(`[markerStore/fetchMarkerById]: error: ${error}`);
   }
-  return null
-}
+  return null;
+};
 
 /**
  * @description Update a marker in Firestore
@@ -96,40 +96,40 @@ export const updateMarker = async (
     update: (prev: Record<string, Marker>) => Record<string, Marker>
   ) => void
 ): Promise<void> => {
-  console.log(`[markerStore/updateMarker]: Updating marker: ${updatedMarker}`)
+  console.log(`[markerStore/updateMarker]: Updating marker: ${updatedMarker}`);
 
   // Check if the markerId is valid
   if (!updatedMarker.id) {
-    console.error('[markerStore/updateMarker]: Invalid markerId')
-    return
+    console.error('[markerStore/updateMarker]: Invalid markerId');
+    return;
   }
 
   // If the marker does not exist in the atom, return
   if (!existingMarkers[updatedMarker.id]) {
-    console.error('[markerStore/updateMarker]: Marker not found')
-    return
+    console.error('[markerStore/updateMarker]: Marker not found');
+    return;
   }
 
   try {
-    console.log('🔥 [markerStore/updateMarker]')
+    console.log('🔥 [markerStore/updateMarker]');
     await updateDoc(doc(db, 'Markers', updatedMarker.id), {
       listingId: updatedMarker.listingId,
       name: updatedMarker.name,
       latitude: updatedMarker.latitude,
       longitude: updatedMarker.longitude,
       radius: updatedMarker.radius,
-    })
+    });
 
     // Update the markers atom with the new marker
     set(markersAtom, (prev) => {
-      const newMarkers = { ...prev }
-      newMarkers[updatedMarker.id] = updatedMarker
-      return newMarkers
-    })
+      const newMarkers = { ...prev };
+      newMarkers[updatedMarker.id] = updatedMarker;
+      return newMarkers;
+    });
   } catch (error) {
-    console.error(`[markerStore/updateMarker]: error: ${error}`)
+    console.error(`[markerStore/updateMarker]: error: ${error}`);
   }
-}
+};
 
 /**
  * @description Delete a marker from Firestore
@@ -144,32 +144,32 @@ export const deleteMarker = async (
     update: (prev: Record<string, Marker>) => Record<string, Marker>
   ) => void
 ): Promise<void> => {
-  console.log(`[markerStore/deleteMarker]: Deleting marker: ${markerId}`)
+  console.log(`[markerStore/deleteMarker]: Deleting marker: ${markerId}`);
 
   // Check if the markerId is valid
   if (!markerId) {
-    console.error('[markerStore/deleteMarker]: Invalid markerId')
-    return
+    console.error('[markerStore/deleteMarker]: Invalid markerId');
+    return;
   }
 
   // If the marker does not exist in the atom, return
   if (!existingMarkers[markerId]) {
-    console.error('[markerStore/deleteMarker]: Marker not found')
-    return
+    console.error('[markerStore/deleteMarker]: Marker not found');
+    return;
   }
 
   try {
     // Delete the marker from Firestore
-    console.log('🔥 [markerStore/deleteMarker]')
-    await deleteDoc(doc(db, 'Markers', markerId))
+    console.log('🔥 [markerStore/deleteMarker]');
+    await deleteDoc(doc(db, 'Markers', markerId));
 
     // Update the markers atom by removing the deleted marker
     set(markersAtom, (prev) => {
-      const newMarkers = { ...prev }
-      delete newMarkers[markerId]
-      return newMarkers
-    })
+      const newMarkers = { ...prev };
+      delete newMarkers[markerId];
+      return newMarkers;
+    });
   } catch (error) {
-    console.error(`[markerStore/deleteMarker]: error: ${error}`)
+    console.error(`[markerStore/deleteMarker]: error: ${error}`);
   }
-}
+};

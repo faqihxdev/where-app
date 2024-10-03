@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
-import { Listing } from '../types'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { listingsAtom, deleteListingAtom } from '../stores/listingStore'
-import { fetchUserListingsAtom, listingUsersAtom, getAvatarUrl } from '../stores/userStore'
-import { markersAtom, fetchMarkerById } from '../stores/markerStore'
-import { getImage } from '../stores/imageStore'
+import { useState, useEffect } from 'react';
+import { Listing } from '../types';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { listingsAtom, deleteListingAtom } from '../stores/listingStore';
+import { fetchUserListingsAtom, listingUsersAtom, getAvatarUrl } from '../stores/userStore';
+import { markersAtom, fetchMarkerById } from '../stores/markerStore';
+import { getImage } from '../stores/imageStore';
 import {
   ExclamationCircleIcon,
   MagnifyingGlassCircleIcon,
@@ -12,7 +12,7 @@ import {
   PencilIcon,
   TrashIcon,
   EllipsisVerticalIcon,
-} from '@heroicons/react/24/outline'
+} from '@heroicons/react/24/outline';
 import {
   Avatar,
   Menu,
@@ -21,37 +21,37 @@ import {
   MenuItem,
   Button,
   useDisclosure,
-} from '@chakra-ui/react'
-import { format } from 'date-fns'
-import LoadingSpinner from './LoadingSpinner'
-import { truncateWithEllipsis } from '../utils/utils'
-import { ListingStatus } from '../types'
-import { useNavigate, useLocation } from 'react-router-dom'
-import AlertDialog from './AlertDialog'
-import { showCustomToast } from './CustomToast'
+} from '@chakra-ui/react';
+import { format } from 'date-fns';
+import LoadingSpinner from './LoadingSpinner';
+import { truncateWithEllipsis } from '../utils/utils';
+import { ListingStatus } from '../types';
+import { useNavigate, useLocation } from 'react-router-dom';
+import AlertDialog from './AlertDialog';
+import { showCustomToast } from './CustomToast';
 
 interface ListingCardProps {
-  listing: Listing
-  showActions?: boolean
+  listing: Listing;
+  showActions?: boolean;
 }
 
 export default function ListingCard({ listing, showActions = false }: ListingCardProps) {
-  const setListings = useSetAtom(listingsAtom)
-  const fetchUserListings = useSetAtom(fetchUserListingsAtom)
-  const deleteListing = useSetAtom(deleteListingAtom)
-  const [isImageLoading, setIsImageLoading] = useState(!listing.images.main.data)
-  const markers = useAtomValue(markersAtom)
-  const listingUsers = useAtomValue(listingUsersAtom)
-  const navigate = useNavigate()
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const location = useLocation()
+  const setListings = useSetAtom(listingsAtom);
+  const fetchUserListings = useSetAtom(fetchUserListingsAtom);
+  const deleteListing = useSetAtom(deleteListingAtom);
+  const [isImageLoading, setIsImageLoading] = useState(!listing.images.main.data);
+  const markers = useAtomValue(markersAtom);
+  const listingUsers = useAtomValue(listingUsersAtom);
+  const navigate = useNavigate();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchMainImage = async () => {
       if (listing.images.main.id && !listing.images.main.data) {
-        setIsImageLoading(true)
+        setIsImageLoading(true);
         try {
-          const imageDoc = await getImage(listing.images.main.id)
+          const imageDoc = await getImage(listing.images.main.id);
           if (imageDoc) {
             // Update the local listings state
             setListings((prev) => ({
@@ -66,99 +66,99 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
                   },
                 },
               },
-            }))
+            }));
           }
         } catch (error) {
-          console.error('[ListingCard/fetchMainImage]: ', error)
+          console.error('[ListingCard/fetchMainImage]: ', error);
         } finally {
-          setIsImageLoading(false)
+          setIsImageLoading(false);
         }
       }
-    }
+    };
 
-    fetchMainImage()
+    fetchMainImage();
 
     // Fetch user data for the listing
     const fetchUser = async () => {
       try {
-        await fetchUserListings(listing.userId)
+        await fetchUserListings(listing.userId);
       } catch (error) {
-        console.error('[ListingCard/fetchUser]: ', error)
+        console.error('[ListingCard/fetchUser]: ', error);
       }
-    }
+    };
 
-    fetchUser()
+    fetchUser();
 
     // Fetch markers for the listing
     const fetchMarkersListing = async () => {
       try {
-        await Promise.all(listing.markers.map((m) => fetchMarkerById(m.id, markers)))
+        await Promise.all(listing.markers.map((m) => fetchMarkerById(m.id, markers)));
       } catch (error) {
-        console.error('[ListingCard/fetchMarkers]: ', error)
+        console.error('[ListingCard/fetchMarkers]: ', error);
       }
-    }
+    };
 
-    fetchMarkersListing()
-  }, [listing, markers, fetchUserListings, setListings])
+    fetchMarkersListing();
+  }, [listing, markers, fetchUserListings, setListings]);
 
   // Function to safely format the date
   const formatDate = (date: Date) => {
-    return format(date, 'yyyy-MM-dd hh:mm a')
-  }
+    return format(date, 'yyyy-MM-dd hh:mm a');
+  };
 
   // Updated getDisplayName function
   const getDisplayName = (userId: string) => {
-    const user = listingUsers[userId]
+    const user = listingUsers[userId];
     if (user) {
-      return user.preferences?.name || user.email
+      return user.preferences?.name || user.email;
     }
-    return ''
-  }
+    return '';
+  };
 
   // Helper function to safely get marker name
   const getMarkerName = (markerId: string) => {
-    return markers[markerId]?.name || 'Loading location...'
-  }
+    return markers[markerId]?.name || 'Loading location...';
+  };
 
   // Helper function to get status badge color
   const getStatusBadgeColor = (status: ListingStatus) => {
     switch (status) {
       case ListingStatus.resolved:
-        return 'bg-green-200/95 text-green-800'
+        return 'bg-green-200/95 text-green-800';
       case ListingStatus.archived:
-        return 'bg-violet-200/95 text-violet-800'
+        return 'bg-violet-200/95 text-violet-800';
       default:
-        return ''
+        return '';
     }
-  }
+  };
 
   const handleViewClick = () => {
-    const from = location.pathname === '/inbox' ? 'inbox' : 'home'
-    navigate(`/view/${listing.id}?from=${from}`)
-  }
+    const from = location.pathname === '/inbox' ? 'inbox' : 'home';
+    navigate(`/view/${listing.id}?from=${from}`);
+  };
 
   const handleEditClick = () => {
-    navigate(`/edit/${listing.id}?from=inbox`)
-  }
+    navigate(`/edit/${listing.id}?from=inbox`);
+  };
 
   const handleDeleteClick = async () => {
     try {
-      await deleteListing(listing.id)
-      onClose()
+      await deleteListing(listing.id);
+      onClose();
       showCustomToast({
         title: 'Listing Deleted',
         description: 'Your listing has been successfully deleted.',
         color: 'success',
-      })
+      });
     } catch (error) {
-      console.error('[ListingCard/handleDeleteClick]: ', error)
+      console.error('[ListingCard/handleDeleteClick]: ', error);
       showCustomToast({
         title: 'Error',
         description: 'Failed to delete the listing. Please try again.',
         color: 'danger',
-      })
+      });
     }
-  }
+  };
 
   return (
     <div className='bg-white outline outline-1 outline-gray-200 rounded-lg overflow-hidden'>
@@ -270,5 +270,5 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
         body='Are you sure you want to delete this listing? This action cannot be undone.'
       />
     </div>
-  )
+  );
 }

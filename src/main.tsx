@@ -1,8 +1,8 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { ChakraProvider, extendTheme } from '@chakra-ui/react'
-import App from './App.tsx'
-import './index.css'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { ChakraProvider, extendTheme } from '@chakra-ui/react';
+import App from './App.tsx';
+import './index.css';
 
 const theme = extendTheme({
   fonts: {
@@ -37,7 +37,7 @@ const theme = extendTheme({
       950: '#172554',
     },
   },
-})
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -45,4 +45,4 @@ createRoot(document.getElementById('root')!).render(
       <App />
     </ChakraProvider>
   </StrictMode>
-)
+);

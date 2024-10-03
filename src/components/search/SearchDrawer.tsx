@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import {
   Drawer,
   DrawerBody,
@@ -9,17 +9,17 @@ import {
   DrawerCloseButton,
   VStack,
   Button,
-} from '@chakra-ui/react'
-import { SearchParams, Marker } from '../../types'
-import SearchForm from './SearchForm'
-import MapSelector from '../map/MapSelector'
+} from '@chakra-ui/react';
+import { SearchParams, Marker } from '../../types';
+import SearchForm from './SearchForm';
+import MapSelector from '../map/MapSelector';
 
 interface SearchDrawerProps {
-  isOpen: boolean
-  onClose: () => void
-  onApplySearch: (searchParams: SearchParams) => void
-  searchParams: SearchParams
-  onResetSearch: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  onApplySearch: (searchParams: SearchParams) => void;
+  searchParams: SearchParams;
+  onResetSearch: () => void;
 }
 
 const SearchDrawer: React.FC<SearchDrawerProps> = ({
@@ -29,15 +29,15 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   searchParams,
   onResetSearch,
 }) => {
-  const [localSearchParams, setLocalSearchParams] = React.useState<SearchParams>(searchParams)
+  const [localSearchParams, setLocalSearchParams] = React.useState<SearchParams>(searchParams);
   const [locationFilter, setLocationFilter] = useState<Omit<Marker, 'id' | 'listingId'> | null>(
     null
-  )
-  const [resetKey, setResetKey] = useState(0)
+  );
+  const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
-      setLocalSearchParams(searchParams)
+      setLocalSearchParams(searchParams);
       setLocationFilter(
         searchParams.location
           ? {
@@ -47,9 +47,9 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
               radius: searchParams.location.radius,
             }
           : null
-      )
+      );
     }
-  }, [isOpen, searchParams])
+  }, [isOpen, searchParams]);
 
   const handleApplySearch = () => {
     const updatedSearchParams = {
@@ -62,20 +62,20 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             radius: locationFilter.radius,
           }
         : null,
-    }
-    onApplySearch(updatedSearchParams)
-  }
+    };
+    onApplySearch(updatedSearchParams);
+  };
 
   const handleResetSearch = () => {
-    onResetSearch()
-    setLocalSearchParams({ ...searchParams, location: null })
-    setLocationFilter(null)
-    setResetKey((prevKey) => prevKey + 1)
-  }
+    onResetSearch();
+    setLocalSearchParams({ ...searchParams, location: null });
+    setLocationFilter(null);
+    setResetKey((prevKey) => prevKey + 1);
+  };
 
   const handleLocationChange = (markers: Omit<Marker, 'id' | 'listingId'>[]) => {
-    setLocationFilter(markers[0] || null)
-  }
+    setLocationFilter(markers[0] || null);
+  };
 
   return (
     <Drawer isOpen={isOpen} placement='bottom' onClose={onClose} size='full'>
@@ -122,7 +122,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
-  )
-}
+  );
+};
 
-export default SearchDrawer
+export default SearchDrawer;

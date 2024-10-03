@@ -1,111 +1,111 @@
-import React, { useEffect, useState, useCallback } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { listingsAtom, fetchListingByIdAtom } from '../stores/listingStore'
-import { listingUsersAtom, fetchUserListingsAtom } from '../stores/userStore'
-import { markersAtom, fetchMarkerById } from '../stores/markerStore'
-import { Listing } from '../types'
-import { Button } from '@chakra-ui/react'
-import LoadingSpinner from '../components/LoadingSpinner'
-import PullToRefresh from 'react-simple-pull-to-refresh'
-import { ArrowPathIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { listingsAtom, fetchListingByIdAtom } from '../stores/listingStore';
+import { listingUsersAtom, fetchUserListingsAtom } from '../stores/userStore';
+import { markersAtom, fetchMarkerById } from '../stores/markerStore';
+import { Listing } from '../types';
+import { Button } from '@chakra-ui/react';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PullToRefresh from 'react-simple-pull-to-refresh';
+import { ArrowPathIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 const ViewListingPage: React.FC = () => {
-  const { listingId } = useParams<{ listingId: string }>()
-  const location = useLocation()
-  const searchParams = new URLSearchParams(location.search)
-  const from = searchParams.get('from') || 'home'
-  const listings = useAtomValue(listingsAtom)
-  const fetchListingById = useSetAtom(fetchListingByIdAtom)
-  const listingUsers = useAtomValue(listingUsersAtom)
-  const fetchUserListings = useSetAtom(fetchUserListingsAtom)
-  const markers = useAtomValue(markersAtom)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const { listingId } = useParams<{ listingId: string }>();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const from = searchParams.get('from') || 'home';
+  const listings = useAtomValue(listingsAtom);
+  const fetchListingById = useSetAtom(fetchListingByIdAtom);
+  const listingUsers = useAtomValue(listingUsersAtom);
+  const fetchUserListings = useSetAtom(fetchUserListingsAtom);
+  const markers = useAtomValue(markersAtom);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Fetch listing data on load or on refresh
   const fetchListingData = useCallback(
     async (onRefresh: boolean = false) => {
-      if (!listingId) return // If the listingId is not available, return
+      if (!listingId) return; // If the listingId is not available, return
 
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
       try {
         if (onRefresh || !listings[listingId]) {
-          await fetchListingById(listingId)
+          await fetchListingById(listingId);
         }
 
-        const listing = listings[listingId]
+        const listing = listings[listingId];
         if (!listing) {
-          setError('Listing not found')
-          return
+          setError('Listing not found');
+          return;
         }
 
         // Fetch user data if not available
         if (!listingUsers[listing.userId]) {
-          await fetchUserListings(listing.userId)
+          await fetchUserListings(listing.userId);
         }
 
         // Fetch markers if not available
         await Promise.all(
           listing.markers.map(async (m) => {
             if (!markers[m.id]) {
-              await fetchMarkerById(m.id, markers)
+              await fetchMarkerById(m.id, markers);
             }
           })
-        )
+        );
       } catch (error) {
-        console.error('[ViewListingPage]: Error fetching listing data:', error)
-        setError('An error occurred while fetching the listing data')
+        console.error('[ViewListingPage]: Error fetching listing data:', error);
+        setError('An error occurred while fetching the listing data');
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     },
     [listingId, listings, listingUsers, fetchUserListings, fetchListingById, markers]
-  )
+  );
 
   useEffect(() => {
-    fetchListingData()
-  }, [fetchListingData])
+    fetchListingData();
+  }, [fetchListingData]);
 
   const handleRefresh = async () => {
-    await fetchListingData(true)
-  }
+    await fetchListingData(true);
+  };
 
   const handleBack = () => {
     if (from === 'inbox') {
-      navigate('/inbox')
+      navigate('/inbox');
     } else {
-      navigate('/')
+      navigate('/');
     }
-  }
+  };
 
   const truncateBase64 = (base64: string) => {
-    return base64.substring(0, 50) + '...'
-  }
+    return base64.substring(0, 50) + '...';
+  };
 
   const PullDownContent = () => (
     <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
       <ArrowPathIcon className='w-5 h-5 animate-spin' />
       <span>Pull down to refresh...</span>
     </div>
-  )
+  );
 
   const RefreshContent = () => (
     <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
       <ArrowPathIcon className='w-5 h-5 animate-spin' />
       <span>Refreshing...</span>
     </div>
-  )
+  );
 
   if (isLoading) {
     return (
       <div className='flex justify-center items-center h-screen'>
         <LoadingSpinner />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -122,10 +122,10 @@ const ViewListingPage: React.FC = () => {
           Go Back To Listings
         </Button>
       </div>
-    )
+    );
   }
 
-  const listing = listings[listingId as string] as Listing
+  const listing = listings[listingId as string] as Listing;
 
   if (!listing) {
     return (
@@ -141,7 +141,7 @@ const ViewListingPage: React.FC = () => {
           Go Back To Listings
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -191,7 +191,7 @@ const ViewListingPage: React.FC = () => {
         </pre>
       </div>
     </PullToRefresh>
-  )
-}
+  );
+};
 
-export default ViewListingPage
+export default ViewListingPage;

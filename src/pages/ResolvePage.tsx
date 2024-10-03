@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 const ResolvePage: React.FC = () => {
   return (
@@ -7,7 +7,7 @@ const ResolvePage: React.FC = () => {
       <p>This is a dummy resolve page. Implement your resolve functionality here.</p>
       <p>This page will be used to resolve matches between lost and found items.</p>
     </div>
-  )
-}
+  );
+};
 
-export default ResolvePage
+export default ResolvePage;

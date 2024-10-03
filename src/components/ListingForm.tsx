@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react';
 import {
   FormControl,
   FormLabel,
@@ -9,43 +9,43 @@ import {
   VStack,
   HStack,
   Button,
-} from '@chakra-ui/react'
+} from '@chakra-ui/react';
 import {
   PlusIcon,
   XMarkIcon,
   ClipboardDocumentIcon,
   PhotoIcon,
   MapPinIcon,
-} from '@heroicons/react/24/outline'
-import { showCustomToast } from './CustomToast'
-import { Listing, ListingCategory, ListingStatus, Marker, ImageType } from '../types'
-import { compressImage } from '../stores/imageStore'
-import MapSelector from './map/MapSelector'
+} from '@heroicons/react/24/outline';
+import { showCustomToast } from './CustomToast';
+import { Listing, ListingCategory, ListingStatus, Marker, ImageType } from '../types';
+import { compressImage } from '../stores/imageStore';
+import MapSelector from './map/MapSelector';
 
 interface ListingFormProps {
-  initialData?: Partial<Listing>
+  initialData?: Partial<Listing>;
   onSubmit: (
     formData: Omit<Listing, 'id' | 'images' | 'markers'>,
     imageUpdates: { [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File } },
     markers: Omit<Marker, 'id' | 'listingId'>[]
-  ) => Promise<void>
-  isLoading: boolean
+  ) => Promise<void>;
+  isLoading: boolean;
 }
 
 interface ListingFormError {
-  [key: string]: string
+  [key: string]: string;
 }
 
 const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoading }) => {
-  const [type, setType] = useState<'lost' | 'found'>(initialData?.type || 'lost')
-  const [title, setTitle] = useState(initialData?.title || '')
-  const [description, setDescription] = useState(initialData?.description || '')
+  const [type, setType] = useState<'lost' | 'found'>(initialData?.type || 'lost');
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [description, setDescription] = useState(initialData?.description || '');
   const [category, setCategory] = useState<ListingCategory>(
     initialData?.category || ListingCategory.other
-  )
-  const [status, setStatus] = useState<ListingStatus>(initialData?.status || ListingStatus.active)
-  const [images, setImages] = useState<File[]>([])
-  const [imagesPreviews, setImagesPreviews] = useState<string[]>([])
+  );
+  const [status, setStatus] = useState<ListingStatus>(initialData?.status || ListingStatus.active);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagesPreviews, setImagesPreviews] = useState<string[]>([]);
   const [markers, setMarkers] = useState<Omit<Marker, 'id' | 'listingId'>[]>(
     initialData?.markers?.map((m) => ({
       name: m.name,
@@ -53,13 +53,13 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
       longitude: m.longitude,
       radius: m.radius,
     })) || []
-  )
+  );
 
-  const [errors, setErrors] = useState<ListingFormError>({})
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [errors, setErrors] = useState<ListingFormError>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageUpdates, setImageUpdates] = useState<{
-    [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File }
-  }>({})
+    [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File };
+  }>({});
 
   useEffect(() => {
     if (initialData?.images) {
@@ -67,131 +67,134 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
         initialData.images.main.data,
         initialData.images.alt1?.data,
         initialData.images.alt2?.data,
-      ].filter(Boolean) as string[]
-      setImagesPreviews(previews)
+      ].filter(Boolean) as string[];
+      setImagesPreviews(previews);
 
       // Initialize imageUpdates
-      const updates: { [key in ImageType]?: { action: 'keep'; file?: File } } = {}
-      if (initialData.images.main.data) updates.main = { action: 'keep' }
-      if (initialData.images.alt1?.data) updates.alt1 = { action: 'keep' }
-      if (initialData.images.alt2?.data) updates.alt2 = { action: 'keep' }
-      setImageUpdates(updates)
+      const updates: { [key in ImageType]?: { action: 'keep'; file?: File } } = {};
+      if (initialData.images.main.data) updates.main = { action: 'keep' };
+      if (initialData.images.alt1?.data) updates.alt1 = { action: 'keep' };
+      if (initialData.images.alt2?.data) updates.alt2 = { action: 'keep' };
+      setImageUpdates(updates);
     }
-  }, [initialData])
+  }, [initialData]);
 
   const validateField = (field: string, value: string | File[] | null): string => {
     switch (field) {
       case 'title':
         return value && (value as string).length >= 3
           ? ''
-          : 'Title must be at least 3 characters long'
+          : 'Title must be at least 3 characters long';
       case 'description':
         return value && (value as string).length >= 10
           ? ''
-          : 'Description must be at least 10 characters long'
+          : 'Description must be at least 10 characters long';
       case 'images':
         if ((!value || (value as File[]).length === 0) && imagesPreviews.length === 0) {
-          return 'At least one image is required'
+          return 'At least one image is required';
         }
         if ((value as File[]).some((img) => img.size > 1024 * 1024 * 3))
-          return 'Each image must be less than 3 MB'
-        return ''
+          return 'Each image must be less than 3 MB';
+        return '';
       case 'locationName':
-        return value ? '' : 'Location name is required'
+        return value ? '' : 'Location name is required';
       case 'latitude': {
-        const lat = parseFloat(value as string)
-        return isNaN(lat) || lat < -90 || lat > 90 ? 'Invalid latitude (-90 to 90)' : ''
+        const lat = parseFloat(value as string);
+        return isNaN(lat) || lat < -90 || lat > 90 ? 'Invalid latitude (-90 to 90)' : '';
       }
       case 'longitude': {
-        const lon = parseFloat(value as string)
-        return isNaN(lon) || lon < -180 || lon > 180 ? 'Invalid longitude (-180 to 180)' : ''
+        const lon = parseFloat(value as string);
+        return isNaN(lon) || lon < -180 || lon > 180 ? 'Invalid longitude (-180 to 180)' : '';
       }
       default:
-        return ''
+        return '';
     }
-  }
+  };
 
   const handleBlur = (field: string, value: string | File[] | null) => {
-    const error = validateField(field, value)
-    setErrors((prev) => ({ ...prev, [field]: error }))
-  }
+    const error = validateField(field, value);
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
+    const files = Array.from(e.target.files || []);
     if (files.length + imagesPreviews.length > 3) {
       showCustomToast({
         title: 'Error',
         description: 'You can upload a maximum of 3 images.',
         color: 'danger',
-      })
-      return
+      });
+      return;
     }
 
     try {
-      const compressedFiles = await Promise.all(files.map((file) => compressImage(file)))
-      setImages((prev) => [...prev, ...compressedFiles])
-      setErrors((prev) => ({ ...prev, images: '' }))
+      const compressedFiles = await Promise.all(files.map((file) => compressImage(file)));
+      setImages((prev) => [...prev, ...compressedFiles]);
+      setErrors((prev) => ({ ...prev, images: '' }));
 
       compressedFiles.forEach((file, index) => {
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onloadend = () => {
-          setImagesPreviews((prev) => [...prev, reader.result as string])
+          setImagesPreviews((prev) => [...prev, reader.result as string]);
           const imageType: ImageType = ['main', 'alt1', 'alt2'][
             imagesPreviews.length + index
-          ] as ImageType
+          ] as ImageType;
           setImageUpdates((prev) => ({
             ...prev,
             [imageType]: { action: 'add', file },
-          }))
-        }
-        reader.readAsDataURL(file)
-      })
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
     } catch (error) {
-      console.error('[ListingForm/handleImageChange]: ', error)
+      console.error('[ListingForm/handleImageChange]: ', error);
       showCustomToast({
         title: 'Error',
         description: 'Failed to process images. Please try again.',
         color: 'danger',
-      })
+      });
     }
-  }
+  };
 
   const removeImage = (index: number) => {
-    setImagesPreviews((prev) => prev.filter((_, i) => i !== index))
-    const imageType: ImageType = ['main', 'alt1', 'alt2'][index] as ImageType
+    setImagesPreviews((prev) => prev.filter((_, i) => i !== index));
+    const imageType: ImageType = ['main', 'alt1', 'alt2'][index] as ImageType;
     setImageUpdates((prev) => ({
       ...prev,
       [imageType]: { action: 'delete' },
-    }))
-  }
+    }));
+  };
 
   const handleLocationsChange = (newMarkers: Omit<Marker, 'id' | 'listingId'>[]) => {
-    setMarkers(newMarkers)
-  }
+    setMarkers(newMarkers);
+  };
 
   const validateForm = (): boolean => {
     const newErrors: ListingFormError = {
       title: validateField('title', title),
       description: validateField('description', description),
       images: validateField('images', images),
-    }
+    };
 
     markers.forEach((loc, index) => {
-      newErrors[`location${index}_name`] = validateField('locationName', loc.name)
-      newErrors[`location${index}_latitude`] = validateField('latitude', loc.latitude.toString())
-      newErrors[`location${index}_longitude`] = validateField('longitude', loc.longitude.toString())
-    })
+      newErrors[`location${index}_name`] = validateField('locationName', loc.name);
+      newErrors[`location${index}_latitude`] = validateField('latitude', loc.latitude.toString());
+      newErrors[`location${index}_longitude`] = validateField(
+        'longitude',
+        loc.longitude.toString()
+      );
+    });
 
-    setErrors(newErrors)
-    return Object.values(newErrors).every((error) => error === '')
-  }
+    setErrors(newErrors);
+    return Object.values(newErrors).every((error) => error === '');
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!validateForm()) return
+    event.preventDefault();
+    if (!validateForm()) return;
 
     try {
-      const currentDate = new Date()
+      const currentDate = new Date();
 
       const formData: Omit<Listing, 'id' | 'images' | 'markers'> = {
         type,
@@ -203,18 +206,18 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
         updatedAt: currentDate,
         expiresAt: new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000),
         userId: initialData?.userId || '',
-      }
+      };
 
-      await onSubmit(formData, imageUpdates, markers)
+      await onSubmit(formData, imageUpdates, markers);
     } catch (error) {
-      console.error('[ListingForm/handleSubmit]: ', error)
+      console.error('[ListingForm/handleSubmit]: ', error);
       showCustomToast({
         title: 'Error',
         description: 'Failed to submit listing. Please try again.',
         color: 'danger',
-      })
+      });
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
@@ -394,7 +397,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
         {initialData ? 'Update Listing' : 'Create Listing'}
       </Button>
     </form>
-  )
-}
+  );
+};
 
-export default ListingForm
+export default ListingForm;

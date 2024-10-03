@@ -1,12 +1,12 @@
-import React from 'react'
-import { HStack } from '@chakra-ui/react'
-import { XMarkIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline'
-import { SearchParams, ListingKeyNames } from '../../types'
-import { truncateWithEllipsis } from '../../utils/utils'
+import React from 'react';
+import { HStack } from '@chakra-ui/react';
+import { XMarkIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
+import { SearchParams, ListingKeyNames } from '../../types';
+import { truncateWithEllipsis } from '../../utils/utils';
 
 interface ActiveFiltersProps {
-  searchParams: SearchParams
-  onRemoveFilter: (key: keyof SearchParams) => void
+  searchParams: SearchParams;
+  onRemoveFilter: (key: keyof SearchParams) => void;
 }
 
 const ActiveFilters: React.FC<ActiveFiltersProps> = ({ searchParams, onRemoveFilter }) => {
@@ -74,7 +74,7 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({ searchParams, onRemoveFil
         </div>
       )}
     </HStack>
-  )
-}
+  );
+};
 
-export default ActiveFilters
+export default ActiveFilters;

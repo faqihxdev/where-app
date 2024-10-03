@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import {
   FormControl,
   FormLabel,
@@ -7,15 +7,15 @@ import {
   InputGroup,
   InputRightElement,
   Button,
-} from '@chakra-ui/react'
+} from '@chakra-ui/react';
 
 interface PasswordInputProps {
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onBlur: (e: React.FocusEvent<HTMLInputElement>) => void
-  error?: string
-  label: string
-  placeholder: string
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
+  error?: string;
+  label: string;
+  placeholder: string;
 }
 
 export function PasswordInput({
@@ -26,8 +26,8 @@ export function PasswordInput({
   label,
   placeholder,
 }: PasswordInputProps) {
-  const [show, setShow] = useState(false)
-  const handleClick = () => setShow(!show)
+  const [show, setShow] = useState(false);
+  const handleClick = () => setShow(!show);
 
   return (
     <FormControl isInvalid={!!error}>
@@ -52,5 +52,5 @@ export function PasswordInput({
       </InputGroup>
       <FormErrorMessage>{error}</FormErrorMessage>
     </FormControl>
-  )
+  );
 }

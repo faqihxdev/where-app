@@ -1,78 +1,78 @@
-import React, { useState, useEffect } from 'react'
-import { loginAtom, registerAtom, initializeAuthAtom } from '../stores/authStore'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { FormControl, FormLabel, FormErrorMessage, Input, Button } from '@chakra-ui/react'
-import { showCustomToast } from '../components/CustomToast'
-import { PasswordInput } from '../components/forms/PasswordInput'
-import logo from '../assets/logo.png'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { isAuthenticatedAtom } from '../stores/authStore'
+import React, { useState, useEffect } from 'react';
+import { loginAtom, registerAtom, initializeAuthAtom } from '../stores/authStore';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FormControl, FormLabel, FormErrorMessage, Input, Button } from '@chakra-ui/react';
+import { showCustomToast } from '../components/CustomToast';
+import { PasswordInput } from '../components/forms/PasswordInput';
+import logo from '../assets/logo.png';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { isAuthenticatedAtom } from '../stores/authStore';
 
 export default function AuthPage() {
-  const login = useSetAtom(loginAtom)
-  const register = useSetAtom(registerAtom)
-  const initializeAuth = useSetAtom(initializeAuthAtom)
-  const [isLogin, setIsLogin] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [errors, setErrors] = useState<{ [key: string]: string }>({})
-  const navigate = useNavigate()
-  const [isLoading, setIsLoading] = useState(true)
-  const isAuthenticated = useAtomValue(isAuthenticatedAtom)
-  const location = useLocation()
+  const login = useSetAtom(loginAtom);
+  const register = useSetAtom(registerAtom);
+  const initializeAuth = useSetAtom(initializeAuthAtom);
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const isAuthenticated = useAtomValue(isAuthenticatedAtom);
+  const location = useLocation();
 
   useEffect(() => {
     const init = async () => {
-      await initializeAuth()
-      setIsLoading(false)
-    }
-    init()
-  }, [initializeAuth])
+      await initializeAuth();
+      setIsLoading(false);
+    };
+    init();
+  }, [initializeAuth]);
 
   useEffect(() => {
     if (isAuthenticated) {
-      const intendedPath = (location.state as { from?: Location })?.from?.pathname || '/'
-      navigate(intendedPath)
+      const intendedPath = (location.state as { from?: Location })?.from?.pathname || '/';
+      navigate(intendedPath);
     }
-  }, [isAuthenticated, navigate, location])
+  }, [isAuthenticated, navigate, location]);
 
   const validateField = (field: string, value: string) => {
-    let error = ''
+    let error = '';
     switch (field) {
       case 'email':
         if (!value) {
-          error = 'Email is required'
+          error = 'Email is required';
         } else if (!/\S+@\S+\.\S+/.test(value)) {
-          error = 'Email is invalid'
+          error = 'Email is invalid';
         }
-        break
+        break;
       case 'password':
         if (!value) {
-          error = 'Password is required'
+          error = 'Password is required';
         } else if (value.length < 6) {
-          error = 'Password must be at least 6 characters'
+          error = 'Password must be at least 6 characters';
         }
-        break
+        break;
       case 'confirmPassword':
         if (!isLogin && value !== password) {
-          error = "Passwords don't match"
+          error = "Passwords don't match";
         }
-        break
+        break;
       case 'displayName':
         if (!isLogin && !value) {
-          error = 'Display name is required'
+          error = 'Display name is required';
         }
-        break
+        break;
     }
-    return error
-  }
+    return error;
+  };
 
   const handleBlur = (field: string, value: string) => {
-    const error = validateField(field, value)
-    setErrors((prev) => ({ ...prev, [field]: error }))
-  }
+    const error = validateField(field, value);
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
 
   const validateForm = () => {
     const newErrors = {
@@ -80,46 +80,46 @@ export default function AuthPage() {
       password: validateField('password', password),
       confirmPassword: isLogin ? '' : validateField('confirmPassword', confirmPassword),
       displayName: isLogin ? '' : validateField('displayName', displayName),
-    }
-    setErrors(newErrors)
-    return Object.values(newErrors).every((error) => error === '')
-  }
+    };
+    setErrors(newErrors);
+    return Object.values(newErrors).every((error) => error === '');
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!validateForm()) return
+    event.preventDefault();
+    if (!validateForm()) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       if (isLogin) {
-        await login({ email, password })
+        await login({ email, password });
         showCustomToast({
           title: 'Login Successful',
           description: 'Welcome back!',
           color: 'success',
-        })
-        navigate('/')
+        });
+        navigate('/');
       } else {
-        await register({ email, password, displayName })
+        await register({ email, password, displayName });
         showCustomToast({
           title: 'Registration Successful',
           description: 'Your account has been created.',
           color: 'success',
-        })
-        navigate('/')
+        });
+        navigate('/');
       }
     } catch (error) {
-      console.error('[AuthPage] Authentication error:', error)
+      console.error('[AuthPage] Authentication error:', error);
       showCustomToast({
         title: 'Authentication Failed',
         description: 'Please check your credentials and try again.',
         color: 'danger',
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className='min-h-screen bg-gray-100 flex flex-col justify-center p-4'>
@@ -220,5 +220,5 @@ export default function AuthPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }
