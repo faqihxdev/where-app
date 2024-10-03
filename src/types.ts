@@ -1,6 +1,8 @@
 import { Timestamp } from 'firebase/firestore'
 
-// <<< ENUMS >>>
+// <<< TYPES & ENUMS >>>
+
+export type ImageType = 'main' | 'alt1' | 'alt2'
 
 export enum ListingCategory {
   electronics = 'Electronics',

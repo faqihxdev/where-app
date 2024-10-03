@@ -8,18 +8,17 @@ import {
   Select,
   VStack,
   HStack,
-  IconButton,
   Button,
 } from '@chakra-ui/react'
 import {
   PlusIcon,
-  TrashIcon,
+  XMarkIcon,
   ClipboardDocumentIcon,
   PhotoIcon,
   MapPinIcon,
 } from '@heroicons/react/24/outline'
 import { showCustomToast } from './CustomToast'
-import { Listing, ListingCategory, ListingStatus, Marker } from '../types'
+import { Listing, ListingCategory, ListingStatus, Marker, ImageType } from '../types'
 import { compressImage } from '../stores/imageStore'
 import MapSelector from './map/MapSelector'
 
@@ -27,7 +26,7 @@ interface ListingFormProps {
   initialData?: Partial<Listing>
   onSubmit: (
     formData: Omit<Listing, 'id' | 'images' | 'markers'>,
-    imageFiles: File[],
+    imageUpdates: { [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File } },
     markers: Omit<Marker, 'id' | 'listingId'>[]
   ) => Promise<void>
   isLoading: boolean
@@ -58,6 +57,9 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
 
   const [errors, setErrors] = useState<ListingFormError>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [imageUpdates, setImageUpdates] = useState<{
+    [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File }
+  }>({})
 
   useEffect(() => {
     if (initialData?.images) {
@@ -67,6 +69,13 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
         initialData.images.alt2?.data,
       ].filter(Boolean) as string[]
       setImagesPreviews(previews)
+
+      // Initialize imageUpdates
+      const updates: { [key in ImageType]?: { action: 'keep'; file?: File } } = {}
+      if (initialData.images.main.data) updates.main = { action: 'keep' }
+      if (initialData.images.alt1?.data) updates.alt1 = { action: 'keep' }
+      if (initialData.images.alt2?.data) updates.alt2 = { action: 'keep' }
+      setImageUpdates(updates)
     }
   }, [initialData])
 
@@ -109,7 +118,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    if (files.length + images.length + imagesPreviews.length > 3) {
+    if (files.length + imagesPreviews.length > 3) {
       showCustomToast({
         title: 'Error',
         description: 'You can upload a maximum of 3 images.',
@@ -123,10 +132,17 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
       setImages((prev) => [...prev, ...compressedFiles])
       setErrors((prev) => ({ ...prev, images: '' }))
 
-      compressedFiles.forEach((file) => {
+      compressedFiles.forEach((file, index) => {
         const reader = new FileReader()
         reader.onloadend = () => {
           setImagesPreviews((prev) => [...prev, reader.result as string])
+          const imageType: ImageType = ['main', 'alt1', 'alt2'][
+            imagesPreviews.length + index
+          ] as ImageType
+          setImageUpdates((prev) => ({
+            ...prev,
+            [imageType]: { action: 'add', file },
+          }))
         }
         reader.readAsDataURL(file)
       })
@@ -141,15 +157,12 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
   }
 
   const removeImage = (index: number) => {
-    if (index < imagesPreviews.length - images.length) {
-      // Removing an existing image
-      setImagesPreviews((prev) => prev.filter((_, i) => i !== index))
-    } else {
-      // Removing a newly added image
-      const adjustedIndex = index - (imagesPreviews.length - images.length)
-      setImages((prev) => prev.filter((_, i) => i !== adjustedIndex))
-      setImagesPreviews((prev) => prev.filter((_, i) => i !== index))
-    }
+    setImagesPreviews((prev) => prev.filter((_, i) => i !== index))
+    const imageType: ImageType = ['main', 'alt1', 'alt2'][index] as ImageType
+    setImageUpdates((prev) => ({
+      ...prev,
+      [imageType]: { action: 'delete' },
+    }))
   }
 
   const handleLocationsChange = (newMarkers: Omit<Marker, 'id' | 'listingId'>[]) => {
@@ -189,10 +202,10 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
         createdAt: initialData?.createdAt || currentDate,
         updatedAt: currentDate,
         expiresAt: new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000),
-        userId: initialData?.userId || '', // This should be set in the PostPage or EditListingPage
+        userId: initialData?.userId || '',
       }
 
-      await onSubmit(formData, images, markers)
+      await onSubmit(formData, imageUpdates, markers)
     } catch (error) {
       console.error('[ListingForm/handleSubmit]: ', error)
       showCustomToast({
@@ -336,22 +349,18 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
         {imagesPreviews.length > 0 && (
           <HStack spacing={3} wrap='wrap'>
             {imagesPreviews.map((preview, index) => (
-              <div key={index} className='relative border border-gray-200 rounded-lg overflow-clip'>
+              <div key={index} className='relative border border-gray-200 rounded-lg'>
                 <img
                   src={preview}
                   alt={`Preview ${index + 1}`}
-                  className='w-20 h-20 object-cover'
+                  className='w-20 h-20 object-cover rounded-lg'
                 />
-                <IconButton
+                <button
                   aria-label='Remove image'
-                  icon={<TrashIcon className='h-3 w-3 stroke-[2]' />}
-                  size='xs'
-                  position='absolute'
-                  top={1}
-                  right={1}
-                  bg='white'
-                  onClick={() => removeImage(index)}
-                />
+                  className='absolute -top-2 -right-2 p-1 bg-red-600 rounded-full hover:bg-red-700 transition-colors'
+                  onClick={() => removeImage(index)}>
+                  <XMarkIcon className='h-3 w-3 stroke-[3] text-white' />
+                </button>
               </div>
             ))}
           </HStack>

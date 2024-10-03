@@ -1,6 +1,6 @@
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
-import { Listing, ListingDB, ListingImages, Marker } from '../types'
+import { Listing, ListingDB, ListingImages, Marker, ImageType } from '../types'
 import { db } from '../firebaseConfig'
 import {
   collection,
@@ -11,6 +11,7 @@ import {
   getDocs,
   query,
   where,
+  getDoc,
   Timestamp,
 } from 'firebase/firestore'
 import { addImage, deleteImage, getImage } from './imageStore'
@@ -60,10 +61,12 @@ export const fetchAllListingsAtom = atom(
         )
 
         // Fetch the main image if it's not already loaded
-        if (listing.images.main.id && !listing.images.main.data) {
-          const imageDoc = await getImage(listing.images.main.id)
-          if (imageDoc) {
-            listing.images.main.data = imageDoc.data
+        for (const type of ['main', 'alt1', 'alt2'] as (keyof ListingImages)[]) {
+          if (listing.images[type]?.id && !listing.images[type]?.data) {
+            const imageDoc = await getImage(listing.images[type]!.id)
+            if (imageDoc) {
+              listing.images[type]!.data = imageDoc.data
+            }
           }
         }
 
@@ -81,6 +84,67 @@ export const fetchAllListingsAtom = atom(
       return listings
     } catch (error) {
       console.error(`[listingStore] Error fetching listings: ${error}`)
+      throw error
+    }
+  }
+)
+
+/**
+ * @description Fetch a listing by id
+ * @param {string} listingId - The ID of the listing to fetch
+ * @returns {Promise<Listing | null>} - A promise that resolves when the listing is fetched
+ */
+export const fetchListingByIdAtom = atom(
+  null,
+  async (get, set, listingId: string): Promise<Listing | null> => {
+    console.log(`[listingStore/fetchListingByIdAtom]: Fetching listing: ${listingId}`)
+    try {
+      // Get the listing from the Listings collection
+      console.log('🔥[listingStore/fetchListingByIdAtom]')
+      const docSnap = await getDoc(doc(db, 'Listings', listingId))
+      let listing: Listing
+
+      // If the listing exists, convert it to a Listing and return it
+      if (docSnap.exists()) {
+        const listingDB = docSnap.data() as ListingDB
+        const markerIds = listingDB.markerIds
+
+        // Fetch markers using the fetchMarkerById function & update the markersAtom
+        const markers = await Promise.all(
+          markerIds.map(async (markerId) => {
+            const marker = await fetchMarkerById(markerId, get(markersAtom))
+            if (marker) {
+              set(markersAtom, (prev) => ({ ...prev, [markerId]: marker }))
+            }
+            return marker
+          })
+        )
+
+        // Convert the listingDB to a Listing
+        listing = convertListingDBToListing(
+          { ...listingDB, id: docSnap.id },
+          markers.filter((m) => m !== null) as Marker[]
+        )
+
+        // Fetch the main image if it's not already loaded
+        for (const type of ['main', 'alt1', 'alt2'] as (keyof ListingImages)[]) {
+          if (listing.images[type]?.id && !listing.images[type]?.data) {
+            const imageDoc = await getImage(listing.images[type]!.id)
+            if (imageDoc) {
+              listing.images[type]!.data = imageDoc.data
+            }
+          }
+        }
+
+        // Update the listingsAtom with the new listing
+        set(listingsAtom, { ...get(listingsAtom), [listingId]: listing })
+
+        return listing
+      }
+
+      return null
+    } catch (error) {
+      console.error(`[listingStore] Error fetching listing by id: ${error}`)
       throw error
     }
   }
@@ -129,10 +193,12 @@ export const fetchListingsByUserIdAtom = atom(
         )
 
         // Fetch the main image if it's not already loaded
-        if (listing.images.main.id && !listing.images.main.data) {
-          const imageDoc = await getImage(listing.images.main.id)
-          if (imageDoc) {
-            listing.images.main.data = imageDoc.data
+        for (const type of ['main', 'alt1', 'alt2'] as (keyof ListingImages)[]) {
+          if (listing.images[type]?.id && !listing.images[type]?.data) {
+            const imageDoc = await getImage(listing.images[type]!.id)
+            if (imageDoc) {
+              listing.images[type]!.data = imageDoc.data
+            }
           }
         }
 
@@ -284,54 +350,48 @@ export const addListingAtom = atom(
  */
 export const updateListingAtom = atom(
   null,
-  async (get, set, payload: { updatedListing: Listing; imageFiles?: File[] }): Promise<void> => {
+  async (
+    get,
+    set,
+    payload: {
+      updatedListing: Listing
+      imageUpdates: { [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File } }
+    }
+  ): Promise<void> => {
     console.log(`[listingStore/updateListingAtom]: updatedListing: ${payload.updatedListing}`)
-    const { updatedListing, imageFiles } = payload
+    const { updatedListing, imageUpdates } = payload
     try {
       // Extract the listing id and the update data & get the original listing
       const { id, ...updateData } = updatedListing
       const originalListing = get(listingsAtom)[id]
 
-      // Handle image updates
-      const updatedImages: ListingImages = { ...originalListing.images }
+      // Get the original images
+      const updatedImages: ListingImages = originalListing.images
 
-      // If there are image files, update the images
-      // If the {main, alt1, alt2} image is not in the new set, delete it
-      if (imageFiles && imageFiles.length > 0) {
-        if (updatedImages.main && !imageFiles.includes(updatedImages.main as unknown as File)) {
-          await deleteImage(updatedImages.main.id)
-          updatedImages.main = { id: '', listingId: id, data: '' }
-        }
-        if (updatedImages.alt1 && !imageFiles.includes(updatedImages.alt1 as unknown as File)) {
-          await deleteImage(updatedImages.alt1.id as string)
-          updatedImages.alt1 = undefined
-        }
-        if (updatedImages.alt2 && !imageFiles.includes(updatedImages.alt2 as unknown as File)) {
-          await deleteImage(updatedImages.alt2.id as string)
-          updatedImages.alt2 = undefined
-        }
+      for (const [type, update] of Object.entries(imageUpdates) as [
+        ImageType,
+        { action: 'add' | 'delete' | 'keep'; file?: File },
+      ][]) {
+        if (update.action === 'add' && update.file) {
+          // If there's an existing image, delete it first
+          if (updatedImages[type]?.id) {
+            await deleteImage(updatedImages[type]!.id!)
+          }
 
-        // Add new images
-        for (let i = 0; i < imageFiles.length; i++) {
-          const file = imageFiles[i]
-          const reader = new FileReader()
-          const imageData = await new Promise<string>((resolve) => {
+          const base64Image = await new Promise<string>((resolve) => {
+            const reader = new FileReader()
             reader.onloadend = () => resolve(reader.result as string)
-            reader.readAsDataURL(file)
+            reader.readAsDataURL(update.file!)
           })
-
-          // Add the image to the Images collection
-          const imageId = await addImage(imageData, id)
-
-          // Update the images object
-          if (i === 0) {
-            updatedImages.main = { id: imageId, listingId: id, data: imageData }
-          } else if (i === 1) {
-            updatedImages.alt1 = { id: imageId, listingId: id, data: imageData }
-          } else if (i === 2) {
-            updatedImages.alt2 = { id: imageId, listingId: id, data: imageData }
+          const imageId = await addImage(base64Image, id)
+          updatedImages[type] = { id: imageId, listingId: id, data: base64Image }
+        } else if (update.action === 'delete') {
+          if (updatedImages[type]?.id) {
+            await deleteImage(updatedImages[type]!.id!)
+            delete updatedImages[type]
           }
         }
+        // If action is 'keep', do nothing
       }
 
       // Handle marker updates
@@ -384,13 +444,16 @@ export const updateListingAtom = atom(
         alt2Id?: string
       } = { mainId: '' }
 
-      if (updatedImages.main) {
+      if (updatedImages.main.id) {
+        console.log('updatedImages.main.id', updatedImages.main.id)
         listingImageIds.mainId = updatedImages.main.id
       }
-      if (updatedImages.alt1) {
+      if (updatedImages.alt1?.id) {
+        console.log('updatedImages.alt1?.id', updatedImages.alt1?.id)
         listingImageIds.alt1Id = updatedImages.alt1.id
       }
-      if (updatedImages.alt2) {
+      if (updatedImages.alt2?.id) {
+        console.log('updatedImages.alt2?.id', updatedImages.alt2?.id)
         listingImageIds.alt2Id = updatedImages.alt2.id
       }
 
