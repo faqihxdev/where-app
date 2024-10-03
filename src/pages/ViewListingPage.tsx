@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { listingsAtom, fetchAllListingsAtom } from '../stores/listingStore'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { listingsAtom, fetchListingByIdAtom } from '../stores/listingStore'
 import { listingUsersAtom, fetchUserListingsAtom } from '../stores/userStore'
 import { markersAtom, fetchMarkerById } from '../stores/markerStore'
-import { getImage } from '../stores/imageStore'
 import { Listing } from '../types'
 import { Button } from '@chakra-ui/react'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -16,8 +15,8 @@ const ViewListingPage: React.FC = () => {
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
   const from = searchParams.get('from') || 'home'
-  const [listings, setListings] = useAtom(listingsAtom)
-  const fetchAllListings = useSetAtom(fetchAllListingsAtom)
+  const listings = useAtomValue(listingsAtom)
+  const fetchListingById = useSetAtom(fetchListingByIdAtom)
   const listingUsers = useAtomValue(listingUsersAtom)
   const fetchUserListings = useSetAtom(fetchUserListingsAtom)
   const markers = useAtomValue(markersAtom)
@@ -25,69 +24,54 @@ const ViewListingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
 
-  const fetchListingData = useCallback(async () => {
-    if (!listingId) return
+  // Fetch listing data on load or on refresh
+  const fetchListingData = useCallback(
+    async (onRefresh: boolean = false) => {
+      if (!listingId) return // If the listingId is not available, return
 
-    setIsLoading(true)
-    setError(null)
-    try {
-      if (!listings[listingId]) {
-        await fetchAllListings()
-      }
+      setIsLoading(true)
+      setError(null)
 
-      const listing = listings[listingId]
-      if (!listing) {
-        setError('Listing not found')
-        return
-      }
-
-      // Fetch user data if not available
-      if (!listingUsers[listing.userId]) {
-        await fetchUserListings(listing.userId)
-      }
-
-      // Fetch markers if not available
-      await Promise.all(
-        listing.markers.map(async (m) => {
-          if (!markers[m.id]) {
-            await fetchMarkerById(m.id, markers)
-          }
-        })
-      )
-
-      // Fetch images if not available
-      if (listing.images.main.id && !listing.images.main.data) {
-        const imageDoc = await getImage(listing.images.main.id)
-        if (imageDoc) {
-          setListings((prev) => ({
-            ...prev,
-            [listingId]: {
-              ...prev[listingId],
-              images: {
-                ...prev[listingId].images,
-                main: {
-                  ...prev[listingId].images.main,
-                  data: imageDoc.data,
-                },
-              },
-            },
-          }))
+      try {
+        if (onRefresh || !listings[listingId]) {
+          await fetchListingById(listingId)
         }
+
+        const listing = listings[listingId]
+        if (!listing) {
+          setError('Listing not found')
+          return
+        }
+
+        // Fetch user data if not available
+        if (!listingUsers[listing.userId]) {
+          await fetchUserListings(listing.userId)
+        }
+
+        // Fetch markers if not available
+        await Promise.all(
+          listing.markers.map(async (m) => {
+            if (!markers[m.id]) {
+              await fetchMarkerById(m.id, markers)
+            }
+          })
+        )
+      } catch (error) {
+        console.error('[ViewListingPage]: Error fetching listing data:', error)
+        setError('An error occurred while fetching the listing data')
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error('[ViewListingPage]: Error fetching listing data:', error)
-      setError('An error occurred while fetching the listing data')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [listingId, listings, fetchAllListings, listingUsers, fetchUserListings, markers, setListings])
+    },
+    [listingId, listings, listingUsers, fetchUserListings, fetchListingById, markers]
+  )
 
   useEffect(() => {
     fetchListingData()
   }, [fetchListingData])
 
   const handleRefresh = async () => {
-    await fetchListingData()
+    await fetchListingData(true)
   }
 
   const handleBack = () => {
@@ -173,7 +157,7 @@ const ViewListingPage: React.FC = () => {
           <button
             onClick={handleBack}
             className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
-            <ArrowLeftIcon className='h-6 w-6 text-gray-600' />
+            <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
           </button>
           <h1 className='text-xl font-semibold ml-3'>View Listing</h1>
         </div>

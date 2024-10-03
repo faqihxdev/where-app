@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { listingsAtom, updateListingAtom, fetchAllListingsAtom } from '../stores/listingStore'
+import { listingsAtom, updateListingAtom, fetchListingByIdAtom } from '../stores/listingStore'
 import { showCustomToast } from '../components/CustomToast'
-import { Listing, Marker } from '../types'
+import { Listing, Marker, ImageType } from '../types'
 import ListingForm from '../components/ListingForm'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
-import { fetchMarkerById } from '../stores/markerStore'
+import { fetchMarkerById, markersAtom } from '../stores/markerStore'
 
 const EditListingPage: React.FC = () => {
   const { listingId } = useParams<{ listingId: string }>()
@@ -15,33 +15,36 @@ const EditListingPage: React.FC = () => {
   const location = useLocation()
   const listings = useAtomValue(listingsAtom)
   const updateListing = useSetAtom(updateListingAtom)
-  const fetchAllListings = useSetAtom(fetchAllListingsAtom)
+  const fetchListingById = useSetAtom(fetchListingByIdAtom)
+  const markers = useAtomValue(markersAtom)
   const [isLoading, setIsLoading] = useState(true)
   const [listing, setListing] = useState<Listing | null>(null)
 
   const fetchListingData = useCallback(async () => {
-    if (!listingId) return
-
+    if (!listingId) return // If the listingId is not available, return
     setIsLoading(true)
+
     try {
       if (!listings[listingId]) {
-        await fetchAllListings()
+        await fetchListingById(listingId)
       }
 
       const fetchedListing = listings[listingId]
+
       if (fetchedListing) {
         // Fetch markers for the listing
-        const markers = await Promise.all(
-          fetchedListing.markers.map(async (marker) => {
-            const fetchedMarker = await fetchMarkerById(marker.id, {})
-            return fetchedMarker || marker
+        await Promise.all(
+          fetchedListing.markers.map(async (m) => {
+            if (!markers[m.id]) {
+              const fetchedMarker = await fetchMarkerById(m.id, {})
+              return fetchedMarker || m
+            } else {
+              return m
+            }
           })
         )
 
-        setListing({
-          ...fetchedListing,
-          markers,
-        })
+        setListing(fetchedListing)
       } else {
         showCustomToast({
           title: 'Error',
@@ -60,7 +63,7 @@ const EditListingPage: React.FC = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [listingId, listings, fetchAllListings, navigate])
+  }, [listingId, listings, markers, fetchListingById, navigate])
 
   useEffect(() => {
     fetchListingData()
@@ -68,7 +71,7 @@ const EditListingPage: React.FC = () => {
 
   const handleSubmit = async (
     formData: Omit<Listing, 'id' | 'images' | 'markers'>,
-    imageFiles: File[],
+    imageUpdates: { [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File } },
     markers: Omit<Marker, 'id' | 'listingId'>[]
   ) => {
     if (!listingId || !listing) return
@@ -91,7 +94,10 @@ const EditListingPage: React.FC = () => {
         })),
       }
 
-      await updateListing({ updatedListing, imageFiles })
+      console.log('[EditListingPage/handleSubmit]: updatedListing:', updatedListing)
+      console.log('[EditListingPage/handleSubmit]: imageUpdates:', imageUpdates)
+
+      await updateListing({ updatedListing, imageUpdates })
 
       showCustomToast({
         title: 'Listing Updated',
@@ -151,7 +157,7 @@ const EditListingPage: React.FC = () => {
         <button
           onClick={handleBack}
           className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
-          <ArrowLeftIcon className='h-6 w-6 text-gray-600' />
+          <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
         </button>
         <h1 className='text-xl font-semibold ml-3'>Edit Listing</h1>
       </div>

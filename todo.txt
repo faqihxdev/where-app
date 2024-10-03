@@ -1,0 +1,16 @@
+# TODO
+- Optimise: Check for all data fetching ui to only fetch on refresh / first time visit
+- Map UI
+- View listing page
+- Inbox
+  - Notification: Expiry
+- Profile
+  - User Info
+  - Change display name, password, etc
+  - Change profile picture (optional)
+- Resolve listings (be both from matches or your listings) both click resolve, for match, show the listing id of matched, for basic listing, just resolve, after any of the 2 go to resolve page to resolve them.
+- Third-party login (?)
+
+# Known Bugs
+- New user register listing not loaded?
+- Deleting main image submits edit listing (lol wth)

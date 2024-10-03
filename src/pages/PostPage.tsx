@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { addListingAtom } from '../stores/listingStore'
 import { showCustomToast } from '../components/CustomToast'
-import { Listing, Marker } from '../types'
+import { Listing, Marker, ImageType } from '../types'
 import ListingForm from '../components/ListingForm'
 import { userDataAtom } from '../stores/userStore'
 
@@ -16,7 +16,7 @@ const PostPage: React.FC = () => {
 
   const handleSubmit = async (
     formData: Omit<Listing, 'id' | 'images' | 'markers'>,
-    imageFiles: File[],
+    imageUpdates: { [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File } },
     markers: Omit<Marker, 'id' | 'listingId'>[]
   ) => {
     if (!userData) {
@@ -34,6 +34,13 @@ const PostPage: React.FC = () => {
         ...formData,
         userId: userData.uid,
       }
+
+      const imageFiles: File[] = Object.values(imageUpdates)
+        .filter(
+          (update): update is { action: 'add'; file: File } =>
+            update.action === 'add' && !!update.file
+        )
+        .map((update) => update.file)
 
       await addListing({ newListing, imageFiles, markers })
       showCustomToast({
