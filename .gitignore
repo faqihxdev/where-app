@@ -31,3 +31,4 @@ dist-ssr
 /.firebase
 package-lock.json
 .ref.txt
+*.tsbuildinfo
