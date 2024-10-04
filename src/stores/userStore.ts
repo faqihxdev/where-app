@@ -1,4 +1,4 @@
-import { atom } from 'jotai';
+import { atom, SetStateAction } from 'jotai';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { User } from '../types';
@@ -73,40 +73,34 @@ export const updateUserAtom = atom(
 /**
  * @description Fetch user data for a listing from Firestore (get user data for listing card etc)
  * @param {string} userId - The ID of the user to fetch
+ * @param {Record<string, User>} existingListingUsers - Existing listing users from the atom
+ * @param {Function} set - Function to update the listingUsersAtom
  * @returns {Promise<User | null>} - A promise that resolves when the user data is fetched
  */
-export const fetchUserListingsAtom = atom(
-  null,
-  async (get, set, userId: string): Promise<User | null> => {
-    console.log(`[userStore/fetchListingUserDataAtom]: userId: ${userId}`);
+export const fetchListingUser = async (
+  userId: string,
+  setListingUsers: (update: SetStateAction<Record<string, User>>) => void
+): Promise<User | null> => {
+  console.log(`[userStore/fetchListingUser]: userId: ${userId}`);
 
-    // Get the listing users from the listing users atom
-    const listingUsers = get(listingUsersAtom);
+  // If the user data does not exist in the existing listing users, fetch it from Firestore
+  try {
+    console.log('🔥 [userStore/fetchListingUser]');
+    const userDoc = await getDoc(doc(db, 'Users', userId));
 
-    // If the user data exists in the listing users atom, return it
-    if (listingUsers[userId]) {
-      return listingUsers[userId];
+    // If the user document exists, set the user data in the listing users atom
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as User;
+      console.log(`[userStore/fetchListingUser]: User data fetched: ${userData}`);
+      setListingUsers((prev) => ({ ...prev, [userId]: userData }));
+      return userData;
     }
-
-    // If the user data does not exist in the listing users atom, fetch it from Firestore
-    try {
-      console.log('🔥 [userStore/fetchListingUserDataAtom]');
-      const userDoc = await getDoc(doc(db, 'Users', userId));
-
-      // If the user document exists, set the user data in the listing users atom
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as User;
-        console.log(`[userStore/fetchListingUserDataAtom]: User data fetched: ${userData}`);
-        set(listingUsersAtom, (prev) => ({ ...prev, [userId]: userData }));
-        return userData;
-      }
-    } catch (error) {
-      console.error(`[userStore/fetchListingUserDataAtom]: Error fetching user data: ${error}`);
-      throw error;
-    }
-    return null;
+  } catch (error) {
+    console.error(`[userStore/fetchListingUser]: Error fetching user data: ${error}`);
+    throw error;
   }
-);
+  return null;
+};
 
 /* ########## HELPER FUNCTIONS ########## */
 
