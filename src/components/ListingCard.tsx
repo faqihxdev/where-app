@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Listing } from '../types';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { listingsAtom, deleteListingAtom } from '../stores/listingStore';
-import { fetchUserListingsAtom, listingUsersAtom, getAvatarUrl } from '../stores/userStore';
-import { markersAtom, fetchMarkerById } from '../stores/markerStore';
-import { getImage } from '../stores/imageStore';
+import { deleteListingAtom } from '../stores/listingStore';
+import { listingUsersAtom, getAvatarUrl } from '../stores/userStore';
+import { markersAtom } from '../stores/markerStore';
 import {
   ExclamationCircleIcon,
   MagnifyingGlassCircleIcon,
@@ -36,70 +35,13 @@ interface ListingCardProps {
 }
 
 export default function ListingCard({ listing, showActions = false }: ListingCardProps) {
-  const setListings = useSetAtom(listingsAtom);
-  const fetchUserListings = useSetAtom(fetchUserListingsAtom);
   const deleteListing = useSetAtom(deleteListingAtom);
-  const [isImageLoading, setIsImageLoading] = useState(!listing.images.main.data);
+  const [isImageLoading] = useState(!listing.images.main.data);
   const markers = useAtomValue(markersAtom);
   const listingUsers = useAtomValue(listingUsersAtom);
   const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const location = useLocation();
-
-  useEffect(() => {
-    const fetchMainImage = async () => {
-      if (listing.images.main.id && !listing.images.main.data) {
-        setIsImageLoading(true);
-        try {
-          const imageDoc = await getImage(listing.images.main.id);
-          if (imageDoc) {
-            // Update the local listings state
-            setListings((prev) => ({
-              ...prev,
-              [listing.id]: {
-                ...prev[listing.id],
-                images: {
-                  ...prev[listing.id].images,
-                  main: {
-                    ...prev[listing.id].images.main,
-                    data: imageDoc.data,
-                  },
-                },
-              },
-            }));
-          }
-        } catch (error) {
-          console.error('[ListingCard/fetchMainImage]: ', error);
-        } finally {
-          setIsImageLoading(false);
-        }
-      }
-    };
-
-    fetchMainImage();
-
-    // Fetch user data for the listing
-    const fetchUser = async () => {
-      try {
-        await fetchUserListings(listing.userId);
-      } catch (error) {
-        console.error('[ListingCard/fetchUser]: ', error);
-      }
-    };
-
-    fetchUser();
-
-    // Fetch markers for the listing
-    const fetchMarkersListing = async () => {
-      try {
-        await Promise.all(listing.markers.map((m) => fetchMarkerById(m.id, markers)));
-      } catch (error) {
-        console.error('[ListingCard/fetchMarkers]: ', error);
-      }
-    };
-
-    fetchMarkersListing();
-  }, [listing, markers, fetchUserListings, setListings]);
 
   // Function to safely format the date
   const formatDate = (date: Date) => {
