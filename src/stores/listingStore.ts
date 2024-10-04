@@ -571,3 +571,39 @@ const checkForMatchesAndExpiry = async (listings: Listing[]): Promise<void> => {
   console.log(`[listingStore/checkForMatchesAndExpiry] ${listings.length} listings to check`);
   return;
 };
+
+
+// FOR JACOB's MAP FUNCTION
+// Function to fetch all listings and their markers
+export const fetchListingsWithMarkers = async () => {
+  try {
+    // Fetch all listings
+    const listingsSnapshot = await getDocs(collection(db, 'Listings'));
+    const listings = listingsSnapshot.docs.map((listingDoc) => ({
+      id: listingDoc.id,
+      ...listingDoc.data(),
+    }));
+
+    const listingsWithMarkers = await Promise.all(
+      listings.map(async (listing) => {
+        // Fetch associated markers for each listing
+        const markers = await Promise.all(
+          listing.markerIds.map(async (markerId) => {
+            const markerDoc = await getDoc(doc(db, 'Markers', markerId));
+            return markerDoc.exists() ? { id: markerDoc.id, ...markerDoc.data() } : null;
+          })
+        );
+
+        return {
+          ...listing,
+          markers: markers.filter((marker) => marker !== null),
+        };
+      })
+    );
+
+    return listingsWithMarkers;
+  } catch (error) {
+    console.error('Error fetching listings and markers:', error);
+    throw error;
+  }
+};

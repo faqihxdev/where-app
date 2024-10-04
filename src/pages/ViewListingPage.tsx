@@ -77,7 +77,10 @@ const ViewListingPage: React.FC = () => {
   const handleBack = () => {
     if (from === 'inbox') {
       navigate('/inbox');
-    } else {
+    } else if (from == 'map') {
+      navigate('/map');
+    }
+    else {
       navigate('/');
     }
   };
@@ -173,15 +176,15 @@ const ViewListingPage: React.FC = () => {
                 },
                 alt1: listing.images.alt1
                   ? {
-                      ...listing.images.alt1,
-                      data: truncateBase64(listing.images.alt1.data || ''),
-                    }
+                    ...listing.images.alt1,
+                    data: truncateBase64(listing.images.alt1.data || ''),
+                  }
                   : undefined,
                 alt2: listing.images.alt2
                   ? {
-                      ...listing.images.alt2,
-                      data: truncateBase64(listing.images.alt2.data || ''),
-                    }
+                    ...listing.images.alt2,
+                    data: truncateBase64(listing.images.alt2.data || ''),
+                  }
                   : undefined,
               },
             },

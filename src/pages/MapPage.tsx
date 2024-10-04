@@ -1,32 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Spinner } from '@chakra-ui/react';
-import { fetchAllMarkers } from '../stores/markerStore'; // Import the fetchAllMarkers function
-import { Marker as MarkerType } from '../types'; // Import the Marker type from your types
+import { fetchListingsWithMarkers } from '../stores/listingStore';
 
-
-// Create custom icon for the user's location marker
 const userLocationIcon = new L.Icon({
-  iconUrl: '/logo.png', // Update with your marker icon URL
+  iconUrl: '/logo_transparent.png',
   iconSize: [30, 37],
   iconAnchor: [15, 37],
 });
 
-const itemLocationIcon = new L.Icon({
-  iconUrl: '/marker.png', // Update with your marker icon URL
-  iconSize: [15, 18],
-  iconAnchor: [7, 18],
-});
-
-
-
 const MapPage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [markers, setMarkers] = useState<Record<string, MarkerType>>({}); // Add state for markers
-
+  const [listingsWithMarkers, setListingsWithMarkers] = useState([]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -47,19 +35,38 @@ const MapPage: React.FC = () => {
       setLoading(false);
     }
 
-    // Fetch markers from Firestore
-    const fetchMarkers = async () => {
+    const fetchListings = async () => {
       try {
-        const fetchedMarkers = await fetchAllMarkers();
-        setMarkers(fetchedMarkers); // Update markers state
+        const fetchedListingsWithMarkers = await fetchListingsWithMarkers();
+        setListingsWithMarkers(fetchedListingsWithMarkers);
       } catch (error) {
-        console.error('Error fetching markers:', error);
+        console.error('Error fetching listings and markers:', error);
       }
     };
 
-    fetchMarkers();
+    fetchListings();
   }, []);
 
+  const getColorForType = (type: string) => {
+    switch (type) {
+      case 'found':
+        return 'green';
+      case 'lost':
+        return 'red';
+      default:
+        return 'gray';
+    }
+  };
+
+  const getMarkerForType = (type: string) => {
+    const markerIconUrl =
+      type === 'found' ? '/marker_green.png' : type === 'lost' ? '/marker.png' : '/marker.png';
+    return new L.Icon({
+      iconUrl: markerIconUrl,
+      iconSize: [15, 18],
+      iconAnchor: [7, 18],
+    });
+  };
 
   if (loading) {
     return (
@@ -75,7 +82,6 @@ const MapPage: React.FC = () => {
         <h1 className='text-2xl font-semibold text-center'>Map</h1>
       </header>
 
-      {/* Map */}
       <div className='w-full max-w-4xl h-[70vh] bg-white shadow-md rounded-lg'>
         {userLocation ? (
           <MapContainer
@@ -87,22 +93,44 @@ const MapPage: React.FC = () => {
               url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             />
             <Marker position={userLocation} icon={userLocationIcon} />
-
-            {Object.values(markers).map((marker) => (
-              <React.Fragment key={marker.id}>
-                {/* Marker */}
-                <Marker position={[marker.latitude, marker.longitude]} icon={itemLocationIcon} />
-                {/* Circle for radius */}
-                <Circle
-                  center={[marker.latitude, marker.longitude]}
-                  radius={marker.radius}
-                  pathOptions={{ color: 'red', fillColor: 'red', fillOpacity: 0.2 }} // Customize circle styles
-                />
-              </React.Fragment>
-            ))}
-
-
-
+            <Circle
+              center={userLocation}
+              radius={500}
+              pathOptions={{
+                color: 'blue',
+                fillColor: 'blue',
+                fillOpacity: 0.1,
+              }}
+            />
+            {listingsWithMarkers.map((listing) =>
+              listing.markers.map((marker) => (
+                <React.Fragment key={marker.id}>
+                  <Marker
+                    position={[marker.latitude, marker.longitude]}
+                    icon={getMarkerForType(listing.type)}
+                  >
+                    <Popup>
+                      <div className="p-2">
+                        <h4 className="font-bold">{listing.title}</h4>
+                        <p><strong>Type:</strong> {listing.type}</p>
+                        <p><strong>Marker Name:</strong> {marker.name}</p>
+                        <p><strong>Radius:</strong> {marker.radius} meters</p>
+                        <p><strong>Description:</strong> {listing.description}</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                  <Circle
+                    center={[marker.latitude, marker.longitude]}
+                    radius={marker.radius}
+                    pathOptions={{
+                      color: getColorForType(listing.type),
+                      fillColor: getColorForType(listing.type),
+                      fillOpacity: 0.2,
+                    }}
+                  />
+                </React.Fragment>
+              ))
+            )}
           </MapContainer>
         ) : (
           <p className='text-center'>Unable to fetch your location.</p>

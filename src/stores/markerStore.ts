@@ -175,23 +175,4 @@ export const deleteMarker = async (
 };
 
 
-export const fetchAllMarkers = async (): Promise<Record<string, Marker>> => {
-  console.log('[markerStore/fetchAllMarkers]: Fetching all markers');
-  try {
-    const markersSnapshot = await getDocs(collection(db, 'Markers'));
-    const markers: Record<string, Marker> = {};
-
-    markersSnapshot.forEach((doc) => {
-      const markerData = doc.data() as Omit<Marker, 'id'>;
-      const marker: Marker = { id: doc.id, ...markerData };
-      markers[doc.id] = marker;
-    });
-
-    return markers;
-  } catch (error) {
-    console.error(`[markerStore/fetchAllMarkers]: error: ${error}`);
-    throw error;
-  }
-};
-
 
