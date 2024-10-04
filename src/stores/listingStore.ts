@@ -16,12 +16,16 @@ import {
 } from 'firebase/firestore';
 import { addImage, deleteImage, getImage } from './imageStore';
 import { markersAtom, addMarker, fetchMarkerById, deleteMarker, updateMarker } from './markerStore';
+import { fetchListingUser, listingUsersAtom } from './userStore';
 
 // The listings atom is used to store the listings in the client-side state
 export const listingsAtom = atomWithStorage<Record<string, Listing>>('listings', {});
 
 // The listingsFetched atom is used to store the boolean value indicating if the listings have been fetched from Firestore
 export const listingsFetchedAtom = atomWithStorage<boolean>('listingsFetched', false);
+
+// Add this new atom at the top of the file with other atom declarations
+export const userListingsFetchedAtom = atomWithStorage<boolean>('userListingsFetched', false);
 
 /**
  * @TODO Add the MATCH and EXPIRY functionality
@@ -69,6 +73,11 @@ export const fetchAllListingsAtom = atom(
             }
           }
         }
+
+        // Fetch the listing user
+        await fetchListingUser(listing.userId, (update) => {
+          set(listingUsersAtom, update);
+        });
 
         // Add the listing to the listingsAtom
         listings[doc.id] = listing;
@@ -135,6 +144,11 @@ export const fetchListingByIdAtom = atom(
             }
           }
         }
+
+        // Fetch the listing user
+        await fetchListingUser(listing.userId, (update) => {
+          set(listingUsersAtom, update);
+        });
 
         // Update the listingsAtom with the new listing
         set(listingsAtom, { ...get(listingsAtom), [listingId]: listing });
@@ -209,6 +223,9 @@ export const fetchListingsByUserIdAtom = atom(
 
       // Update the listingsAtom with the new listings
       set(listingsAtom, existingListings);
+
+      // Set userListingsFetched to true
+      set(userListingsFetchedAtom, true);
 
       return listings;
     } catch (error) {

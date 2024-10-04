@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom, fetchListingByIdAtom } from '../stores/listingStore';
-import { listingUsersAtom, fetchUserListingsAtom } from '../stores/userStore';
+import { listingUsersAtom, fetchListingUser } from '../stores/userStore';
 import { markersAtom, fetchMarkerById } from '../stores/markerStore';
 import { Listing } from '../types';
 import { Button } from '@chakra-ui/react';
@@ -18,7 +18,7 @@ const ViewListingPage: React.FC = () => {
   const listings = useAtomValue(listingsAtom);
   const fetchListingById = useSetAtom(fetchListingByIdAtom);
   const listingUsers = useAtomValue(listingUsersAtom);
-  const fetchUserListings = useSetAtom(fetchUserListingsAtom);
+  const setListingUsers = useSetAtom(listingUsersAtom);
   const markers = useAtomValue(markersAtom);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +45,7 @@ const ViewListingPage: React.FC = () => {
 
         // Fetch user data if not available
         if (!listingUsers[listing.userId]) {
-          await fetchUserListings(listing.userId);
+          await fetchListingUser(listing.userId, setListingUsers);
         }
 
         // Fetch markers if not available
@@ -63,7 +63,7 @@ const ViewListingPage: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [listingId, listings, listingUsers, fetchUserListings, fetchListingById, markers]
+    [listingId, listings, listingUsers, setListingUsers, fetchListingById, markers]
   );
 
   useEffect(() => {
