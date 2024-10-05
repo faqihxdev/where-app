@@ -21,7 +21,7 @@ export enum ListingCategory {
 export enum ListingStatus {
   active = 'Active',
   resolved = 'Resolved',
-  archived = 'Archived',
+  expired = 'Expired',
 }
 
 export enum ListingKeyNames {
