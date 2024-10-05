@@ -25,7 +25,7 @@ export const fetchUserDataAtom = atom(null, async (_, set, uid: string): Promise
     // If the user document exists, set the user data atom
     if (userDoc.exists()) {
       const userData = userDoc.data() as User;
-      console.log(`[userStore/fetchUserData]: User data fetched: ${userData}`);
+      console.log('[userStore/fetchUserData]: User data fetched:', userData);
       set(userDataAtom, userData);
       return userData;
     } else {
