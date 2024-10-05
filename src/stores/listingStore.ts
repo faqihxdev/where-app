@@ -1,6 +1,6 @@
-import { atom } from 'jotai';
+import { atom, SetStateAction } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { Listing, ListingDB, ListingImages, Marker, ImageType } from '../types';
+import { Listing, ListingDB, ListingImages, Marker, ImageType, ListingStatus } from '../types';
 import { db } from '../firebaseConfig';
 import {
   collection,
@@ -553,6 +553,34 @@ export const deleteListingAtom = atom(null, async (get, set, listingId: string):
   }
 });
 
+/**
+ * @description Set the status of a listing to expired
+ * @param {string} listingId - The ID of the listing to set to expired
+ * @returns {Promise<void>} - A promise that resolves when the listing is set to expired
+ */
+export const setListingStatusToExpiredAtom = async (
+  listingId: string,
+  setListings: (update: SetStateAction<Record<string, Listing>>) => void
+): Promise<void> => {
+  console.log(`[listingStore/setListingStatusToExpiredAtom]: listingId: ${listingId}`);
+  try {
+    // Update the listing status to expired
+    console.log('🔥 [listingStore/setListingStatusToExpiredAtom]');
+    await updateDoc(doc(db, 'Listings', listingId), {
+      status: ListingStatus.expired,
+    });
+
+    // Update the client-side state
+    setListings((prev) => ({
+      ...prev,
+      [listingId]: { ...prev[listingId], status: ListingStatus.expired },
+    }));
+  } catch (error) {
+    console.error(`[listingStore/setListingStatusToExpiredAtom]: error: ${error}`);
+    throw error;
+  }
+};
+
 /* ########## HELPER FUNCTIONS ########## */
 
 /**
@@ -586,5 +614,20 @@ const convertListingDBToListing = (listingDB: ListingDB, markers: Marker[]): Lis
  */
 const checkForMatchesAndExpiry = async (listings: Listing[]): Promise<void> => {
   console.log(`[listingStore/checkForMatchesAndExpiry] ${listings.length} listings to check`);
+
+  // Check for listings that have expired
+  for (const listing of listings) {
+    if (listing.expiresAt < new Date()) {
+      await setListingStatusToExpiredAtom(listing.id, (update) => {
+        return update;
+      });
+
+      // TODO: Notify the user that their listing has expired
+      // TODO: If expire date is more than 30 days, delete the listing
+    }
+  }
+
+  // Check for matches
+
   return;
 };
