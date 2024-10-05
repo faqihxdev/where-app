@@ -6,19 +6,28 @@ import { Spinner, Button } from '@chakra-ui/react';
 import { fetchListingsWithMarkers } from '../stores/listingStore';
 import { useNavigate } from 'react-router-dom';
 
+// Icons for user location and police stations
 const userLocationIcon = new L.Icon({
   iconUrl: '/logo_transparent.png',
   iconSize: [30, 37],
   iconAnchor: [15, 37],
 });
 
+const policeStationIcon = new L.Icon({
+  iconUrl: '/police_picture.png', // Path to your police station marker icon
+  iconSize: [15, 18],
+  iconAnchor: [7, 8],
+});
+
 const MapPage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(true);
   const [listingsWithMarkers, setListingsWithMarkers] = useState([]);
+  const [policeStations, setPoliceStations] = useState<any[]>([]); // Store police stations GeoJSON data
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Fetch user location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -37,6 +46,7 @@ const MapPage: React.FC = () => {
       setLoading(false);
     }
 
+    // Fetch listings
     const fetchListings = async () => {
       try {
         const fetchedListingsWithMarkers = await fetchListingsWithMarkers();
@@ -46,7 +56,19 @@ const MapPage: React.FC = () => {
       }
     };
 
+    // Fetch GeoJSON data from local file
+    const fetchPoliceStations = async () => {
+      try {
+        const response = await fetch('/cleaned_police_stations.geojson'); // Assuming it's in public folder
+        const data = await response.json();
+        setPoliceStations(data.features); // Assuming 'features' holds the relevant GeoJSON data
+      } catch (error) {
+        console.error('Error fetching police station data:', error);
+      }
+    };
+
     fetchListings();
+    fetchPoliceStations();
   }, []);
 
   const getColorForType = (type: string) => {
@@ -86,11 +108,7 @@ const MapPage: React.FC = () => {
 
       <div className="w-full max-w-4xl h-[70vh] bg-white shadow-md rounded-lg">
         {userLocation ? (
-          <MapContainer
-            center={userLocation}
-            zoom={13}
-            style={{ height: '100%', width: '100%' }}
-          >
+          <MapContainer center={userLocation} zoom={13} style={{ height: '100%', width: '100%' }}>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -105,6 +123,8 @@ const MapPage: React.FC = () => {
                 fillOpacity: 0.1,
               }}
             />
+
+            {/* Render Listings Markers */}
             {listingsWithMarkers.map((listing) =>
               listing.markers.map((marker) => (
                 <React.Fragment key={marker.id}>
@@ -112,8 +132,7 @@ const MapPage: React.FC = () => {
                     position={[marker.latitude, marker.longitude]}
                     icon={getMarkerForType(listing.type)}
                   >
-                    <Popup
-                      className="custom-popup">
+                    <Popup className="custom-popup">
                       <div
                         className=" text-xs"
                         style={{
@@ -149,6 +168,20 @@ const MapPage: React.FC = () => {
                 </React.Fragment>
               ))
             )}
+
+            {policeStations.map((station, index) => (
+              <Marker
+                key={index}
+                position={[station.geometry.coordinates[1], station.geometry.coordinates[0]]}
+                icon={policeStationIcon}
+              >
+                <Popup>
+                  <div>
+                    <h4>{station.properties.Description}</h4>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
           </MapContainer>
         ) : (
           <p className="text-center">Unable to fetch your location.</p>
