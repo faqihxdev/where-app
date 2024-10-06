@@ -1,4 +1,4 @@
-import { atom } from 'jotai';
+import { atom, SetStateAction } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { Match } from '../types';
 import { db } from '../firebaseConfig';
@@ -22,9 +22,25 @@ export const matchesAtom = atomWithStorage<Record<string, Match>>('matches', {})
  * @param {Omit<Match, 'id'>} newMatch - The new match to add
  * @returns {Promise<Match>} - A promise that resolves to the new match
  */
-export const addMatchAtom = atom(null, async (_, set, newMatch: Omit<Match, 'id'>) => {
+export const addMatchAtom = async (
+  newMatch: Omit<Match, 'id'>,
+  setMatches: (update: SetStateAction<Record<string, Match>>) => void
+) => {
   console.log(`[matchStore/addMatchAtom]: Adding match: ${newMatch}`);
+
   try {
+    // Check if the match already exists in Firestore
+    const q = query(
+      collection(db, 'Matches'),
+      where('listingId1', '==', newMatch.listingId1),
+      where('listingId2', '==', newMatch.listingId2)
+    );
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      console.log(`[matchStore/addMatchAtom]: Match already exists: ${newMatch}`);
+      return;
+    }
+
     // Create a new match object to add to Firestore
     const newMatchToAdd: Omit<Match, 'id'> = {
       listingId1: newMatch.listingId1,
@@ -42,13 +58,13 @@ export const addMatchAtom = atom(null, async (_, set, newMatch: Omit<Match, 'id'
 
     // Update the matches atom
     const match: Match = { id: docRef.id, ...newMatch };
-    set(matchesAtom, (prev) => ({ ...prev, [docRef.id]: match }));
+    setMatches((prev) => ({ ...prev, [match.id]: match }));
     return match;
   } catch (error) {
     console.error(`[matchStore/addMatchAtom]: Error adding match: ${error}`);
     throw error;
   }
-});
+};
 
 /**
  * @description Fetch matches for a user
