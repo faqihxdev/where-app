@@ -30,6 +30,26 @@ export const areCoordinatesWithinDistance = (
 };
 
 /**
+ * @description Checks if two markers overlap considering an additional buffer
+ * @param marker1 The first marker
+ * @param marker2 The second marker
+ * @param buffer Additional buffer to add to each marker's radius (in meters)
+ * @returns True if the markers overlap, false otherwise
+ */
+export const doMarkersOverlap = (
+  marker1: { latitude: number; longitude: number; radius: number },
+  marker2: { latitude: number; longitude: number; radius: number },
+  buffer: number
+): boolean => {
+  const [withinDistance] = areCoordinatesWithinDistance(
+    { lat: marker1.latitude, lng: marker1.longitude },
+    { lat: marker2.latitude, lng: marker2.longitude },
+    marker1.radius + marker2.radius + 2 * buffer
+  );
+  return withinDistance;
+};
+
+/**
  * @description Performs reverse geocoding to get an address from latitude and longitude
  * @param lat The latitude of the location
  * @param lon The longitude of the location
@@ -144,24 +164,4 @@ export const cosineSimilarity = (text1: string, text2: string): number => {
   const cosineSim = dotProduct / (magnitude1 * magnitude2);
 
   return cosineSim;
-};
-
-/**
- * @description Checks if two markers overlap considering an additional buffer
- * @param marker1 The first marker
- * @param marker2 The second marker
- * @param buffer Additional buffer to add to each marker's radius (in meters)
- * @returns True if the markers overlap, false otherwise
- */
-export const doMarkersOverlap = (
-  marker1: { latitude: number; longitude: number; radius: number },
-  marker2: { latitude: number; longitude: number; radius: number },
-  buffer: number
-): boolean => {
-  const [withinDistance] = areCoordinatesWithinDistance(
-    { lat: marker1.latitude, lng: marker1.longitude },
-    { lat: marker2.latitude, lng: marker2.longitude },
-    marker1.radius + marker2.radius + 2 * buffer
-  );
-  return withinDistance;
 };
