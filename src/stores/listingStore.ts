@@ -1,6 +1,15 @@
-import { atom, SetStateAction } from 'jotai';
+import { atom, SetStateAction, Setter } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { Listing, ListingDB, ListingImages, Marker, ImageType, ListingStatus } from '../types';
+import {
+  Listing,
+  ListingDB,
+  ListingImages,
+  Marker,
+  ImageType,
+  ListingStatus,
+  Match,
+  MatchStatus,
+} from '../types';
 import { db } from '../firebaseConfig';
 import {
   collection,
@@ -17,6 +26,8 @@ import {
 import { addImage, deleteImage, getImage } from './imageStore';
 import { markersAtom, addMarker, fetchMarkerById, deleteMarker, updateMarker } from './markerStore';
 import { fetchListingUser, listingUsersAtom } from './userStore';
+import { addMatchAtom, matchesAtom } from './matchStore';
+import { cosineSimilarity, doMarkersOverlap } from '../utils/utils';
 
 // The listings atom is used to store the listings in the client-side state
 export const listingsAtom = atomWithStorage<Record<string, Listing>>('listings', {});
@@ -84,7 +95,7 @@ export const fetchAllListingsAtom = atom(
       }
 
       // Check for matches and expiry
-      await checkForMatchesAndExpiry(Object.values(listings));
+      await matchExpiryCheck(Object.values(listings), get(matchesAtom), set);
 
       // Update the listingsAtom with the new listings
       set(listingsAtom, listings);
@@ -607,19 +618,25 @@ const convertListingDBToListing = (listingDB: ListingDB, markers: Marker[]): Lis
 });
 
 /**
- * @TODO Complete the function
- * @description For all the listings, check for (1) matches and (2) expiry
+ * @description For all the listings, check for (1) expiry and (2) matches
  * @param {Listing[]} listings - The listings to check
+ * @param {Record<string, Match>} existingMatches - The existing matches
+ * @param {(update: SetStateAction<Record<string, Match>>) => void} setMatches - Function to update matches
  * @returns {Promise<void>} - A promise that resolves when the listings are checked
  */
-const checkForMatchesAndExpiry = async (listings: Listing[]): Promise<void> => {
-  console.log(`[listingStore/checkForMatchesAndExpiry] ${listings.length} listings to check`);
+const matchExpiryCheck = async (
+  listings: Listing[],
+  existingMatches: Record<string, Match>,
+  set: Setter
+): Promise<void> => {
+  console.log(`[listingStore/matchExpiryCheck] ${listings.length} listings to check`);
 
-  // Check for listings that have expired
+  // For every listing, check if it has expired
   for (const listing of listings) {
     if (listing.expiresAt < new Date()) {
-      await setListingStatusToExpiredAtom(listing.id, (update) => {
-        return update;
+      // Fetch the listing user
+      await setListingStatusToExpiredAtom(listing.userId, (update) => {
+        set(listingsAtom, update);
       });
 
       // TODO: Notify the user that their listing has expired
@@ -627,7 +644,100 @@ const checkForMatchesAndExpiry = async (listings: Listing[]): Promise<void> => {
     }
   }
 
-  // Check for matches
+  // For every listing, check if it has a match
+  for (let i = 0; i < listings.length; i++) {
+    for (let j = i + 1; j < listings.length; j++) {
+      console.log(`[${listings[i].title} | ${listings[j].title}]`);
 
-  return;
+      const listing1 = listings[i];
+      const listing2 = listings[j];
+
+      // Check if these listings have already been matched
+      const existingMatch = Object.values(existingMatches).find(
+        (match) =>
+          (match.listingId1 === listing1.id && match.listingId2 === listing2.id) ||
+          (match.listingId1 === listing2.id && match.listingId2 === listing1.id)
+      );
+
+      if (!existingMatch) {
+        // If no existing match, check for a new match
+        if (isMatch(listing1, listing2)) {
+          console.warn('[listingStore/matchExpiryCheck] New match found', listing1, listing2);
+          const newMatch: Omit<Match, 'id'> = {
+            listingId1: listing1.id,
+            listingId2: listing2.id,
+            userId1: listing1.userId,
+            userId2: listing2.userId,
+            status: MatchStatus.new,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          // Use the addMatchAtom to add the new match
+          await addMatchAtom(newMatch, (update) => {
+            set(matchesAtom, update);
+          });
+
+          // TODO: Notify the users that they have a new match
+
+          console.log(
+            `[listingStore/matchExpiryCheck] New match found: ${listing1.id} & ${listing2.id}`
+          );
+        }
+      }
+    }
+  }
+};
+
+/**
+ * @description Check if two listings match
+ * @param {Listing} listing1 - The first listing
+ * @param {Listing} listing2 - The second listing
+ * @returns {boolean} - True if the listings match, false otherwise
+ */
+const isMatch = (listing1: Listing, listing2: Listing): boolean => {
+  // Condition 1: Types must be opposite
+  if (listing1.type === listing2.type) {
+    return false;
+  }
+
+  // Condition 2: Same category
+  if (listing1.category !== listing2.category) {
+    return false;
+  }
+
+  // Condition 3: Status cannot be resolved
+  if (listing1.status === ListingStatus.resolved || listing2.status === ListingStatus.resolved) {
+    return false;
+  }
+
+  // Condition 4: Marker overlap
+  const buffer = 100; // 100 meters additional buffer
+  const markersOverlap = listing1.markers.some((marker1) =>
+    listing2.markers.some((marker2) => doMarkersOverlap(marker1, marker2, buffer))
+  );
+
+  if (!markersOverlap) {
+    console.log(
+      "[listingStore/isMatch] Markers Don't Overlap:",
+      listing1.markers,
+      listing2.markers
+    );
+    return false;
+  }
+
+  // Condition 5: Cosine similarity > 0.8
+  const combinedText1 = `${listing1.title}`;
+  const combinedText2 = `${listing2.title}`;
+  const similarity = cosineSimilarity(combinedText1, combinedText2);
+
+  if (similarity < 0.8) {
+    console.log(`[listingStore/isMatch] Low CoSim: ${similarity}`);
+    return false;
+  }
+
+  console.log(similarity);
+
+  // All conditions are satisfied
+  return true;
 };
