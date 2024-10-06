@@ -15,6 +15,7 @@ import ViewListingPage from './pages/ViewListingPage';
 import EditListingPage from './pages/EditListingPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ResolvePage from './pages/ResolvePage';
+// import OneSignal from 'react-onesignal';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAtomValue(isAuthenticatedAtom);
@@ -30,6 +31,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const initializeAuth = useSetAtom(initializeAuthAtom);
+
   useEffect(() => {
     const init = async () => {
       await initializeAuth();
@@ -37,6 +39,37 @@ function App() {
     };
     init();
   }, [initializeAuth]);
+
+  // useEffect(() => {
+  //   const initOneSignal = async () => {
+  //     try {
+  //       const existingUserId = OneSignal.User.PushSubscription.id;
+  //       console.log('[App]: Existing OneSignal User ID:', existingUserId);
+  //       if (existingUserId) {
+  //         console.log('[App]: Existing OneSignal User ID:', existingUserId);
+  //       } else {
+  //         await OneSignal.init({
+  //           appId: '3e721a36-042d-41e0-b58a-6c8a41e5f3a8',
+  //           allowLocalhostAsSecureOrigin: true,
+  //           notifyButton: {
+  //             enable: true,
+  //           },
+  //         });
+
+  //         const newUserId = OneSignal.User.PushSubscription.id;
+  //         if (newUserId) {
+  //           console.log('[App]: New OneSignal User ID:', newUserId);
+  //         } else {
+  //           console.error('[App]: Failed to get OneSignal User ID after initialization');
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error('[App]: Error initializing or getting OneSignal User ID:', error);
+  //     }
+  //   };
+
+  //   initOneSignal();
+  // }, []);
 
   if (isLoading) {
     return (
@@ -72,5 +105,4 @@ function App() {
     </Provider>
   );
 }
-
 export default App;
