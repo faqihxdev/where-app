@@ -4,15 +4,8 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom } from '../stores/listingStore';
 import { updateMatchAtom } from '../stores/matchStore';
 import { userDataAtom } from '../stores/userStore';
-import {
-  MapPinIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationCircleIcon,
-  MagnifyingGlassCircleIcon,
-} from '@heroicons/react/24/outline';
-import { Menu, MenuButton, MenuList, MenuItem, Button, useDisclosure } from '@chakra-ui/react';
+import { MapPinIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { Button, useDisclosure } from '@chakra-ui/react';
 import { format, formatDistanceStrict } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { areCoordinatesWithinDistance } from '../utils/utils';
@@ -164,37 +157,40 @@ const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
 
     return (
       <div className='mb-4'>
-        <h3 className='text-sm font-medium mb-2'>
+        <h3 className='text-sm font-semibold mb-2'>
           {isCurrentUserListing
             ? 'Your listing'
             : `Matched with ${getDisplayName(listing.userId)}'s listing`}
         </h3>
         <div
-          className='bg-gray-100 rounded-lg p-2 flex items-center justify-between cursor-pointer hover:bg-gray-200 transition-colors duration-200'
+          className='p-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-between cursor-pointer hover:bg-gray-200 transition-colors duration-200'
           onClick={() => handleViewListing(listing)}>
           <div className='flex items-center space-x-2 flex-grow'>
             {listing.images.main.data ? (
               <img
                 src={listing.images.main.data}
                 alt={listing.title}
-                className='w-20 h-20 object-cover rounded-lg'
+                className='w-16 h-16 object-cover rounded-md'
               />
             ) : (
-              <div className='w-20 h-20 bg-gray-200 flex items-center justify-center rounded-lg'>
+              <div className='w-20 h-20 bg-gray-200 flex items-center justify-center'>
                 <span className='text-gray-400 text-xs'>No Image</span>
               </div>
             )}
-            <div className='flex-grow min-w-0'>
-              <h4 className='font-semibold text-sm mb-1 pr-8 truncate'>{listing.title}</h4>
-              <p className='text-xs text-gray-600 mb-1 pr-8 truncate'>{listing.description}</p>
-              <div
-                className={`flex items-center text-xs mt-1 ${listing.type === 'lost' ? 'text-red-600' : 'text-blue-600'}`}>
-                {listing.type === 'lost' ? (
-                  <ExclamationCircleIcon className='h-3 w-3 mr-1 flex-shrink-0' />
-                ) : (
-                  <MagnifyingGlassCircleIcon className='h-3 w-3 mr-1 flex-shrink-0' />
-                )}
-                <span>{listing.type === 'lost' ? 'Lost' : 'Found'} item</span>
+            <div className='flex-grow min-w-0 p-2'>
+              <h4 className='font-semibold text-sm mb-1 truncate'>{listing.title}</h4>
+              <div className='flex items-center'>
+                <span
+                  className={`text-[10px] font-medium px-1.5 rounded-full mr-1 ${
+                    listing.type === 'lost'
+                      ? 'text-red-600 bg-red-100'
+                      : 'text-blue-600 bg-blue-100'
+                  }`}>
+                  {listing.type === 'lost' ? 'Lost' : 'Found'}
+                </span>
+                <p className='text-xs text-gray-600 truncate flex-grow pr-2'>
+                  {listing.description}
+                </p>
               </div>
             </div>
           </div>
@@ -213,44 +209,50 @@ const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
 
   return (
     <div className='bg-white rounded-lg outline outline-1 outline-gray-200 overflow-hidden'>
-      <div className='p-4'>
+      <div className='relative p-4'>
+        <span
+          className={`absolute top-0 right-0 text-xs font-medium pr-2 pl-3 py-1 rounded-bl-xl ${getMatchStatusColor(
+            match.status
+          )}`}>
+          {match.status}
+        </span>
         {renderListing(currentUserListing, true)}
         {renderListing(otherUserListing, false)}
 
         {/* Location and Time Information */}
         <div className='mt-4 bg-gray-100 rounded-lg p-3'>
           <div className='flex flex-col'>
-            <div className='flex items-center justify-between text-sm text-gray-600 mb-2 pr-2'>
+            <div className='flex items-center justify-between text-[13px] text-gray-600 mb-2 pr-2'>
               <div className='flex items-center'>
-                <MapPinIcon className='h-4 w-4 mr-2 flex-shrink-0' />
+                <MapPinIcon className='h-4 w-4 mr-2 flex-shrink-0 stroke-2' />
                 <span className='font-medium'>Locations</span>
               </div>
               {distance !== null && (
-                <p className='text-xs text-blue-600 font-medium'>{distance} meters apart</p>
+                <p className='text-xs text-blue-600 font-semibold'>{distance} meters apart</p>
               )}
             </div>
-            <p className='text-xs text-gray-500 ml-6 pr-4 truncate'>
+            <p className='text-xs text-gray-500 ml-6 pr-2 truncate'>
               <span className='font-semibold'>You:</span>{' '}
               {currentUserListing?.markers[0]?.name || 'No location'}
             </p>
-            <p className='text-xs text-gray-500 ml-6 pr-4 truncate mb-2'>
+            <p className='text-xs text-gray-500 ml-6 pr-2 truncate mb-2'>
               <span className='font-semibold'>Match:</span>{' '}
               {otherUserListing?.markers[0]?.name || 'No location'}
             </p>
-            <div className='flex items-center justify-between text-sm text-gray-600 mt-3 mb-2 pr-2'>
+            <div className='flex items-center justify-between text-[13px] text-gray-600 mt-1 mb-2 pr-2'>
               <div className='flex items-center'>
-                <ClockIcon className='h-4 w-4 mr-2 flex-shrink-0' />
+                <ClockIcon className='h-4 w-4 mr-2 flex-shrink-0 stroke-2' />
                 <span className='font-medium'>Listing Times</span>
               </div>
               {timeDifference && (
-                <p className='text-xs text-blue-600 font-medium'>{timeDifference}</p>
+                <p className='text-xs text-blue-600 font-semibold'>{timeDifference}</p>
               )}
             </div>
             <p className='text-xs text-gray-500 ml-6'>
               <span className='font-semibold'>You:</span>{' '}
               {formatDate(currentUserListing?.createdAt || '')}
             </p>
-            <p className='text-xs text-gray-500 ml-6 mb-2'>
+            <p className='text-xs text-gray-500 ml-6'>
               <span className='font-semibold'>Match:</span>{' '}
               {formatDate(otherUserListing?.createdAt || '')}
             </p>
@@ -259,41 +261,31 @@ const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
       </div>
 
       {/* Match Actions */}
-      <div className='bg-gray-100 px-4 py-3 sm:px-6 flex justify-between items-center'>
-        <div className='flex items-center space-x-2'>
-          <span
-            className={`text-xs font-medium px-2 py-1 rounded-full border outline outline-1 outline-gray-300 ${getMatchStatusColor(
-              match.status
-            )}`}>
-            {match.status}
-          </span>
-        </div>
-        <Menu>
-          <MenuButton
-            as={Button}
-            size='sm'
-            fontWeight='medium'
-            bg='primary.600'
-            color='white'
-            _hover={{ bg: 'primary.700' }}
-            _active={{ bg: 'primary.800' }}>
-            Actions
-          </MenuButton>
-          <MenuList>
-            <MenuItem
-              onClick={() => handleActionClick('resolve')}
-              icon={<CheckCircleIcon className='h-4 w-4' />}>
-              Resolve
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleActionClick('reject')}
-              icon={<XCircleIcon className='h-4 w-4' />}
-              color='red.500'>
-              Reject
-            </MenuItem>
-          </MenuList>
-        </Menu>
+      <div className='bg-gray-100 px-4 py-3 sm:px-6 flex justify-end items-center space-x-2'>
+        <Button
+          size='sm'
+          fontWeight='medium'
+          colorScheme='green'
+          leftIcon={<CheckCircleIcon className='h-4 w-4' />}
+          onClick={() => handleActionClick('resolve')}
+          isDisabled={
+            match.status === MatchStatus.resolved || match.status === MatchStatus.rejected
+          }>
+          Resolve
+        </Button>
+        <Button
+          size='sm'
+          fontWeight='medium'
+          colorScheme='red'
+          leftIcon={<XCircleIcon className='h-4 w-4' />}
+          onClick={() => handleActionClick('reject')}
+          isDisabled={
+            match.status === MatchStatus.resolved || match.status === MatchStatus.rejected
+          }>
+          Reject
+        </Button>
       </div>
+
       <AlertDialog
         isOpen={isOpen}
         onClose={onClose}
