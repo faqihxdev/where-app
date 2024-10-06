@@ -174,7 +174,6 @@ export const deleteMarker = async (
   }
 };
 
-
 export const fetchAllMarkers = async (): Promise<Record<string, Marker>> => {
   console.log('[markerStore/fetchAllMarkers]: Fetching all markers');
   try {
@@ -193,5 +192,3 @@ export const fetchAllMarkers = async (): Promise<Record<string, Marker>> => {
     throw error;
   }
 };
-
-

@@ -67,8 +67,8 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
     switch (status) {
       case ListingStatus.resolved:
         return 'bg-green-200/95 text-green-800';
-      case ListingStatus.archived:
-        return 'bg-violet-200/95 text-violet-800';
+      case ListingStatus.expired:
+        return 'bg-red-200/95 text-red-800';
       default:
         return '';
     }
@@ -207,9 +207,16 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
       <AlertDialog
         isOpen={isOpen}
         onClose={onClose}
-        onConfirm={handleDeleteClick}
         title='Delete Listing'
-        body='Are you sure you want to delete this listing? This action cannot be undone.'
+        body={<p>Are you sure you want to delete this listing? This action cannot be undone.</p>}
+        footer={
+          <>
+            <Button onClick={onClose}>Cancel</Button>
+            <Button colorScheme='red' onClick={handleDeleteClick} ml={3}>
+              Delete
+            </Button>
+          </>
+        }
       />
     </div>
   );

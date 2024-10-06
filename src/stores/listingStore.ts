@@ -1,4 +1,4 @@
-import { atom, SetStateAction, Setter } from 'jotai';
+import { atom, Getter, SetStateAction, Setter } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import {
   Listing,
@@ -9,6 +9,7 @@ import {
   ListingStatus,
   Match,
   MatchStatus,
+  NotificationType,
 } from '../types';
 import { db } from '../firebaseConfig';
 import {
@@ -27,6 +28,7 @@ import { addImage, deleteImage, getImage } from './imageStore';
 import { markersAtom, addMarker, fetchMarkerById, deleteMarker, updateMarker } from './markerStore';
 import { fetchListingUser, listingUsersAtom } from './userStore';
 import { addMatchAtom, matchesAtom } from './matchStore';
+import { addNotification, userNotificationsAtom } from './notificationStore';
 import { cosineSimilarity, doMarkersOverlap } from '../utils/utils';
 
 // The listings atom is used to store the listings in the client-side state
@@ -95,7 +97,7 @@ export const fetchAllListingsAtom = atom(
       }
 
       // Check for matches and expiry
-      await matchExpiryCheck(Object.values(listings), get(matchesAtom), set);
+      await matchExpiryCheck(Object.values(listings), get, set);
 
       // Update the listingsAtom with the new listings
       set(listingsAtom, listings);
@@ -624,23 +626,33 @@ const convertListingDBToListing = (listingDB: ListingDB, markers: Marker[]): Lis
  * @param {(update: SetStateAction<Record<string, Match>>) => void} setMatches - Function to update matches
  * @returns {Promise<void>} - A promise that resolves when the listings are checked
  */
-const matchExpiryCheck = async (
-  listings: Listing[],
-  existingMatches: Record<string, Match>,
-  set: Setter
-): Promise<void> => {
+const matchExpiryCheck = async (listings: Listing[], get: Getter, set: Setter): Promise<void> => {
   console.log(`[listingStore/matchExpiryCheck] ${listings.length} listings to check`);
 
   // For every listing, check if it has expired
   for (const listing of listings) {
     if (listing.expiresAt < new Date()) {
-      // Fetch the listing user
+      // Set the listing status to expired
       await setListingStatusToExpiredAtom(listing.userId, (update) => {
         set(listingsAtom, update);
       });
 
-      // TODO: Notify the user that their listing has expired
-      // TODO: If expire date is more than 30 days, delete the listing
+      // Notify the user that their listing has expired
+      await addNotification(
+        {
+          userId: listing.userId,
+          title: 'Listing Expired',
+          message: 'Your listing has expired',
+          type: NotificationType.expiry,
+          listingId: listing.id,
+        },
+        get(userNotificationsAtom),
+        (update) => {
+          set(userNotificationsAtom, update);
+        }
+      );
+
+      // TODO: Push Notification to the user
     }
   }
 
@@ -653,7 +665,7 @@ const matchExpiryCheck = async (
       const listing2 = listings[j];
 
       // Check if these listings have already been matched
-      const existingMatch = Object.values(existingMatches).find(
+      const existingMatch = Object.values(get(matchesAtom)).find(
         (match) =>
           (match.listingId1 === listing1.id && match.listingId2 === listing2.id) ||
           (match.listingId1 === listing2.id && match.listingId2 === listing1.id)
@@ -678,7 +690,24 @@ const matchExpiryCheck = async (
             set(matchesAtom, update);
           });
 
-          // TODO: Notify the users that they have a new match
+          // Notify the users that they have a new match
+          for (const userId of new Set([listing1.userId, listing2.userId])) {
+            await addNotification(
+              {
+                userId,
+                title: 'New Match',
+                message: 'You have a new match',
+                type: NotificationType.match,
+                listingId: userId === listing1.userId ? listing1.id : listing2.id,
+              },
+              get(userNotificationsAtom),
+              (update) => {
+                set(userNotificationsAtom, update);
+              }
+            );
+          }
+
+          // TODO: Push Notification to the users
 
           console.log(
             `[listingStore/matchExpiryCheck] New match found: ${listing1.id} & ${listing2.id}`
