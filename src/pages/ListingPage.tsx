@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom, fetchAllListingsAtom, listingsFetchedAtom } from '../stores/listingStore';
+import {
+  userNotificationsAtom,
+  notificationsLoadedAtom,
+  fetchAllUserNotifications,
+} from '../stores/notificationStore';
+import { userDataAtom } from '../stores/userStore';
 import { Listing, ListingStatus, SearchParams } from '../types';
 import { MagnifyingGlassIcon, ArrowPathIcon, InboxIcon } from '@heroicons/react/24/outline';
 import { showCustomToast } from '../components/CustomToast';
@@ -24,7 +30,10 @@ const defaultSearchParams: SearchParams = {
 export default function ListingPage() {
   const [listings, setListings] = useAtom(listingsAtom);
   const [listingsFetched, setListingsFetched] = useAtom(listingsFetchedAtom);
-  const [, fetchAllListings] = useAtom(fetchAllListingsAtom);
+  const fetchAllListings = useSetAtom(fetchAllListingsAtom);
+  const [notificationsLoaded, setNotificationsLoaded] = useAtom(notificationsLoadedAtom);
+  const [notifications, setNotifications] = useAtom(userNotificationsAtom);
+  const user = useAtomValue(userDataAtom);
   const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found'>('all');
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
   const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
@@ -36,7 +45,14 @@ export default function ListingPage() {
     setIsLoading(true);
     setListingsFetched(false);
     try {
-      await fetchAllListings();
+      if (user) {
+        if (!notificationsLoaded) {
+          await fetchAllUserNotifications(user.uid, setNotifications, setNotificationsLoaded);
+        }
+        await fetchAllListings();
+      } else {
+        console.log('[ListingPage] User not logged in, skipping listings fetch');
+      }
     } catch (error) {
       console.error('[ListingPage] Error refreshing listings:', error);
       showCustomToast({
@@ -47,7 +63,14 @@ export default function ListingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [setListingsFetched, fetchAllListings]);
+  }, [
+    setListingsFetched,
+    fetchAllListings,
+    notificationsLoaded,
+    user,
+    setNotifications,
+    setNotificationsLoaded,
+  ]);
 
   const PullDownContent = () => (
     <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
@@ -68,6 +91,9 @@ export default function ListingPage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        if (user && !notificationsLoaded) {
+          await fetchAllUserNotifications(user.uid, setNotifications, setNotificationsLoaded);
+        }
         await fetchAllListings();
       } catch (error) {
         console.error('[ListingPage] Error fetching listings:', error);
@@ -81,13 +107,31 @@ export default function ListingPage() {
       }
     };
 
-    // If listings are not fetched, fetch them
-    if (!listingsFetched) {
+    // If listings are not fetched and notifications are loaded, fetch them
+    console.warn(
+      Object.keys(listings).length,
+      Object.keys(notifications).length,
+      listingsFetched,
+      notificationsLoaded,
+      !listingsFetched && notificationsLoaded
+    );
+    if (!listingsFetched && user) {
       fetchData();
     } else {
       setIsLoading(false);
     }
-  }, [listings, listingsFetched, setListings, setListingsFetched, fetchAllListings]);
+  }, [
+    listings,
+    listingsFetched,
+    setListings,
+    setListingsFetched,
+    fetchAllListings,
+    notificationsLoaded,
+    notifications,
+    user,
+    setNotifications,
+    setNotificationsLoaded,
+  ]);
 
   // On mount, fetch listings
   useEffect(() => {
