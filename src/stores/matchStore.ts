@@ -1,4 +1,4 @@
-import { atom, SetStateAction } from 'jotai';
+import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { Match } from '../types';
 import { db } from '../firebaseConfig';
@@ -22,10 +22,7 @@ export const matchesAtom = atomWithStorage<Record<string, Match>>('matches', {})
  * @param {Omit<Match, 'id'>} newMatch - The new match to add
  * @returns {Promise<Match>} - A promise that resolves to the new match
  */
-export const addMatchAtom = async (
-  newMatch: Omit<Match, 'id'>,
-  setMatches: (update: SetStateAction<Record<string, Match>>) => void
-) => {
+export const addMatchAtom = atom(null, async (_, set, newMatch: Omit<Match, 'id'>) => {
   console.log(`[matchStore/addMatchAtom]: Adding match: ${newMatch}`);
 
   try {
@@ -58,13 +55,13 @@ export const addMatchAtom = async (
 
     // Update the matches atom
     const match: Match = { id: docRef.id, ...newMatch };
-    setMatches((prev) => ({ ...prev, [match.id]: match }));
+    set(matchesAtom, (prev) => ({ ...prev, [match.id]: match }));
     return match;
   } catch (error) {
     console.error(`[matchStore/addMatchAtom]: Error adding match: ${error}`);
     throw error;
   }
-};
+});
 
 /**
  * @description Fetch matches for a user
@@ -73,7 +70,7 @@ export const addMatchAtom = async (
  */
 export const fetchMatchesByUserAtom = atom(
   null,
-  async (get, set, userId: string): Promise<Record<string, Match>> => {
+  async (_, set, userId: string): Promise<Record<string, Match>> => {
     console.log(`[matchStore/fetchMatchesByUser]: Fetching matches for user: ${userId}`);
     try {
       // Create a query to get the matches for the user
