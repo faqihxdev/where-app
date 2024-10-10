@@ -134,7 +134,7 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
         <div className='w-2/3 px-3 pt-2 pb-3 relative'>
           <div
             className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-              listing.type === 'found' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800'
+              listing.type === 'found' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
             }`}>
             {listing.type === 'lost' ? (
               <ExclamationCircleIcon className='w-3 h-3 stroke-2' />

@@ -3,9 +3,8 @@ import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Spinner } from '@chakra-ui/react';
-import { fetchAllMarkers } from '../stores/markerStore'; // Import the fetchAllMarkers function
-import { Marker as MarkerType } from '../types'; // Import the Marker type from your types
-
+import { useAtomValue, useSetAtom } from 'jotai';
+import { fetchAllMarkersAtom, markersAtom } from '../stores/markerStore'; // Import the fetchAllMarkers function
 
 // Create custom icon for the user's location marker
 const userLocationIcon = new L.Icon({
@@ -20,13 +19,11 @@ const itemLocationIcon = new L.Icon({
   iconAnchor: [7, 18],
 });
 
-
-
 const MapPage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const fetchAllMarkers = useSetAtom(fetchAllMarkersAtom);
   const [loading, setLoading] = useState(true);
-  const [markers, setMarkers] = useState<Record<string, MarkerType>>({}); // Add state for markers
-
+  const markers = useAtomValue(markersAtom); // Add state for markers
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -50,16 +47,14 @@ const MapPage: React.FC = () => {
     // Fetch markers from Firestore
     const fetchMarkers = async () => {
       try {
-        const fetchedMarkers = await fetchAllMarkers();
-        setMarkers(fetchedMarkers); // Update markers state
+        await fetchAllMarkers();
       } catch (error) {
         console.error('Error fetching markers:', error);
       }
     };
 
     fetchMarkers();
-  }, []);
-
+  }, [fetchAllMarkers]);
 
   if (loading) {
     return (
@@ -78,10 +73,7 @@ const MapPage: React.FC = () => {
       {/* Map */}
       <div className='w-full max-w-4xl h-[70vh] bg-white shadow-md rounded-lg'>
         {userLocation ? (
-          <MapContainer
-            center={userLocation}
-            zoom={13}
-            style={{ height: '100%', width: '100%' }}>
+          <MapContainer center={userLocation} zoom={13} style={{ height: '100%', width: '100%' }}>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -100,9 +92,6 @@ const MapPage: React.FC = () => {
                 />
               </React.Fragment>
             ))}
-
-
-
           </MapContainer>
         ) : (
           <p className='text-center'>Unable to fetch your location.</p>
