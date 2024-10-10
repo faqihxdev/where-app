@@ -89,9 +89,11 @@ export interface Listing {
   createdAt: Date; // The time the listing was created
   updatedAt: Date; // The time the listing was last updated
   expiresAt: Date; // The time the listing will expire at
+  expiry?: Date; // <-- Add this line to define the expiry property
   images: ListingImages; // The images of the listing
   markers: Marker[]; // The markers of the listing
 }
+
 
 export interface Match {
   id: string; // The document id of the match in the Matches collection
@@ -156,3 +158,5 @@ export interface SearchParams {
   sortOrder: 'ascending' | 'descending'; // The order to sort the listings by
   location: { name: string; lat: number; lng: number; radius: number } | null; // The location to search for listings within
 }
+
+
