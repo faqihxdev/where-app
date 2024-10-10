@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { loginAtom, registerAtom, initializeAuthAtom } from '../stores/authStore';
+import { loginAtom, registerAtom } from '../stores/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FormControl, FormLabel, FormErrorMessage, Input, Button } from '@chakra-ui/react';
 import { showCustomToast } from '../components/CustomToast';
@@ -11,7 +11,6 @@ import { isAuthenticatedAtom } from '../stores/authStore';
 export default function AuthPage() {
   const login = useSetAtom(loginAtom);
   const register = useSetAtom(registerAtom);
-  const initializeAuth = useSetAtom(initializeAuthAtom);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,17 +18,9 @@ export default function AuthPage() {
   const [displayName, setDisplayName] = useState('');
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const isAuthenticated = useAtomValue(isAuthenticatedAtom);
   const location = useLocation();
-
-  useEffect(() => {
-    const init = async () => {
-      await initializeAuth();
-      setIsLoading(false);
-    };
-    init();
-  }, [initializeAuth]);
 
   useEffect(() => {
     if (isAuthenticated) {

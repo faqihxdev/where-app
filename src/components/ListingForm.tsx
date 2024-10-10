@@ -117,7 +117,6 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
       default:
         return '';
     }
-
   };
 
   const handleBlur = (field: string, value: string | File[] | null) => {
@@ -242,19 +241,21 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
             <div className='flex rounded-md bg-gray-100 p-1.5' role='group'>
               <button
                 type='button'
-                className={`flex-1 py-1 font-medium rounded-md ${type === 'lost'
-                  ? 'text-gray-950 bg-white'
-                  : 'text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950'
-                  }`}
+                className={`flex-1 py-1 font-medium rounded-md ${
+                  type === 'lost'
+                    ? 'text-gray-950 bg-white'
+                    : 'text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950'
+                }`}
                 onClick={() => setType('lost')}>
                 Lost
               </button>
               <button
                 type='button'
-                className={`flex-1 py-1 font-medium rounded-md ${type === 'found'
-                  ? 'text-gray-950 bg-white'
-                  : 'text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950'
-                  }`}
+                className={`flex-1 py-1 font-medium rounded-md ${
+                  type === 'found'
+                    ? 'text-gray-950 bg-white'
+                    : 'text-gray-700 bg-transparent hover:bg-white/50 hover:text-gray-950'
+                }`}
                 onClick={() => setType('found')}>
                 Found
               </button>

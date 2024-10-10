@@ -1,5 +1,4 @@
 # TODO
-- Optimise: Check for all data fetching ui to only fetch on refresh / first time visit
 - Map UI
 - View listing page
 - Inbox
@@ -12,5 +11,10 @@
 - Third-party login (?)
 
 # Known Bugs
+- Mutliple rendering for the home page
 - New user register listing not loaded?
 - Deleting main image submits edit listing (lol wth)
+
+
+# TMP My TODO
+- Fix the multiple rendering for the home page

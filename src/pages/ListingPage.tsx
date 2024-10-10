@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom, fetchAllListingsAtom, listingsFetchedAtom } from '../stores/listingStore';
+import {
+  notificationsLoadedAtom,
+  fetchAllUserNotificationsAtom,
+} from '../stores/notificationStore';
+import { userDataAtom } from '../stores/userStore';
 import { Listing, ListingStatus, SearchParams } from '../types';
 import { MagnifyingGlassIcon, ArrowPathIcon, InboxIcon } from '@heroicons/react/24/outline';
 import { showCustomToast } from '../components/CustomToast';
@@ -24,19 +29,31 @@ const defaultSearchParams: SearchParams = {
 export default function ListingPage() {
   const [listings, setListings] = useAtom(listingsAtom);
   const [listingsFetched, setListingsFetched] = useAtom(listingsFetchedAtom);
-  const [, fetchAllListings] = useAtom(fetchAllListingsAtom);
+  const fetchAllListings = useSetAtom(fetchAllListingsAtom);
+  const fetchAllUserNotifications = useSetAtom(fetchAllUserNotificationsAtom);
+  const notificationsLoaded = useAtomValue(notificationsLoadedAtom);
+  const user = useAtomValue(userDataAtom);
   const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found'>('all');
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
   const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
   const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams);
   const [isLoading, setIsLoading] = useState(true);
+  const [isManualRefresh, setIsManualRefresh] = useState(false);
 
   const handleRefresh = useCallback(async () => {
     console.log('[ListingPage] Refreshing listings...');
     setIsLoading(true);
     setListingsFetched(false);
     try {
-      await fetchAllListings();
+      if (user) {
+        // If notifications are not loaded, fetch them
+        if (!notificationsLoaded) {
+          await fetchAllUserNotifications(user.uid);
+        }
+        await fetchAllListings();
+      } else {
+        console.log('[ListingPage] User not logged in, skipping listings fetch');
+      }
     } catch (error) {
       console.error('[ListingPage] Error refreshing listings:', error);
       showCustomToast({
@@ -47,27 +64,42 @@ export default function ListingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [setListingsFetched, fetchAllListings]);
+  }, [setListingsFetched, fetchAllListings, user, fetchAllUserNotifications, notificationsLoaded]);
 
-  const PullDownContent = () => (
-    <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
-      <ArrowPathIcon className='w-5 h-5 animate-spin' />
-      <span>Pull down to refresh...</span>
-    </div>
-  );
-
-  const RefreshContent = () => (
-    <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
-      <ArrowPathIcon className='w-5 h-5 animate-spin' />
-      <span>Refreshing...</span>
-    </div>
-  );
-
-  // On mount, fetch listings
+  // Effect to handle manual browser refresh
   useEffect(() => {
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem('isManualRefresh', 'true');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  // Effect to check for manual refresh and fetch data
+  useEffect(() => {
+    console.warn('useEffect for manual refresh');
+    const isManualRefresh = sessionStorage.getItem('isManualRefresh') === 'true';
+    setIsManualRefresh(isManualRefresh);
+    sessionStorage.removeItem('isManualRefresh');
+
+    if (isManualRefresh) {
+      handleRefresh();
+    }
+  }, [handleRefresh]);
+
+  // Effect to fetch listings on mount or manual refresh
+  useEffect(() => {
+    console.warn('useEffect fetch data');
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        if (user && !notificationsLoaded) {
+          await fetchAllUserNotifications(user.uid);
+        }
         await fetchAllListings();
       } catch (error) {
         console.error('[ListingPage] Error fetching listings:', error);
@@ -81,16 +113,27 @@ export default function ListingPage() {
       }
     };
 
-    // If listings are not fetched, fetch them
-    if (!listingsFetched) {
+    console.warn(listingsFetched, notificationsLoaded, isManualRefresh);
+    if ((!listingsFetched && user) || isManualRefresh) {
       fetchData();
     } else {
       setIsLoading(false);
     }
-  }, [listings, listingsFetched, setListings, setListingsFetched, fetchAllListings]);
+  }, [
+    listings,
+    listingsFetched,
+    setListings,
+    setListingsFetched,
+    fetchAllListings,
+    fetchAllUserNotifications,
+    notificationsLoaded,
+    user,
+    isManualRefresh,
+  ]);
 
-  // On mount, fetch listings
+  // On mount, filter listings
   useEffect(() => {
+    console.warn('useEffect for on mount');
     // Filter listings based on active tab and search params
     const filtered = Object.values(listings).filter(
       (listing) =>
@@ -161,6 +204,20 @@ export default function ListingPage() {
     setActiveTab('all');
     setIsSearchDrawerOpen(false);
   };
+
+  const PullDownContent = () => (
+    <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
+      <ArrowPathIcon className='w-5 h-5 animate-spin' />
+      <span>Pull down to refresh...</span>
+    </div>
+  );
+
+  const RefreshContent = () => (
+    <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
+      <ArrowPathIcon className='w-5 h-5 animate-spin' />
+      <span>Refreshing...</span>
+    </div>
+  );
 
   return (
     <PullToRefresh

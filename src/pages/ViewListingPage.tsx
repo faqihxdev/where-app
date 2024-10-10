@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom, fetchListingByIdAtom } from '../stores/listingStore';
-import { listingUsersAtom, fetchUserListingsAtom } from '../stores/userStore';
-import { markersAtom, fetchMarkerById } from '../stores/markerStore';
+import { listingUsersAtom, fetchListingUserAtom } from '../stores/userStore';
+import { markersAtom, fetchMarkerByIdAtom } from '../stores/markerStore';
 import { Listing } from '../types';
 import { Button } from '@chakra-ui/react';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -18,8 +18,9 @@ const ViewListingPage: React.FC = () => {
   const listings = useAtomValue(listingsAtom);
   const fetchListingById = useSetAtom(fetchListingByIdAtom);
   const listingUsers = useAtomValue(listingUsersAtom);
-  const fetchUserListings = useSetAtom(fetchUserListingsAtom);
+  const fetchListingUser = useSetAtom(fetchListingUserAtom);
   const markers = useAtomValue(markersAtom);
+  const fetchMarkerById = useSetAtom(fetchMarkerByIdAtom);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -45,14 +46,14 @@ const ViewListingPage: React.FC = () => {
 
         // Fetch user data if not available
         if (!listingUsers[listing.userId]) {
-          await fetchUserListings(listing.userId);
+          await fetchListingUser(listing.userId);
         }
 
         // Fetch markers if not available
         await Promise.all(
           listing.markers.map(async (m) => {
             if (!markers[m.id]) {
-              await fetchMarkerById(m.id, markers);
+              await fetchMarkerById(m.id);
             }
           })
         );
@@ -63,7 +64,15 @@ const ViewListingPage: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [listingId, listings, listingUsers, fetchUserListings, fetchListingById, markers]
+    [
+      listingId,
+      listings,
+      listingUsers,
+      markers,
+      fetchListingById,
+      fetchListingUser,
+      fetchMarkerById,
+    ]
   );
 
   useEffect(() => {

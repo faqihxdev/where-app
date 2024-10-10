@@ -1,3 +1,6 @@
+import nlp from 'compromise';
+import { eng } from 'stopword';
+
 /**
  * @description Checks if two coordinates are within a specified distance of each other and calculates the actual distance
  * @param coord1 The first coordinate object with lat and lng properties
@@ -24,6 +27,26 @@ export const areCoordinatesWithinDistance = (
   const distance = R * c;
 
   return [distance <= maxDistance, distance];
+};
+
+/**
+ * @description Checks if two markers overlap considering an additional buffer
+ * @param marker1 The first marker
+ * @param marker2 The second marker
+ * @param buffer Additional buffer to add to each marker's radius (in meters)
+ * @returns True if the markers overlap, false otherwise
+ */
+export const doMarkersOverlap = (
+  marker1: { latitude: number; longitude: number; radius: number },
+  marker2: { latitude: number; longitude: number; radius: number },
+  buffer: number
+): boolean => {
+  const [withinDistance] = areCoordinatesWithinDistance(
+    { lat: marker1.latitude, lng: marker1.longitude },
+    { lat: marker2.latitude, lng: marker2.longitude },
+    marker1.radius + marker2.radius + 2 * buffer
+  );
+  return withinDistance;
 };
 
 /**
@@ -65,4 +88,80 @@ export const truncateWithEllipsis = (input: string, maxLength: number): string =
   }
 
   return input.substring(0, maxLength - 3) + '...';
+};
+
+/**
+ * @description Computes the cosine similarity between two text strings
+ * @param text1 The first text string
+ * @param text2 The second text string
+ * @returns The cosine similarity between the two text strings
+ */
+export const cosineSimilarity = (text1: string, text2: string): number => {
+  // Common words in app
+  const commonWords = ['found', 'lost', 'in', 'at', 'on'];
+
+  // Remove stopwords and tokenize
+  const words1 = nlp(text1)
+    .terms()
+    .out('array')
+    .map((word: string) => word.toLowerCase())
+    .filter((word: string) => !eng.includes(word))
+    .filter((word: string) => !commonWords.includes(word));
+
+  const words2 = nlp(text2)
+    .terms()
+    .out('array')
+    .map((word: string) => word.toLowerCase())
+    .filter((word: string) => !eng.includes(word))
+    .filter((word: string) => !commonWords.includes(word));
+
+  console.log(words1, words2);
+
+  // Create a combined set of all unique words
+  const allWordsSet = new Set([...words1, ...words2]);
+  const allWords = Array.from(allWordsSet);
+
+  // Create word frequency vectors
+  const freqMap1 = new Map<string, number>();
+  const freqMap2 = new Map<string, number>();
+
+  allWords.forEach((word) => {
+    freqMap1.set(word, 0);
+    freqMap2.set(word, 0);
+  });
+
+  words1.forEach((word: string) => {
+    freqMap1.set(word, (freqMap1.get(word) || 0) + 1);
+  });
+
+  words2.forEach((word: string) => {
+    freqMap2.set(word, (freqMap2.get(word) || 0) + 1);
+  });
+
+  // Compute dot product and magnitudes
+  let dotProduct = 0;
+  let magnitude1 = 0;
+  let magnitude2 = 0;
+
+  allWords.forEach((word) => {
+    const val1 = freqMap1.get(word) || 0;
+    const val2 = freqMap2.get(word) || 0;
+
+    dotProduct += val1 * val2;
+    magnitude1 += val1 * val1;
+    magnitude2 += val2 * val2;
+  });
+
+  magnitude1 = Math.sqrt(magnitude1);
+  magnitude2 = Math.sqrt(magnitude2);
+
+  // Handle division by zero
+  if (magnitude1 === 0 || magnitude2 === 0) {
+    return 0;
+  }
+
+  // Compute cosine similarity
+  const cosineSim = dotProduct / (magnitude1 * magnitude2);
+
+  return cosineSim;
 };
