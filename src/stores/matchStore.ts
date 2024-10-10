@@ -24,7 +24,20 @@ export const matchesAtom = atomWithStorage<Record<string, Match>>('matches', {})
  */
 export const addMatchAtom = atom(null, async (_, set, newMatch: Omit<Match, 'id'>) => {
   console.log(`[matchStore/addMatchAtom]: Adding match: ${newMatch}`);
+
   try {
+    // Check if the match already exists in Firestore
+    const q = query(
+      collection(db, 'Matches'),
+      where('listingId1', '==', newMatch.listingId1),
+      where('listingId2', '==', newMatch.listingId2)
+    );
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      console.log(`[matchStore/addMatchAtom]: Match already exists: ${newMatch}`);
+      return;
+    }
+
     // Create a new match object to add to Firestore
     const newMatchToAdd: Omit<Match, 'id'> = {
       listingId1: newMatch.listingId1,
@@ -42,7 +55,7 @@ export const addMatchAtom = atom(null, async (_, set, newMatch: Omit<Match, 'id'
 
     // Update the matches atom
     const match: Match = { id: docRef.id, ...newMatch };
-    set(matchesAtom, (prev) => ({ ...prev, [docRef.id]: match }));
+    set(matchesAtom, (prev) => ({ ...prev, [match.id]: match }));
     return match;
   } catch (error) {
     console.error(`[matchStore/addMatchAtom]: Error adding match: ${error}`);
@@ -55,40 +68,44 @@ export const addMatchAtom = atom(null, async (_, set, newMatch: Omit<Match, 'id'
  * @param {string} userId - The ID of the user to fetch matches for
  * @returns {Promise<Record<string, Match>>} - A promise that resolves to the matches
  */
-export const fetchMatchesByUserAtom = atom(null, async (_, set, userId: string) => {
-  console.log(`[matchStore/fetchMatchesByUser]: Fetching matches for user: ${userId}`);
-  try {
-    // Create a query to get the matches for the user
-    const q = query(collection(db, 'Matches'), where('userId1', '==', userId));
+export const fetchMatchesByUserAtom = atom(
+  null,
+  async (_, set, userId: string): Promise<Record<string, Match>> => {
+    console.log(`[matchStore/fetchMatchesByUser]: Fetching matches for user: ${userId}`);
+    try {
+      // Create a query to get the matches for the user
+      const q = query(collection(db, 'Matches'), where('userId1', '==', userId));
 
-    // Get the matches from Firestore
-    console.log('🔥 [matchStore/fetchMatchesByUser]');
-    const querySnapshot = await getDocs(q);
-    const matches: Record<string, Match> = {};
+      // Get the matches from Firestore
+      console.log('🔥 [matchStore/fetchMatchesByUser]');
+      const querySnapshot = await getDocs(q);
+      const matches: Record<string, Match> = {};
 
-    // Loop through each match and add it to the matches atom
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      matches[doc.id] = {
-        id: doc.id,
-        listingId1: data.listingId1,
-        listingId2: data.listingId2,
-        userId1: data.userId1,
-        userId2: data.userId2,
-        status: data.status,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        updatedAt: (data.updatedAt as Timestamp).toDate(),
-      } as Match;
-    });
+      // Loop through each match and add it to the matches atom
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        matches[doc.id] = {
+          id: doc.id,
+          listingId1: data.listingId1,
+          listingId2: data.listingId2,
+          userId1: data.userId1,
+          userId2: data.userId2,
+          status: data.status,
+          createdAt: (data.createdAt as Timestamp).toDate(),
+          updatedAt: (data.updatedAt as Timestamp).toDate(),
+        } as Match;
+      });
 
-    // Update the matches atom
-    set(matchesAtom, matches);
-    return matches;
-  } catch (error) {
-    console.error(`[matchStore/fetchMatchesByUser]: Error fetching matches: ${error}`);
-    throw error;
+      // Update the matches atom
+      set(matchesAtom, matches);
+
+      return matches;
+    } catch (error) {
+      console.error(`[matchStore/fetchMatchesByUser]: Error fetching matches: ${error}`);
+      throw error;
+    }
   }
-});
+);
 
 /**
  * @description Update a match in Firestore and update the matches atom

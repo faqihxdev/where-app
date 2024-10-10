@@ -21,7 +21,7 @@ export enum ListingCategory {
 export enum ListingStatus {
   active = 'Active',
   resolved = 'Resolved',
-  archived = 'Archived',
+  expired = 'Expired',
 }
 
 export enum ListingKeyNames {
@@ -40,6 +40,15 @@ export enum MatchStatus {
   viewed = 'Viewed',
   resolved = 'Resolved',
   rejected = 'Rejected',
+}
+
+export enum NotificationType {
+  match = 'Match Found',
+  expiryReminder = 'Expiry Reminder',
+  expiry = 'Expired',
+  deleteReminder = 'Delete Reminder',
+  delete = 'Deleted',
+  resolve = 'Resolved',
 }
 
 // <<< MAIN TYPES >>>
@@ -95,6 +104,20 @@ export interface Match {
   status: MatchStatus; // The status of the match
   createdAt: Date; // The time the match was created
   updatedAt: Date; // The time the match was last updated
+}
+
+export interface Notification {
+  id: string; // The document id of the notification in the Notifications collection
+  userId: string; // The document id of the user in the Users collection
+  title: string; // The title of the notification
+  message: string; // The message of the notification
+  type: NotificationType; // The type of the notification
+  status: 'unread' | 'read' | 'removed'; // The status of the notification
+  createdAt: Date; // The time the notification was created
+  updatedAt: Date; // The time the notification was last updated
+  expiresAt: Date; // The time the notification will expire at (expire after 30 days)
+  listingId?: string; // The document id of the listing in the Listings collection
+  matchId?: string; // The document id of the match in the Matches collection
 }
 
 // <<< DATABASE COLLECTION TYPES >>>
