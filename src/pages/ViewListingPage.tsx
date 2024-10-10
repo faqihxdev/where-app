@@ -87,7 +87,10 @@ const ViewListingPage: React.FC = () => {
   const handleBack = () => {
     if (from === 'inbox') {
       navigate('/inbox');
-    } else {
+    } else if (from == 'map') {
+      navigate('/map');
+    }
+    else {
       navigate('/');
     }
   };
@@ -155,7 +158,6 @@ const ViewListingPage: React.FC = () => {
           </button>
           <h1 className='text-3xl font-bold ml-4'>View Listing</h1>
         </div>
-
         {/* Listing Information Section */}
         <div className='bg-gray-100 p-6 rounded-lg shadow-md'>
           {/* Listing Image */}

@@ -1,0 +1,1511 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_1",
+        "Description": "Tampines Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.938686999607,
+          1.34625699956637,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_2",
+        "Description": "Tampines East Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.951143999829,
+          1.35330599955162,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_3",
+        "Description": "Tampines North Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.954352000051,
+          1.35884000018641,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_4",
+        "Description": "Pasir Ris Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.959181999844,
+          1.36880099964767,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_5",
+        "Description": "Tanah Merah Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.942264999683,
+          1.32343600039579,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_6",
+        "Description": "Bukit Batok Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.758524000189,
+          1.3491150000777,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_7",
+        "Description": "Boon Lay Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.712931999739,
+          1.34763900002687,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_8",
+        "Description": "Bukit Panjang North Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.773955000368,
+          1.44209899976896,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_9",
+        "Description": "Bukit Panjang Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.771720000194,
+          1.3868890003798,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_10",
+        "Description": "Choa Chu Kang Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.74454600038,
+          1.39485699972185,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_11",
+        "Description": "Geylang Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.88613694588,
+          1.31096650005533,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_12",
+        "Description": "Woodlands West Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.778751000432,
+          1.43298600032673,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_13",
+        "Description": "Hong Kah South Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.719448000132,
+          1.34837799969041,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_14",
+        "Description": "Choa Chu Kang Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.751779000359,
+          1.37898200035594,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_15",
+        "Description": "Hong Kah North Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.749562999571,
+          1.35997800023621,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_16",
+        "Description": "Jurong Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.722280000347,
+          1.32896099964176,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_17",
+        "Description": "Chong Pang Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.829956999557,
+          1.43113700028776,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_18",
+        "Description": "Jurong West Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.714412000254,
+          1.34932399998772,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_19",
+        "Description": "Nanyang Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.701720000049,
+          1.35066800026802,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_20",
+        "Description": "Marsiling Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.777879000278,
+          1.44229799960368,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_21",
+        "Description": "Nee Soon South Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.833107999563,
+          1.41896700001221,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_22",
+        "Description": "Woodlands East Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.802357000115,
+          1.43886500022198,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_23",
+        "Description": "Serangoon Garden Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.86642200037,
+          1.36343199965782,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_24",
+        "Description": "Teck Ghee Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.848396000127,
+          1.36511699997963,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_25",
+        "Description": "Serangoon North Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.871015000067,
+          1.36988799993883,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_26",
+        "Description": "Sengkang Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.893906000347,
+          1.39278600007143,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_27",
+        "Description": "Serangoon Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.870216999684,
+          1.35166999963354,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_28",
+        "Description": "Bedok Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.935543999944,
+          1.32090900010099,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_29",
+        "Description": "Chai Chee Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.92603799988,
+          1.32485399969479,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_30",
+        "Description": "Bedok South Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.91981599977,
+          1.32370899973945,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_31",
+        "Description": "Bedok North Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.936991000121,
+          1.3322589999205,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_32",
+        "Description": "Changkat Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.948811999758,
+          1.34740799978765,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_33",
+        "Description": "Eunos Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.914672000192,
+          1.33421800018427,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_34",
+        "Description": "Changi Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.954809999974,
+          1.34451700040168,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_35",
+        "Description": "Public Security Transport Command"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.890619000157,
+          1.32602500018249,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_36",
+        "Description": "Joo Chiat Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.901501999719,
+          1.30991000022196,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_37",
+        "Description": "Kaki Bukit Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.929130000095,
+          1.33421599960939,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_38",
+        "Description": "Kampong Kembangan Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.911407999566,
+          1.32348900005982,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_39",
+        "Description": "Kampong Ubi Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.90277700029,
+          1.32179400005524,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_40",
+        "Description": "MacPherson Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.887585000183,
+          1.32385600023246,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_41",
+        "Description": "Marine Parade Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.914450999577,
+          1.30622300004859,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_42",
+        "Description": "Marine Parade Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.907032000125,
+          1.30356100030891,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_43",
+        "Description": "Mountbatten Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.888505999963,
+          1.3072850003816,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_44",
+        "Description": "Siglap Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.929731999569,
+          1.31393699995076,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_45",
+        "Description": "Yishun South Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.834907000124,
+          1.41531799958195,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_46",
+        "Description": "Yishun  North Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.840294000143,
+          1.4293430002389,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_47",
+        "Description": "Police Logistics Base (Found and Unclaimed Property Office - FUPO)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.891194000231,
+          1.31171500043463,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_48",
+        "Description": "Police Cantonment Complex"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.839325999655,
+          1.27851099990838,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_49",
+        "Description": "Police HQ"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.84470900018,
+          1.32424400011341,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_50",
+        "Description": "Airport Police Division"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.980308000441,
+          1.34328999996498,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_51",
+        "Description": "Police National Service Department"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.905748999759,
+          1.31672099998608,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_52",
+        "Description": "Traffic Police Accident Pound"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.898258999853,
+          1.35418799991643,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_53",
+        "Description": "Special Operation Command"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.799676999714,
+          1.29506999998233,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_54",
+        "Description": "Traffic Police HQ"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.890495000281,
+          1.33031200021763,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_55",
+        "Description": "Police Coast Guard Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.971461733332,
+          1.40247448134764,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_56",
+        "Description": "Kampong Glam Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.863444999904,
+          1.303968999641,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_57",
+        "Description": "Kolam Ayer Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.871031999851,
+          1.32194499995958,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_58",
+        "Description": "Cairnhill Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.851453999915,
+          1.31389199999,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_59",
+        "Description": "Bukit Merah East Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.839325999655,
+          1.27851099990838,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_60",
+        "Description": "Kreta Ayer Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.84711500028,
+          1.28654599955355,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_61",
+        "Description": "Rochor Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.854254000412,
+          1.30766100039734,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_62",
+        "Description": "Radin Mas Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.820541000344,
+          1.27698900012909,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_63",
+        "Description": "Marina Bay Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.848584999689,
+          1.27501699988225,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_64",
+        "Description": "Tanjong Pagar Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.829960999754,
+          1.27730000034967,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_65",
+        "Description": "Tiong Bahru Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.828881000179,
+          1.28162299969872,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_66",
+        "Description": "Alexandra Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.798135999864,
+          1.300156,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_67",
+        "Description": "Bukit Timah Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.774586000196,
+          1.33958200013364,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_68",
+        "Description": "Ayer Rajah Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.741568999896,
+          1.32102799955438,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_69",
+        "Description": "Bukit Merah West Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.823290000368,
+          1.28576699991658,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_70",
+        "Description": "Clementi Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.763799999918,
+          1.31196700002873,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_71",
+        "Description": "Dover Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.782319999612,
+          1.30380199992795,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_72",
+        "Description": "Commonwealth Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.798291999833,
+          1.30626800026787,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_73",
+        "Description": "Jurong East Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.737231000201,
+          1.34013300033494,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_74",
+        "Description": "Clementi Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.766220000143,
+          1.31774199997046,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_75",
+        "Description": "Pasir Panjang Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.793368000387,
+          1.27543900007941,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_76",
+        "Description": "Queenstown Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.802830000287,
+          1.2884270000542,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_77",
+        "Description": "Telok Blangah Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.809744999846,
+          1.27349300033512,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_78",
+        "Description": "West Coast Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.763602999702,
+          1.30561300041249,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_79",
+        "Description": "Aljunied Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.879307000376,
+          1.33577700039633,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_80",
+        "Description": "Bishan Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.850312000388,
+          1.34816800009037,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_81",
+        "Description": "Boon Teck Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.845239000409,
+          1.34239600022237,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_82",
+        "Description": "Bishan Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.847630000125,
+          1.35795799974095,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_83",
+        "Description": "Moulmein Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.850545000354,
+          1.32871499998198,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_84",
+        "Description": "Bukit Timah Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.812191999752,
+          1.32264299964976,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_85",
+        "Description": "Kim Keat Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.859489999599,
+          1.33696000008072,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_86",
+        "Description": "Orchard Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.839787000032,
+          1.29899200003897,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_87",
+        "Description": "Kampong Java Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.846037999762,
+          1.31185299963305,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_88",
+        "Description": "Potong Pasir Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.86691099992,
+          1.33311999973791,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_89",
+        "Description": "River Valley Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.826344000318,
+          1.29171200009656,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_90",
+        "Description": "Whampoa Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.85856599993,
+          1.32540799969578,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_91",
+        "Description": "Thomson Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.837459000147,
+          1.35533999971183,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_92",
+        "Description": "Toa Payoh Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.850300999934,
+          1.33482599992058,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_93",
+        "Description": "Ang Mo Kio North Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.845057999853,
+          1.38529300024554,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_94",
+        "Description": "Ang Mo Kio South Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.851653999901,
+          1.36991000017158,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_95",
+        "Description": "Hougang Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.884970000246,
+          1.37431799992497,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_96",
+        "Description": "Kebun Baru Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.836983999767,
+          1.37081600029949,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_97",
+        "Description": "Hougang Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.899211000175,
+          1.37294899971771,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_98",
+        "Description": "Punggol Neighbourhood Police Centre (Temporary)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.917075999587,
+          1.39415100028672,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_99",
+        "Description": "Paya Lebar Neighbourhood Police Post"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.888785000268,
+          1.3528780004273,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "kml_100",
+        "Description": "Sembawang Neighbourhood Police Centre"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.819648000404,
+          1.44527399995673,
+          0.0
+        ]
+      }
+    }
+  ]
+}
