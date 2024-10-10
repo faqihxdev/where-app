@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom, fetchListingByIdAtom } from '../stores/listingStore';
-import { listingUsersAtom, fetchUserListingsAtom } from '../stores/userStore';
-import { markersAtom, fetchMarkerById } from '../stores/markerStore';
+import { listingUsersAtom, fetchListingUserAtom } from '../stores/userStore';
+import { markersAtom, fetchMarkerByIdAtom } from '../stores/markerStore';
 import { Listing } from '../types';
 import { Button } from '@chakra-ui/react';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -18,8 +18,9 @@ const ViewListingPage: React.FC = () => {
   const listings = useAtomValue(listingsAtom);
   const fetchListingById = useSetAtom(fetchListingByIdAtom);
   const listingUsers = useAtomValue(listingUsersAtom);
-  const fetchUserListings = useSetAtom(fetchUserListingsAtom);
+  const fetchListingUser = useSetAtom(fetchListingUserAtom);
   const markers = useAtomValue(markersAtom);
+  const fetchMarkerById = useSetAtom(fetchMarkerByIdAtom);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const ViewListingPage: React.FC = () => {
   // Fetch listing data on load or on refresh
   const fetchListingData = useCallback(
     async (onRefresh: boolean = false) => {
-      if (!listingId) return; // If the listingId is not available, return
+      if (!listingId) return;
 
       setIsLoading(true);
       setError(null);
@@ -45,17 +46,18 @@ const ViewListingPage: React.FC = () => {
 
         // Fetch user data if not available
         if (!listingUsers[listing.userId]) {
-          await fetchUserListings(listing.userId);
+          await fetchListingUser(listing.userId);
         }
 
         // Fetch markers if not available
         await Promise.all(
           listing.markers.map(async (m) => {
             if (!markers[m.id]) {
-              await fetchMarkerById(m.id, markers);
+              await fetchMarkerById(m.id);
             }
           })
         );
+
       } catch (error) {
         console.error('[ViewListingPage]: Error fetching listing data:', error);
         setError('An error occurred while fetching the listing data');
@@ -63,7 +65,15 @@ const ViewListingPage: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [listingId, listings, listingUsers, fetchUserListings, fetchListingById, markers]
+    [
+      listingId,
+      listings,
+      listingUsers,
+      markers,
+      fetchListingById,
+      fetchListingUser,
+      fetchMarkerById,
+    ]
   );
 
   useEffect(() => {
@@ -84,24 +94,6 @@ const ViewListingPage: React.FC = () => {
       navigate('/');
     }
   };
-
-  const truncateBase64 = (base64: string) => {
-    return base64.substring(0, 50) + '...';
-  };
-
-  const PullDownContent = () => (
-    <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
-      <ArrowPathIcon className='w-5 h-5 animate-spin' />
-      <span>Pull down to refresh...</span>
-    </div>
-  );
-
-  const RefreshContent = () => (
-    <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
-      <ArrowPathIcon className='w-5 h-5 animate-spin' />
-      <span>Refreshing...</span>
-    </div>
-  );
 
   if (isLoading) {
     return (
@@ -147,6 +139,8 @@ const ViewListingPage: React.FC = () => {
     );
   }
 
+  const listingUser = listingUsers[listing.userId];
+
   return (
     <PullToRefresh
       onRefresh={handleRefresh}
@@ -155,46 +149,95 @@ const ViewListingPage: React.FC = () => {
       resistance={3}
       pullingContent={<PullDownContent />}
       refreshingContent={<RefreshContent />}>
-      <div className='min-h-full bg-white p-4'>
-        <div className='flex justify-start items-center mb-4'>
+      <div className='min-h-full bg-white p-6'>
+        <div className='flex items-center mb-6'>
           <button
             onClick={handleBack}
             className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
             <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
           </button>
-          <h1 className='text-xl font-semibold ml-3'>View Listing</h1>
+          <h1 className='text-3xl font-bold ml-4'>View Listing</h1>
         </div>
-        <pre className='whitespace-pre-wrap break-words bg-gray-100 p-4 rounded-md'>
-          {JSON.stringify(
-            {
-              ...listing,
-              images: {
-                ...listing.images,
-                main: {
-                  ...listing.images.main,
-                  data: truncateBase64(listing.images.main.data || ''),
-                },
-                alt1: listing.images.alt1
-                  ? {
-                    ...listing.images.alt1,
-                    data: truncateBase64(listing.images.alt1.data || ''),
-                  }
-                  : undefined,
-                alt2: listing.images.alt2
-                  ? {
-                    ...listing.images.alt2,
-                    data: truncateBase64(listing.images.alt2.data || ''),
-                  }
-                  : undefined,
-              },
-            },
-            null,
-            2
+        {/* Listing Information Section */}
+        <div className='bg-gray-100 p-6 rounded-lg shadow-md'>
+          {/* Listing Image */}
+          {listing.images? (
+            <img
+              src={listing.images.main.data}
+              alt={listing.title}
+              className='w-full h-64 object-cover rounded-lg mb-4'
+            />
+          ) : (
+            <img
+              src='/path/to/default/image.jpg'  // Replace with a valid path to a default image
+              alt='Default Listing'
+              className='w-full h-64 object-cover rounded-lg mb-4'
+            />
           )}
-        </pre>
+
+          <h2 className='text-2xl font-semibold mb-4'>{listing.title}</h2>
+
+          {/* Description */}
+          {listing.description && (
+            <div className='mb-4'>
+              <h3 className='text-lg font-medium'>Description:</h3>
+              <p className='text-gray-700'>{listing.description}</p>
+            </div>
+          )}
+
+          {/* Status */}
+          {listing.status && (
+            <div className='mb-4'>
+              <h3 className='text-lg font-medium'>Status:</h3>
+              <p className='text-gray-700'>{listing.status}</p>
+            </div>
+          )}
+
+          {/* Expiry Date */}
+          {listing.expiresAt && (
+            <div className='mb-4'>
+              <h3 className='text-lg font-medium'>Expiry Date:</h3>
+              <p className='text-gray-700'>{new Date(listing.expiresAt).toLocaleDateString()}</p>
+            </div>
+          )}
+
+          {/* User Information */}
+          {listingUser.preferences && (
+            <div className='mb-4'>
+              <h3 className='text-lg font-medium'>Posted By:</h3>
+              <p className='text-gray-700'>{listingUser.preferences.name}</p>
+            </div>
+          )} 
+
+          {/* Marker Names */}
+          {listing.markers.length > 0 && (
+            <div className='mb-4'>
+              <h3 className='text-lg font-medium'>Markers:</h3>
+              <ul className='list-disc pl-5 text-gray-700'>
+                {listing.markers.map((marker) => (
+                  <li key={marker.id}>{marker.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
     </PullToRefresh>
   );
 };
 
 export default ViewListingPage;
+
+const PullDownContent = () => (
+  <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
+    <ArrowPathIcon className='w-5 h-5 animate-spin' />
+    <span>Pull down to refresh...</span>
+  </div>
+);
+
+const RefreshContent = () => (
+  <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
+    <ArrowPathIcon className='w-5 h-5 animate-spin' />
+    <span>Refreshing...</span>
+  </div>
+);

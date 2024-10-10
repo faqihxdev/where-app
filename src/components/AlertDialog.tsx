@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import {
   AlertDialog as ChakraAlertDialog,
   AlertDialogBody,
@@ -6,18 +6,17 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
-  Button,
 } from '@chakra-ui/react';
 
 interface AlertDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
   title: string;
-  body: string;
+  body: ReactNode;
+  footer: ReactNode;
 }
 
-const AlertDialog: React.FC<AlertDialogProps> = ({ isOpen, onClose, onConfirm, title, body }) => {
+const AlertDialog: React.FC<AlertDialogProps> = ({ isOpen, onClose, title, body, footer }) => {
   const cancelRef = React.useRef(null);
 
   return (
@@ -30,14 +29,7 @@ const AlertDialog: React.FC<AlertDialogProps> = ({ isOpen, onClose, onConfirm, t
 
           <AlertDialogBody>{body}</AlertDialogBody>
 
-          <AlertDialogFooter>
-            <Button ref={cancelRef} onClick={onClose}>
-              Cancel
-            </Button>
-            <Button colorScheme='red' onClick={onConfirm} ml={3}>
-              Delete
-            </Button>
-          </AlertDialogFooter>
+          <AlertDialogFooter>{footer}</AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialogOverlay>
     </ChakraAlertDialog>

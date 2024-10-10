@@ -8,9 +8,15 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true
+        enabled: true,
       },
-      includeAssets: ['favicon.svg', 'favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: [
+        'favicon.svg',
+        'favicon.ico',
+        'robots.txt',
+        'apple-touch-icon.png',
+        'OneSignalSDKWorker.js',
+      ],
       manifest: {
         name: 'WhereApp',
         short_name: 'WhereApp',

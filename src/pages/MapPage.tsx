@@ -7,6 +7,7 @@ import { fetchListingsWithMarkers } from '../stores/listingStore';
 import { useNavigate } from 'react-router-dom';
 
 // Icons for user location and police stations
+// Create custom icon for the user's location marker
 const userLocationIcon = new L.Icon({
   iconUrl: '/logo_transparent.png',
   iconSize: [30, 37],
@@ -21,10 +22,13 @@ const policeStationIcon = new L.Icon({
 
 const MapPage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const fetchAllMarkers = useSetAtom(fetchAllMarkersAtom);
   const [loading, setLoading] = useState(true);
+
   const [listingsWithMarkers, setListingsWithMarkers] = useState([]);
   const [policeStations, setPoliceStations] = useState<any[]>([]); // Store police stations GeoJSON data
   const navigate = useNavigate();
+  const markers = useAtomValue(markersAtom); // Add state for markers
 
   useEffect(() => {
     // Fetch user location

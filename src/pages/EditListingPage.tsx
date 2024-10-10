@@ -7,7 +7,7 @@ import { Listing, Marker, ImageType } from '../types';
 import ListingForm from '../components/ListingForm';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { fetchMarkerById, markersAtom } from '../stores/markerStore';
+import { fetchMarkerByIdAtom, markersAtom } from '../stores/markerStore';
 
 const EditListingPage: React.FC = () => {
   const { listingId } = useParams<{ listingId: string }>();
@@ -16,6 +16,7 @@ const EditListingPage: React.FC = () => {
   const listings = useAtomValue(listingsAtom);
   const updateListing = useSetAtom(updateListingAtom);
   const fetchListingById = useSetAtom(fetchListingByIdAtom);
+  const fetchMarkerById = useSetAtom(fetchMarkerByIdAtom);
   const markers = useAtomValue(markersAtom);
   const [isLoading, setIsLoading] = useState(true);
   const [listing, setListing] = useState<Listing | null>(null);
@@ -36,7 +37,7 @@ const EditListingPage: React.FC = () => {
         await Promise.all(
           fetchedListing.markers.map(async (m) => {
             if (!markers[m.id]) {
-              const fetchedMarker = await fetchMarkerById(m.id, {});
+              const fetchedMarker = await fetchMarkerById(m.id);
               return fetchedMarker || m;
             } else {
               return m;
@@ -63,7 +64,7 @@ const EditListingPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [listingId, listings, markers, fetchListingById, navigate]);
+  }, [listingId, listings, markers, fetchListingById, fetchMarkerById, navigate]);
 
   useEffect(() => {
     fetchListingData();
