@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { Spinner, Button } from '@chakra-ui/react';
 import { fetchListingsWithMarkers } from '../stores/listingStore';
 import { useNavigate } from 'react-router-dom';
+import { Listing } from '../types';
 
 // Icons for user location and police stations
 // Create custom icon for the user's location marker
@@ -22,13 +23,11 @@ const policeStationIcon = new L.Icon({
 
 const MapPage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const fetchAllMarkers = useSetAtom(fetchAllMarkersAtom);
   const [loading, setLoading] = useState(true);
 
-  const [listingsWithMarkers, setListingsWithMarkers] = useState([]);
+  const [listingsWithMarkers, setListingsWithMarkers] = useState<Listing[]>([]);
   const [policeStations, setPoliceStations] = useState<any[]>([]); // Store police stations GeoJSON data
   const navigate = useNavigate();
-  const markers = useAtomValue(markersAtom); // Add state for markers
 
   useEffect(() => {
     // Fetch user location
@@ -98,24 +97,24 @@ const MapPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Spinner size="xl" />
+      <div className='flex justify-center items-center min-h-screen'>
+        <Spinner size='xl' />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center bg-gray-100">
-      <header className="w-full max-w-4xl bg-white shadow-md rounded-lg p-4 mb-4">
-        <h1 className="text-2xl font-semibold text-center">Map</h1>
+    <div className='flex flex-col items-center justify-center bg-gray-100'>
+      <header className='w-full max-w-4xl bg-white shadow-md rounded-lg p-4 mb-4'>
+        <h1 className='text-2xl font-semibold text-center'>Map</h1>
       </header>
 
-      <div className="w-full max-w-4xl h-[70vh] bg-white shadow-md rounded-lg">
+      <div className='w-full max-w-4xl h-[70vh] bg-white shadow-md rounded-lg'>
         {userLocation ? (
           <MapContainer center={userLocation} zoom={13} style={{ height: '100%', width: '100%' }}>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             />
             <Marker position={userLocation} icon={userLocationIcon} />
             <Circle
@@ -134,27 +133,24 @@ const MapPage: React.FC = () => {
                 <React.Fragment key={marker.id}>
                   <Marker
                     position={[marker.latitude, marker.longitude]}
-                    icon={getMarkerForType(listing.type)}
-                  >
-                    <Popup className="custom-popup">
+                    icon={getMarkerForType(listing.type)}>
+                    <Popup className='custom-popup'>
                       <div
-                        className=" text-xs"
+                        className=' text-xs'
                         style={{
                           minWidth: '100px',
                           maxWidth: '250px',
                           fontSize: '10px',
                           textAlign: 'center',
-                        }}
-                      >
-                        <h4 className="font-bold text-base mb-1">{listing.title}</h4>
-                        <p className="text-gray-600 mb-2">{listing.description}</p>
+                        }}>
+                        <h4 className='font-bold text-base mb-1'>{listing.title}</h4>
+                        <p className='text-gray-600 mb-2'>{listing.description}</p>
                         <Button
                           colorScheme={listing.type === 'found' ? 'green' : 'red'}
-                          size="sm"
-                          width="100px"
+                          size='sm'
+                          width='100px'
                           onClick={() => navigate(`/view/${listing.id}?from=map`)}
-                          mb={2}
-                        >
+                          mb={2}>
                           Open
                         </Button>
                       </div>
@@ -173,12 +169,11 @@ const MapPage: React.FC = () => {
               ))
             )}
 
-            {policeStations.map((station, index) => (
+            {policeStations?.map((station, index) => (
               <Marker
                 key={index}
                 position={[station.geometry.coordinates[1], station.geometry.coordinates[0]]}
-                icon={policeStationIcon}
-              >
+                icon={policeStationIcon}>
                 <Popup>
                   <div>
                     <h4>{station.properties.Description}</h4>
@@ -188,7 +183,7 @@ const MapPage: React.FC = () => {
             ))}
           </MapContainer>
         ) : (
-          <p className="text-center">Unable to fetch your location.</p>
+          <p className='text-center'>Unable to fetch your location.</p>
         )}
       </div>
     </div>

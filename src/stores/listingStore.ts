@@ -755,32 +755,43 @@ const isMatch = (listing1: Listing, listing2: Listing): boolean => {
   return true;
 };
 
-
 // FOR JACOB's MAP FUNCTION
 // Function to fetch all listings and their markers
-export const fetchListingsWithMarkers = async () => {
+export const fetchListingsWithMarkers = async (): Promise<Listing[]> => {
   try {
     // Fetch all listings
     const listingsSnapshot = await getDocs(collection(db, 'Listings'));
     const listings = listingsSnapshot.docs.map((listingDoc) => ({
       id: listingDoc.id,
       ...listingDoc.data(),
-    }));
+    })) as ListingDB[];
 
     const listingsWithMarkers = await Promise.all(
       listings.map(async (listing) => {
         // Fetch associated markers for each listing
         const markers = await Promise.all(
-          listing.markerIds.map(async (markerId) => {
+          (listing.markerIds || []).map(async (markerId: string) => {
             const markerDoc = await getDoc(doc(db, 'Markers', markerId));
-            return markerDoc.exists() ? { id: markerDoc.id, ...markerDoc.data() } : null;
+            return markerDoc.exists()
+              ? ({ id: markerDoc.id, ...markerDoc.data() } as Marker)
+              : null;
           })
         );
 
         return {
           ...listing,
-          markers: markers.filter((marker) => marker !== null),
-        };
+          type: listing.type,
+          userId: listing.userId,
+          title: listing.title,
+          description: listing.description,
+          status: listing.status,
+          category: listing.category,
+          createdAt: listing.createdAt.toDate(),
+          updatedAt: listing.updatedAt.toDate(),
+          expiresAt: listing.expiresAt.toDate(),
+          images: { main: { id: listing.images.mainId, listingId: listing.id, data: '' } },
+          markers: markers.filter((marker): marker is Marker => marker !== null),
+        } as Listing;
       })
     );
 
