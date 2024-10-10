@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { isAuthenticatedAtom, initializeAuthAtom } from './stores/authStore';
+import { userDataAtom } from './stores/userStore';
+import { fetchAllUserNotificationsAtom, notificationsLoadedAtom } from './stores/notificationStore';
 import AuthPage from './pages/AuthPage';
 import ListingPage from './pages/ListingPage';
 import MapPage from './pages/MapPage';
@@ -31,6 +33,10 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const initializeAuth = useSetAtom(initializeAuthAtom);
+  const user = useAtomValue(userDataAtom);
+  const fetchAllUserNotifications = useSetAtom(fetchAllUserNotificationsAtom);
+  const notificationsLoaded = useAtomValue(notificationsLoadedAtom);
+  // const isOneSignalInitialized = useRef(false);
 
   useEffect(() => {
     const init = async () => {
@@ -40,6 +46,21 @@ function App() {
     init();
   }, [initializeAuth]);
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (user && !notificationsLoaded) {
+        try {
+          await fetchAllUserNotifications(user.uid);
+        } catch (error) {
+          console.error('[App]: Error fetching user notifications:', error);
+        }
+      }
+    };
+
+    fetchNotifications();
+  }, [user, fetchAllUserNotifications, notificationsLoaded]);
+
+  // // Setup OneSignal
   // useEffect(() => {
   //   const initOneSignal = async () => {
   //     try {
@@ -49,14 +70,13 @@ function App() {
   //         console.log('[App]: Existing OneSignal User ID:', existingUserId);
   //       } else {
   //         await OneSignal.init({
-  //           appId: '3e721a36-042d-41e0-b58a-6c8a41e5f3a8',
-  //           allowLocalhostAsSecureOrigin: true,
+  //           appId: '53802e04-1d5b-4190-ad12-792043253ebc',
   //           notifyButton: {
   //             enable: true,
   //           },
   //         });
 
-  //         const newUserId = OneSignal.User.PushSubscription.id;
+  //         const newUserId = OneSignal.User.onesignalId;
   //         if (newUserId) {
   //           console.log('[App]: New OneSignal User ID:', newUserId);
   //         } else {

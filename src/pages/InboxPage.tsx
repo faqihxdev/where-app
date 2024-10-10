@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   listingsAtom,
   fetchListingsByUserIdAtom,
@@ -9,8 +9,8 @@ import { matchesAtom, fetchMatchesByUserAtom } from '../stores/matchStore';
 import { userDataAtom } from '../stores/userStore';
 import {
   userNotificationsAtom,
-  fetchAllUserNotifications,
-  markNotifications,
+  fetchAllUserNotificationsAtom,
+  markNotificationsAtom,
 } from '../stores/notificationStore';
 import { Listing, Notification } from '../types';
 import ListingCard from '../components/ListingCard';
@@ -21,13 +21,14 @@ import { InboxIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PullToRefresh from 'react-simple-pull-to-refresh';
 import { showCustomToast } from '../components/CustomToast';
+import { Button } from '@chakra-ui/react';
 
 const InboxPage: React.FC = () => {
-  const [listings, setListings] = useAtom(listingsAtom);
-  const [matches, setMatches] = useAtom(matchesAtom);
-  const [notifications, setNotifications] = useAtom(userNotificationsAtom);
-  const [, fetchListingsByUserId] = useAtom(fetchListingsByUserIdAtom);
-  const [, fetchMatches] = useAtom(fetchMatchesByUserAtom);
+  const listings = useAtomValue(listingsAtom);
+  const matches = useAtomValue(matchesAtom);
+  const notifications = useAtomValue(userNotificationsAtom);
+  const fetchListingsByUserId = useSetAtom(fetchListingsByUserIdAtom);
+  const fetchMatches = useSetAtom(fetchMatchesByUserAtom);
   const userData = useAtomValue(userDataAtom);
   const [isListingsLoading, setIsListingsLoading] = useState(true);
   const [isMatchesLoading, setIsMatchesLoading] = useState(true);
@@ -35,6 +36,8 @@ const InboxPage: React.FC = () => {
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [userListingsFetched, setUserListingsFetched] = useAtom(userListingsFetchedAtom);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const fetchAllUserNotifications = useSetAtom(fetchAllUserNotificationsAtom);
+  const markNotifications = useSetAtom(markNotificationsAtom);
 
   const filteredNotifications = Object.values(notifications).filter(
     (notification) => notification.status !== 'removed'
@@ -49,15 +52,7 @@ const InboxPage: React.FC = () => {
     setIsListingsLoading(true);
     try {
       if (!userListingsFetched) {
-        const fetchedListings = await fetchListingsByUserId(userData.uid);
-        setListings((prev) => {
-          const newListings = { ...prev };
-          fetchedListings.forEach((listing) => {
-            newListings[listing.id] = listing;
-          });
-          return newListings;
-        });
-        setUserListingsFetched(true);
+        await fetchListingsByUserId(userData.uid);
       }
     } catch (error) {
       console.error('[InboxPage] Error fetching listings:', error);
@@ -69,7 +64,7 @@ const InboxPage: React.FC = () => {
     } finally {
       setIsListingsLoading(false);
     }
-  }, [fetchListingsByUserId, userData, userListingsFetched, setListings, setUserListingsFetched]);
+  }, [userData, userListingsFetched, fetchListingsByUserId]);
 
   const fetchMatchesData = useCallback(async () => {
     if (!userData?.uid) {
@@ -79,8 +74,7 @@ const InboxPage: React.FC = () => {
 
     setIsMatchesLoading(true);
     try {
-      const fetchedMatches = await fetchMatches(userData.uid);
-      setMatches(fetchedMatches);
+      await fetchMatches(userData.uid);
     } catch (error) {
       console.error('[InboxPage] Error fetching matches:', error);
       showCustomToast({
@@ -91,7 +85,7 @@ const InboxPage: React.FC = () => {
     } finally {
       setIsMatchesLoading(false);
     }
-  }, [fetchMatches, userData, setMatches]);
+  }, [fetchMatches, userData]);
 
   const fetchNotificationsData = useCallback(async () => {
     if (!userData?.uid) {
@@ -101,7 +95,7 @@ const InboxPage: React.FC = () => {
 
     setIsNotificationsLoading(true);
     try {
-      await fetchAllUserNotifications(userData.uid, setNotifications);
+      await fetchAllUserNotifications(userData.uid);
     } catch (error) {
       console.error('[InboxPage] Error fetching notifications:', error);
       showCustomToast({
@@ -112,7 +106,7 @@ const InboxPage: React.FC = () => {
     } finally {
       setIsNotificationsLoading(false);
     }
-  }, [userData, setNotifications]);
+  }, [userData, fetchAllUserNotifications]);
 
   useEffect(() => {
     fetchListingsData();
@@ -144,7 +138,7 @@ const InboxPage: React.FC = () => {
     const unreadIds = unreadNotifications.map((n) => n.id);
     if (unreadIds.length > 0) {
       try {
-        await markNotifications(unreadIds, 'read', setNotifications);
+        await markNotifications(unreadIds, 'read');
         showCustomToast({
           title: 'Notifications Marked as Read',
           description: 'All notifications have been marked as read.',
@@ -221,11 +215,16 @@ const InboxPage: React.FC = () => {
         <section>
           <div className='flex justify-between items-center mb-4'>
             <h2 className='text-xl font-semibold'>Notifications</h2>
-            <button
+            <Button
               onClick={handleMarkAllAsRead}
-              className='px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'>
+              size='sm'
+              fontWeight='medium'
+              bg='primary.600'
+              color='white'
+              _hover={{ bg: 'primary.700' }}
+              _active={{ bg: 'primary.800' }}>
               Mark All as Read
-            </button>
+            </Button>
           </div>
           {isNotificationsLoading ? (
             <div className='flex justify-center items-center py-8'>
