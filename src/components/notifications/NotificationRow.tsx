@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAtom } from 'jotai';
+import { useSetAtom } from 'jotai';
 import { Notification } from '../../types';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { Menu, MenuButton, MenuList, MenuItem, Button } from '@chakra-ui/react';
-import { userNotificationsAtom, markNotifications } from '../../stores/notificationStore';
+import { markNotificationsAtom } from '../../stores/notificationStore';
 
 interface NotificationRowProps {
   notification: Notification;
@@ -11,12 +11,12 @@ interface NotificationRowProps {
 }
 
 const NotificationRow: React.FC<NotificationRowProps> = ({ notification, onOpenDrawer }) => {
-  const [, setNotifications] = useAtom(userNotificationsAtom);
+  const markNotifications = useSetAtom(markNotificationsAtom);
 
   const handleClick = async () => {
     if (notification.status !== 'read') {
       try {
-        await markNotifications([notification.id], 'read', setNotifications);
+        await markNotifications([notification.id], 'read');
       } catch (error) {
         console.error('[NotificationRow] Error marking notification as read:', error);
       }
@@ -29,8 +29,7 @@ const NotificationRow: React.FC<NotificationRowProps> = ({ notification, onOpenD
     try {
       await markNotifications(
         [notification.id],
-        notification.status === 'read' ? 'unread' : 'read',
-        setNotifications
+        notification.status === 'read' ? 'unread' : 'read'
       );
     } catch (error) {
       console.error('[NotificationRow] Error marking notification:', error);
@@ -40,7 +39,7 @@ const NotificationRow: React.FC<NotificationRowProps> = ({ notification, onOpenD
   const handleRemove = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await markNotifications([notification.id], 'removed', setNotifications);
+      await markNotifications([notification.id], 'removed');
     } catch (error) {
       console.error('[NotificationRow] Error removing notification:', error);
     }
@@ -74,10 +73,10 @@ const NotificationRow: React.FC<NotificationRowProps> = ({ notification, onOpenD
           size='sm'
           paddingX={1.5}
           fontWeight='medium'
-          bg='primary.600'
-          color='white'
-          _hover={{ bg: 'primary.700' }}
-          _active={{ bg: 'primary.800' }}
+          bg='gray.100'
+          color='gray.700'
+          _hover={{ bg: 'gray.200' }}
+          _active={{ bg: 'gray.300' }}
           aria-label='Actions'
           onClick={(e) => e.stopPropagation()}>
           <EllipsisVerticalIcon className='w-5 h-5 stroke-2' />
