@@ -1,19 +1,36 @@
 import React, { useCallback, useRef, useState } from 'react';
 import Webcam from 'react-webcam';
 import { useSetAtom } from 'jotai';
-import { Box, Button, VStack, Image, useToast, Center } from '@chakra-ui/react';
+import { Box, Button, VStack, Image, useToast, Center, Heading } from '@chakra-ui/react';
 import { addImageAtom } from '../../src/stores/imageStore';
-import { updateListingAtom, fetchListingByIdAtom, fetchListingByIdAtom } from '../../src/stores/listingStore';
-
-
-var listing1 = "ajfoafjojfaofj";
-var listing2 = "fwjofjwofwjofw";
-const addImage = useSetAtom(addImageAtom);
-const updateListing = useSetAtom(updateListingAtom);
-const fetchListingById = useSetAtom(fetchListingByIdAtom);
-
+import { updateListingAtom, fetchListingByIdAtom } from '../../src/stores/listingStore';
+import { updateMatchAtom, fetchMatchesByUserAtom } from '../stores/matchStore';
+import { useParams } from 'react-router-dom';
+import { Match, MatchStatus, Listing, ListingStatus } from '../types';
+import { fetchListingUserAtom } from '../stores/userStore';
 
 const WebcamCapture: React.FC = () => {
+  // ID in the form of /resolve/ID1/ID2
+  // perform different action if ID1 is finder or seeker
+  // for now we leave this hardcoded first.
+  // const { id1, id2 } = useParams<{ id1: string; id2: string }>();
+  const id1 = `F1jpCBMxNjcgdxbu4oag`; // type: lost, seeker
+  const id2 = `enmFa25CV7RvJPmnORII`; // type: found, finder
+
+  // boilerplate
+  const fetchMatchesByUser = useSetAtom(fetchMatchesByUserAtom);
+  const updateMatch = useSetAtom(updateMatchAtom);
+  // const addImage = useSetAtom(addImageAtom);
+  const updateListing = useSetAtom(updateListingAtom);
+  const fetchListingById = useSetAtom(fetchListingByIdAtom);
+
+  // require finders to take a picture
+  // get listing and match first
+  const listing = fetchListingById(id1).then((Listing) => Listing);
+  const matches = fetchMatchesByUser(listing.userId);
+  const match = Object.values(matches).find(
+    (match) => match.listingId1 === id2 || match.listingId2 === id2
+  );
 
   const webcamRef = useRef<Webcam>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
@@ -38,10 +55,45 @@ const WebcamCapture: React.FC = () => {
     }
 
     try {
-      // Interface with firebase
-      const response = await fetch(imgSrc);
+      // Update the match status to resolved
+      const updatedMatch = {
+        status: MatchStatus.resolved,
+        updatedAt: new Date(),
+      };
+      updateMatch(match.id, updatedMatch);
 
+      // Convert B64 to a File object
+      function dataURIToBlob(dataURI: string) {
+        dataURI = dataURI.replace(/^data:/, '');
 
+        const type = dataURI.match(/image\/[^;]+/)[0];
+        const base64 = dataURI.replace(/^[^,]+,/, '');
+        const arrayBuffer = new ArrayBuffer(base64.length);
+        const typedArray = new Uint8Array(arrayBuffer);
+
+        for (let i = 0; i < base64.length; i++) {
+          typedArray[i] = base64.charCodeAt(i);
+        }
+
+        return new Blob([arrayBuffer], { type });
+      }
+      const file = new File([dataURIToBlob(imgSrc)], 'resolve', { type: 'image/jpeg' }); // how to make this more resilient to other types
+      const imageUpdates = {
+        main: {
+          action: 'add' as const,
+          file: file,
+        },
+      };
+      // Create updated Partial<Listing> object with image
+      const updatedListing: Listing = {
+        ...listing,
+        status: ListingStatus.resolved,
+      };
+
+      updateListing({
+        updatedListing: updatedListing,
+        imageUpdates: imageUpdates,
+      });
 
       toast({
         title: 'Image uploaded successfully',
@@ -63,6 +115,7 @@ const WebcamCapture: React.FC = () => {
   return (
     <Center h='100vh'>
       <VStack spacing={4}>
+        <Heading>Take a picture with you and the item!</Heading>
         <Box boxShadow='md' p={4} borderRadius='md'>
           <Webcam
             audio={false}
@@ -79,7 +132,7 @@ const WebcamCapture: React.FC = () => {
           <Box>
             <Image src={imgSrc} alt='captured' boxSize='300px' objectFit='cover' />
             <Button colorScheme='green' mt={2} onClick={uploadImage}>
-              Upload Image
+              Resolve Listing
             </Button>
           </Box>
         )}

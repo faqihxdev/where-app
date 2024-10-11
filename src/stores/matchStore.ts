@@ -11,7 +11,6 @@ import {
   addDoc,
   doc,
   updateDoc,
-  deleteDoc,
 } from 'firebase/firestore';
 
 // This matches atom is used to store the matches client-side
