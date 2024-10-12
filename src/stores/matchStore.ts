@@ -12,6 +12,7 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  or,
 } from 'firebase/firestore';
 
 // This matches atom is used to store the matches client-side
@@ -74,7 +75,10 @@ export const fetchMatchesByUserAtom = atom(
     console.log(`[matchStore/fetchMatchesByUser]: Fetching matches for user: ${userId}`);
     try {
       // Create a query to get the matches for the user
-      const q = query(collection(db, 'Matches'), where('userId1', '==', userId));
+      const q = query(
+        collection(db, 'Matches'),
+        or(where('userId1', '==', userId), where('userId2', '==', userId))
+      );
 
       // Get the matches from Firestore
       console.log('🔥 [matchStore/fetchMatchesByUser]');
