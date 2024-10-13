@@ -118,6 +118,7 @@ function App() {
             <Route path='/view/:listingId' element={<ViewListingPage />} />
             <Route path='/edit/:listingId' element={<EditListingPage />} />
             <Route path='/resolve' element={<ResolvePage />} />
+            <Route path='/resolve/:id1/:id2' element={<ResolvePage />} />
           </Route>
           <Route path='*' element={<NotFoundPage />} />
         </Routes>
