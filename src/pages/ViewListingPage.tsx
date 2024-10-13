@@ -2,13 +2,17 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom, fetchListingByIdAtom } from '../stores/listingStore';
-import { listingUsersAtom, fetchListingUserAtom } from '../stores/userStore';
+import { listingUsersAtom, fetchListingUserAtom, getAvatarUrl } from '../stores/userStore';
 import { markersAtom, fetchMarkerByIdAtom } from '../stores/markerStore';
-import { Listing } from '../types';
-import { Button } from '@chakra-ui/react';
+import { Listing, ListingStatus } from '../types';
+import { Button, Avatar } from '@chakra-ui/react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PullToRefresh from 'react-simple-pull-to-refresh';
-import { ArrowPathIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowLeftIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { Carousel } from 'react-responsive-carousel';
+import 'react-responsive-carousel/lib/styles/carousel.min.css';
+import MapSelector from '../components/map/MapSelector';
+import { format } from 'date-fns';
 
 const ViewListingPage: React.FC = () => {
   const { listingId } = useParams<{ listingId: string }>();
@@ -57,7 +61,6 @@ const ViewListingPage: React.FC = () => {
             }
           })
         );
-
       } catch (error) {
         console.error('[ViewListingPage]: Error fetching listing data:', error);
         setError('An error occurred while fetching the listing data');
@@ -87,10 +90,9 @@ const ViewListingPage: React.FC = () => {
   const handleBack = () => {
     if (from === 'inbox') {
       navigate('/inbox');
-    } else if (from == 'map') {
+    } else if (from === 'map') {
       navigate('/map');
-    }
-    else {
+    } else {
       navigate('/');
     }
   };
@@ -121,25 +123,22 @@ const ViewListingPage: React.FC = () => {
   }
 
   const listing = listings[listingId as string] as Listing;
-
-  if (!listing) {
-    return (
-      <div className='flex flex-col items-center justify-center h-screen'>
-        <h1 className='text-2xl font-semibold mb-4'>Listing not found</h1>
-        <Button
-          onClick={() => navigate('/')}
-          fontWeight='medium'
-          bg='primary.600'
-          color='white'
-          _hover={{ bg: 'primary.700' }}
-          _active={{ bg: 'primary.800' }}>
-          Go Back To Listings
-        </Button>
-      </div>
-    );
-  }
-
   const listingUser = listingUsers[listing.userId];
+
+  const getStatusBadgeColor = (status: ListingStatus) => {
+    switch (status) {
+      case ListingStatus.resolved:
+        return 'bg-green-200/95 text-green-800';
+      case ListingStatus.expired:
+        return 'bg-red-200/95 text-red-800';
+      default:
+        return 'bg-blue-200/95 text-blue-800';
+    }
+  };
+
+  const listingImages = [listing.images.main, listing.images.alt1, listing.images.alt2].filter(
+    (img): img is NonNullable<typeof img> => img !== undefined
+  );
 
   return (
     <PullToRefresh
@@ -149,77 +148,105 @@ const ViewListingPage: React.FC = () => {
       resistance={3}
       pullingContent={<PullDownContent />}
       refreshingContent={<RefreshContent />}>
-      <div className='min-h-full bg-white p-6'>
-        <div className='flex items-center mb-6'>
-          <button
-            onClick={handleBack}
-            className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
-            <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
-          </button>
-          <h1 className='text-3xl font-bold ml-4'>View Listing</h1>
+      <div className='min-h-full bg-white p-4'>
+        {/* Page Title and Status */}
+        <div className='mb-4'>
+          <div className='flex items-center justify-between mb-4'>
+            <div className='flex items-center'>
+              <button
+                onClick={handleBack}
+                className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
+                <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
+              </button>
+              <h1 className='text-xl font-semibold ml-4'>View Listing</h1>
+            </div>
+            <div
+              className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(
+                listing.status
+              )}`}>
+              {listing.status}
+            </div>
+          </div>
+          {/* Add a horizontal line that stretches across the screen */}
+          <div className='border-b border-gray-200 -mx-4'></div>
         </div>
-        {/* Listing Information Section */}
-        <div className='bg-gray-100 p-6 rounded-lg shadow-md'>
-          {/* Listing Image */}
-          {listing.images? (
-            <img
-              src={listing.images.main.data}
-              alt={listing.title}
-              className='w-full h-64 object-cover rounded-lg mb-4'
-            />
-          ) : (
-            <img
-              src='/path/to/default/image.jpg'  // Replace with a valid path to a default image
-              alt='Default Listing'
-              className='w-full h-64 object-cover rounded-lg mb-4'
-            />
-          )}
 
-          <h2 className='text-2xl font-semibold mb-4'>{listing.title}</h2>
+        {/* Listing Information Section */}
+        <div className='space-y-4'>
+          {/* User Information */}
+          <div className='flex items-center'>
+            <Avatar
+              size='sm'
+              name={listingUser?.preferences?.name || listingUser?.email}
+              src={getAvatarUrl(listingUser?.preferences?.name || listingUser?.email)}
+              mr={2}
+            />
+            <span className='text-sm font-medium'>
+              {listingUser?.preferences?.name || listingUser?.email}
+            </span>
+          </div>
+
+          {/* Image Carousel */}
+          <div className='w-full rounded-lg overflow-hidden border border-gray-200'>
+            {listingImages.length > 0 && (
+              <Carousel showThumbs={false} showStatus={false} infiniteLoop={true}>
+                {listingImages.map((img, index) => (
+                  <div key={index}>
+                    <img
+                      className='aspect-[4/3] object-cover'
+                      src={img.data}
+                      alt={`${listing.title} - Image ${index + 1}`}
+                    />
+                  </div>
+                ))}
+              </Carousel>
+            )}
+          </div>
+
+          <h2 className='text-xl font-semibold'>{listing.title}</h2>
+
+          {/* Additional Details */}
+          <div className='grid grid-cols-2 gap-4'>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>Category</h3>
+              <p>{listing.category}</p>
+            </div>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>Type</h3>
+              <p className='capitalize'>{listing.type}</p>
+            </div>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>Created At</h3>
+              <p className='flex items-center'>
+                <CalendarIcon className='w-4 h-4 mr-1' />
+                {format(listing.createdAt, 'MMM d, yyyy')}
+              </p>
+            </div>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>Expires At</h3>
+              <p className='flex items-center'>
+                <CalendarIcon className='w-4 h-4 mr-1' />
+                {format(listing.expiresAt, 'MMM d, yyyy')}
+              </p>
+            </div>
+          </div>
 
           {/* Description */}
-          {listing.description && (
-            <div className='mb-4'>
-              <h3 className='text-lg font-medium'>Description:</h3>
-              <p className='text-gray-700'>{listing.description}</p>
-            </div>
-          )}
+          <div>
+            <h3 className='text-sm font-medium text-gray-500'>Description</h3>
+            <p className='text-gray-700'>{listing.description}</p>
+          </div>
 
-          {/* Status */}
-          {listing.status && (
-            <div className='mb-4'>
-              <h3 className='text-lg font-medium'>Status:</h3>
-              <p className='text-gray-700'>{listing.status}</p>
-            </div>
-          )}
-
-          {/* Expiry Date */}
-          {listing.expiresAt && (
-            <div className='mb-4'>
-              <h3 className='text-lg font-medium'>Expiry Date:</h3>
-              <p className='text-gray-700'>{new Date(listing.expiresAt).toLocaleDateString()}</p>
-            </div>
-          )}
-
-          {/* User Information */}
-          {listingUser.preferences && (
-            <div className='mb-4'>
-              <h3 className='text-lg font-medium'>Posted By:</h3>
-              <p className='text-gray-700'>{listingUser.preferences.name}</p>
-            </div>
-          )} 
-
-          {/* Marker Names */}
-          {listing.markers.length > 0 && (
-            <div className='mb-4'>
-              <h3 className='text-lg font-medium'>Markers:</h3>
-              <ul className='list-disc pl-5 text-gray-700'>
-                {listing.markers.map((marker) => (
-                  <li key={marker.id}>{marker.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {/* Map */}
+          <div>
+            <h3 className='text-lg font-semibold mb-2'>Location</h3>
+            <MapSelector
+              mode='filter'
+              initialMarkers={listing.markers}
+              onMarkersChange={() => {}}
+              showRemoveButton={false}
+            />
+          </div>
         </div>
       </div>
     </PullToRefresh>
