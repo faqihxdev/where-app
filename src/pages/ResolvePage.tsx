@@ -197,9 +197,11 @@ const WebcamCapture: React.FC = () => {
         {imgFile && (
           <Box>
             <Image src={imgSrc} alt='captured' boxSize='300px' objectFit='cover' />
-            <Button colorScheme='green' mt={2} onClick={uploadImage}>
-              Resolve Listing
-            </Button>
+            <Center mt={2}>
+              <Button colorScheme='green' mt={2} onClick={uploadImage}>
+                Resolve Listing
+              </Button>
+            </Center>
           </Box>
         )}
       </VStack>
