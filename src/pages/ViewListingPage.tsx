@@ -167,27 +167,13 @@ const ViewListingPage: React.FC = () => {
               {listing.status}
             </div>
           </div>
-          {/* Add a horizontal line that stretches across the screen */}
-          <div className='border-b border-gray-200 -mx-4'></div>
         </div>
 
         {/* Listing Information Section */}
         <div className='space-y-4'>
-          {/* User Information */}
-          <div className='flex items-center'>
-            <Avatar
-              size='sm'
-              name={listingUser?.preferences?.name || listingUser?.email}
-              src={getAvatarUrl(listingUser?.preferences?.name || listingUser?.email)}
-              mr={2}
-            />
-            <span className='text-sm font-medium'>
-              {listingUser?.preferences?.name || listingUser?.email}
-            </span>
-          </div>
 
           {/* Image Carousel */}
-          <div className='w-full rounded-lg overflow-hidden border border-gray-200'>
+          <div className='w-full overflow-hidden border border-gray-200 rounded-lg'>
             {listingImages.length > 0 && (
               <Carousel showThumbs={false} showStatus={false} infiniteLoop={true}>
                 {listingImages.map((img, index) => (
@@ -204,36 +190,49 @@ const ViewListingPage: React.FC = () => {
           </div>
 
           <h2 className='text-xl font-semibold'>{listing.title}</h2>
+          
+          {/* User Information */}
+          <div className='flex items-center p-2 bg-gray-100 rounded-lg'>
+            <Avatar
+              size='sm'
+              name={listingUser?.preferences?.name || listingUser?.email}
+              src={getAvatarUrl(listingUser?.preferences?.name || listingUser?.email)}
+              mr={2}
+            />
+            <span className='text-sm font-medium'>
+              {listingUser?.preferences?.name || listingUser?.email}
+            </span>
+          </div>
 
           {/* Additional Details */}
-          <div className='grid grid-cols-2 gap-4'>
+          <div className='grid grid-cols-2 gap-4 text-sm bg-gray-100 rounded-lg p-4'>
             <div>
-              <h3 className='text-sm font-medium text-gray-500'>Category</h3>
+              <h3 className='font-medium text-gray-500'>Category</h3>
               <p>{listing.category}</p>
             </div>
             <div>
-              <h3 className='text-sm font-medium text-gray-500'>Type</h3>
+              <h3 className='font-medium text-gray-500'>Type</h3>
               <p className='capitalize'>{listing.type}</p>
             </div>
             <div>
-              <h3 className='text-sm font-medium text-gray-500'>Created At</h3>
+              <h3 className='font-medium text-gray-500'>Created At</h3>
               <p className='flex items-center'>
                 <CalendarIcon className='w-4 h-4 mr-1' />
-                {format(listing.createdAt, 'MMM d, yyyy')}
+                <span>{format(listing.createdAt, 'MMM d, yyyy')}</span>
               </p>
             </div>
             <div>
-              <h3 className='text-sm font-medium text-gray-500'>Expires At</h3>
+              <h3 className='font-medium text-gray-500'>Expires At</h3>
               <p className='flex items-center'>
                 <CalendarIcon className='w-4 h-4 mr-1' />
-                {format(listing.expiresAt, 'MMM d, yyyy')}
+                <span>{format(listing.expiresAt, 'MMM d, yyyy')}</span>
               </p>
             </div>
           </div>
 
           {/* Description */}
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>Description</h3>
+          <div className='text-sm bg-gray-100 rounded-lg p-4'>
+            <h3 className='font-medium text-gray-500'>Description</h3>
             <p className='text-gray-700'>{listing.description}</p>
           </div>
 
