@@ -2,10 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Spinner, Button } from '@chakra-ui/react';
+import { Spinner, Button, Avatar } from '@chakra-ui/react';
 import { fetchListingsWithMarkers } from '../stores/listingStore';
 import { useNavigate } from 'react-router-dom';
-import { Listing } from '../types';
+import { Listing, ListingStatus } from '../types';
+import { useAtomValue } from 'jotai';
+import { listingUsersAtom, getAvatarUrl } from '../stores/userStore';
+import { ExclamationCircleIcon, MagnifyingGlassCircleIcon } from '@heroicons/react/24/outline';
+import { format } from 'date-fns';
+import { truncateWithEllipsis } from '../utils/utils';
 
 // Icons for user location and police stations
 // Create custom icon for the user's location marker
@@ -28,6 +33,7 @@ const MapPage: React.FC = () => {
   const [listingsWithMarkers, setListingsWithMarkers] = useState<Listing[]>([]);
   const [policeStations, setPoliceStations] = useState<any[]>([]); // Store police stations GeoJSON data
   const navigate = useNavigate();
+  const listingUsers = useAtomValue(listingUsersAtom);
 
   useEffect(() => {
     // Fetch user location
@@ -95,6 +101,22 @@ const MapPage: React.FC = () => {
     });
   };
 
+  const getDisplayName = (userId: string) => {
+    const user = listingUsers[userId];
+    return user ? user.preferences?.name || user.email : '';
+  };
+
+  const getStatusBadgeColor = (status: ListingStatus) => {
+    switch (status) {
+      case ListingStatus.resolved:
+        return 'bg-green-200/95 text-green-800';
+      case ListingStatus.expired:
+        return 'bg-red-200/95 text-red-800';
+      default:
+        return '';
+    }
+  };
+
   if (loading) {
     return (
       <div className='flex justify-center items-center min-h-screen'>
@@ -104,12 +126,16 @@ const MapPage: React.FC = () => {
   }
 
   return (
-    <div className='flex flex-col items-center justify-center bg-gray-100'>
-      <header className='w-full max-w-4xl bg-white shadow-md rounded-lg p-4 mb-4'>
-        <h1 className='text-2xl font-semibold text-center'>Map</h1>
-      </header>
+    <div className='flex flex-col h-full bg-white'>
+      {/* Updated header style */}
+      <div className='p-4 border-b border-gray-200'>
+        <div className='flex items-center justify-between'>
+          <h1 className='text-xl font-semibold'>Map</h1>
+        </div>
+      </div>
 
-      <div className='w-full max-w-4xl h-[70vh] bg-white shadow-md rounded-lg'>
+      {/* Map container taking up the rest of the screen */}
+      <div className='flex-grow'>
         {userLocation ? (
           <MapContainer center={userLocation} zoom={13} style={{ height: '100%', width: '100%' }}>
             <TileLayer
@@ -134,25 +160,78 @@ const MapPage: React.FC = () => {
                   <Marker
                     position={[marker.latitude, marker.longitude]}
                     icon={getMarkerForType(listing.type)}>
-                    <Popup className='custom-popup'>
-                      <div
-                        className=' text-xs'
-                        style={{
-                          minWidth: '100px',
-                          maxWidth: '250px',
-                          fontSize: '10px',
-                          textAlign: 'center',
-                        }}>
-                        <h4 className='font-bold text-base mb-1'>{listing.title}</h4>
-                        <p className='text-gray-600 mb-2'>{listing.description}</p>
-                        <Button
-                          colorScheme={listing.type === 'found' ? 'green' : 'red'}
-                          size='sm'
-                          width='100px'
-                          onClick={() => navigate(`/view/${listing.id}?from=map`)}
-                          mb={2}>
-                          Open
-                        </Button>
+                    <Popup closeButton={false}>
+                      <div className='w-56 bg-white rounded-lg overflow-hidden'>
+                        <div className='relative'>
+                          {listing.images.main.data && (
+                            <img
+                              src={listing.images.main.data}
+                              alt={listing.title}
+                              className='w-full h-24 object-cover'
+                            />
+                          )}
+                          <div
+                            className={`absolute top-1 right-1 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                              listing.type === 'found'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                            {listing.type === 'lost' ? (
+                              <ExclamationCircleIcon className='w-3 h-3 stroke-2' />
+                            ) : (
+                              <MagnifyingGlassCircleIcon className='w-3 h-3 stroke-2' />
+                            )}
+                            {listing.type === 'lost' ? 'Lost' : 'Found'}
+                          </div>
+                          {listing.status !== ListingStatus.active && (
+                            <div
+                              className={`absolute top-1 left-1 flex rounded-lg items-center gap-1 px-1.5 py-0.5 text-xs font-medium whitespace-nowrap ${getStatusBadgeColor(listing.status)}`}>
+                              <span>{listing.status}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className='p-2'>
+                          <div className='flex items-center gap-1 mb-1'>
+                            <Avatar
+                              size='2xs'
+                              name={getDisplayName(listing.userId)}
+                              src={getAvatarUrl(getDisplayName(listing.userId))}
+                            />
+                            <span className='text-xs font-medium'>
+                              {truncateWithEllipsis(getDisplayName(listing.userId), 15)}
+                            </span>
+                          </div>
+                          <h4 className='font-semibold text-sm mb-1 truncate'>{listing.title}</h4>
+                          <div className='text-gray-600 font-medium text-xs'>
+                            <p>{format(listing.createdAt, 'yyyy-MM-dd hh:mm a')}</p>
+                            <p>{truncateWithEllipsis(marker.name, 25)}</p>
+                          </div>
+                          <div className='flex gap-2 mt-2'>
+                            <Button
+                              onClick={() => navigate(`/view/${listing.id}?from=map`)}
+                              size='xs'
+                              flex={1}
+                              fontWeight='medium'
+                              bg='primary.600'
+                              color='white'
+                              _hover={{ bg: 'primary.700' }}
+                              _active={{ bg: 'primary.800' }}>
+                              View Details
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                const popupElement = document.querySelector(
+                                  '.leaflet-popup-close-button'
+                                ) as HTMLElement;
+                                if (popupElement) popupElement.click();
+                              }}
+                              size='xs'
+                              fontWeight='medium'
+                              variant='outline'>
+                              Close
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </Popup>
                   </Marker>
