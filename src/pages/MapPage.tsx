@@ -12,6 +12,18 @@ import { ExclamationCircleIcon, MagnifyingGlassCircleIcon } from '@heroicons/rea
 import { format } from 'date-fns';
 import { truncateWithEllipsis } from '../utils/utils';
 
+interface PoliceStationFeature {
+  type: 'Feature';
+  properties: {
+    Name: string;
+    Description: string;
+  };
+  geometry: {
+    type: 'Point';
+    coordinates: [number, number, number];
+  };
+}
+
 // Icons for user location and police stations
 // Create custom icon for the user's location marker
 const userLocationIcon = new L.Icon({
@@ -31,7 +43,7 @@ const MapPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const [listingsWithMarkers, setListingsWithMarkers] = useState<Listing[]>([]);
-  const [policeStations, setPoliceStations] = useState<any[]>([]); // Store police stations GeoJSON data
+  const [policeStations, setPoliceStations] = useState<PoliceStationFeature[]>([]); // Store police stations GeoJSON data
   const navigate = useNavigate();
   const listingUsers = useAtomValue(listingUsersAtom);
 
@@ -70,7 +82,7 @@ const MapPage: React.FC = () => {
       try {
         const response = await fetch('/cleaned_police_stations.geojson'); // Assuming it's in public folder
         const data = await response.json();
-        setPoliceStations(data.features); // Assuming 'features' holds the relevant GeoJSON data
+        setPoliceStations(data.features as PoliceStationFeature[]); // Assuming 'features' holds the relevant GeoJSON data
       } catch (error) {
         console.error('Error fetching police station data:', error);
       }
