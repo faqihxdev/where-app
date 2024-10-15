@@ -1,5 +1,5 @@
 import { atom } from 'jotai';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { User } from '../types';
 import { atomWithStorage } from 'jotai/utils';
@@ -24,9 +24,17 @@ export const fetchUserDataAtom = atom(null, async (_, set, uid: string): Promise
 
     // If the user document exists, set the user data atom
     if (userDoc.exists()) {
-      const userData = userDoc.data() as User;
-      set(userDataAtom, userData);
-      return userData;
+      const userData = userDoc.data();
+
+      const fetchedUser: User = {
+        uid: userData.uid,
+        email: userData.email,
+        preferences: userData.preferences,
+        createdAt: (userData.createdAt as Timestamp).toDate(),
+      };
+
+      set(userDataAtom, fetchedUser);
+      return fetchedUser;
     } else {
       console.error(`[userStore/fetchUserData]: No user document found for uid: ${uid}`);
       set(userDataAtom, null);
