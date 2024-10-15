@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { userDataAtom } from '../stores/userStore';
+import { getAvatarUrl, userDataAtom } from '../stores/userStore';
 import { logoutAtom } from '../stores/authStore';
 import { showCustomToast } from '../components/CustomToast';
 import {
@@ -10,14 +10,8 @@ import {
   FormControl,
   FormLabel,
   FormErrorMessage,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
+  Avatar,
+  VStack,
 } from '@chakra-ui/react';
 import {
   getAuth,
@@ -26,36 +20,28 @@ import {
   deleteUser,
   reauthenticateWithCredential,
 } from 'firebase/auth';
+import { ArrowLeftIcon, CalendarIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { format } from 'date-fns';
+import AlertDialog from '../components/AlertDialog';
 
 const ProfilePage: React.FC = () => {
-  const [isPasswordLoading, setIsPasswordLoading] = useState(false); // For password change
-  const [isDeleteLoading, setIsDeleteLoading] = useState(false); // For account deletion
-  const [isLogoutLoading, setIsLogoutLoading] = useState(false); // For logout
-  const [currentPassword, setCurrentPassword] = useState(''); // For change password
-  const [newPassword, setNewPassword] = useState(''); // For change password
-  const [confirmPassword, setConfirmPassword] = useState(''); // For change password
-  const [deletePassword, setDeletePassword] = useState(''); // For delete account
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [isLogoutLoading, setIsLogoutLoading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
   const [error, setError] = useState('');
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const userData = useAtomValue(userDataAtom);
   const logout = useSetAtom(logoutAtom);
   const navigate = useNavigate();
 
-  // Modal controllers for Change Password and Delete Account
-  const {
-    isOpen: isPasswordModalOpen,
-    onOpen: onPasswordModalOpen,
-    onClose: onPasswordModalClose,
-  } = useDisclosure();
-  const {
-    isOpen: isDeleteModalOpen,
-    onOpen: onDeleteModalOpen,
-    onClose: onDeleteModalClose,
-  } = useDisclosure();
-
-  // Handle logout
   const handleLogout = async () => {
     try {
-      setIsLogoutLoading(true); // Set loading state for logout
+      setIsLogoutLoading(true);
       await logout();
       showCustomToast({
         title: 'Logout Successful',
@@ -71,11 +57,10 @@ const ProfilePage: React.FC = () => {
         color: 'danger',
       });
     } finally {
-      setIsLogoutLoading(false); // Remove loading state for logout
+      setIsLogoutLoading(false);
     }
   };
 
-  // Handle password change
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
       setError('New password and confirmation do not match.');
@@ -83,16 +68,13 @@ const ProfilePage: React.FC = () => {
     }
 
     try {
-      setIsPasswordLoading(true); // Set loading state for password change
+      setIsPasswordLoading(true);
       const auth = getAuth();
       const user = auth.currentUser;
 
       if (user && currentPassword) {
-        // Re-authenticate the user with the current password
         const credential = EmailAuthProvider.credential(user.email!, currentPassword);
         await reauthenticateWithCredential(user, credential);
-
-        // Update password
         await updatePassword(user, newPassword);
 
         showCustomToast({
@@ -101,36 +83,31 @@ const ProfilePage: React.FC = () => {
           color: 'success',
         });
 
-        // Clear the form
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
         setError('');
-        onPasswordModalClose(); // Close the modal after success
+        setIsPasswordDialogOpen(false);
       } else {
         setError('User is not authenticated.');
       }
     } catch (error) {
-      console.error('Password change failed: ', error);
+      console.error('[ProfilePage/handlePasswordChange]: ', error);
       setError('Password change failed. Please try again.');
     } finally {
-      setIsPasswordLoading(false); // Remove loading state for password change
+      setIsPasswordLoading(false);
     }
   };
 
-  // Handle account deletion
   const handleDeleteAccount = async () => {
     try {
-      setIsDeleteLoading(true); // Set loading state for account deletion
+      setIsDeleteLoading(true);
       const auth = getAuth();
       const user = auth.currentUser;
 
       if (user && deletePassword) {
-        // Re-authenticate the user with their current password
         const credential = EmailAuthProvider.credential(user.email!, deletePassword);
         await reauthenticateWithCredential(user, credential);
-
-        // Delete the user account
         await deleteUser(user);
 
         showCustomToast({
@@ -139,158 +116,189 @@ const ProfilePage: React.FC = () => {
           color: 'success',
         });
 
-        // Redirect to the login or home page after deletion
         navigate('/auth');
       } else {
         setError('User is not authenticated.');
       }
     } catch (error) {
-      console.error('Account deletion failed: ', error);
+      console.error('[ProfilePage/handleDeleteAccount]: ', error);
       setError('Account deletion failed. Please try again.');
     } finally {
-      setIsDeleteLoading(false); // Remove loading state for account deletion
-      onDeleteModalClose(); // Close the modal after success
+      setIsDeleteLoading(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
   return (
-    <div className='min-h-screen bg-gray-100 p-8'>
-      <div className='max-w-4xl mx-auto bg-white p-6 shadow-lg rounded-lg'>
-        <h1 className='text-3xl font-bold text-gray-800 mb-6'>Profile Page</h1>
+    <div className='min-h-full bg-white p-4'>
+      {/* Page Title */}
+      <div className='flex items-center mb-6'>
+        <button
+          onClick={() => navigate('/')}
+          className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
+          <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
+        </button>
+        <h1 className='text-xl font-semibold ml-4'>Profile</h1>
+      </div>
 
-        {/* User Data Section */}
-        <div className='bg-gray-50 p-4 rounded-lg mt-6 shadow-inner'>
-          <h2 className='text-xl font-semibold text-gray-700 mb-4'>User Data:</h2>
-          <div className='grid grid-cols-1 gap-4'>
-            {userData?.preferences?.name && (
-              <div className='bg-white p-4 rounded-md shadow-sm'>
-                <h3 className='text-gray-700 font-medium text-sm mb-1 flex items-center'>Name:</h3>
-                <p className='text-gray-600 text-sm break-words'>{userData.preferences.name}</p>
-              </div>
-            )}
-
-            {userData?.email && (
-              <div className='bg-white p-4 rounded-md shadow-sm'>
-                <h3 className='text-gray-700 font-medium text-sm mb-1 flex items-center'>Email:</h3>
-                <p className='text-gray-600 text-sm break-words'>{userData.email}</p>
-              </div>
-            )}
-
-            {userData?.createdAt && (
-              <div className='bg-white p-4 rounded-md shadow-sm'>
-                <h3 className='text-gray-700 font-medium text-sm mb-1 flex items-center'>
-                  Account Created At:
-                </h3>
-                <p className='text-gray-600 text-sm break-words'>
-                  {new Date(userData.createdAt).toLocaleDateString('en-GB')}
-                </p>
-              </div>
-            )}
+      {/* User Information */}
+      <div className='flex flex-col items-center mb-8'>
+        <Avatar
+          size='2xl'
+          name={userData?.preferences?.name || ''}
+          src={getAvatarUrl(userData?.preferences?.name || '')}
+          mb={4}
+        />
+        <h2 className='text-2xl font-semibold mb-4'>{userData?.preferences?.name || 'User'}</h2>
+        <div className='bg-gray-100 p-4 rounded-lg w-full max-w-md'>
+          <div className='flex items-center mb-2'>
+            <EnvelopeIcon className='w-5 h-5 mr-2 text-gray-600 stroke-2' />
+            <p className='text-sm text-gray-600'>{userData?.email}</p>
           </div>
+          {userData?.createdAt && (
+            <div className='flex items-center'>
+              <CalendarIcon className='w-5 h-5 mr-2 text-gray-600 stroke-2' />
+              <p className='text-sm text-gray-600'>
+                Created on {format(userData.createdAt, 'MMMM d, yyyy')}
+              </p>
+            </div>
+          )}
         </div>
+      </div>
 
-        {/* Change Password Button */}
-        <Button onClick={onPasswordModalOpen} colorScheme='blue' className='w-full mt-6'>
+      {/* Action Buttons */}
+      <div className='space-y-4 max-w-md mx-auto'>
+        <Button
+          onClick={() => setIsPasswordDialogOpen(true)}
+          w='full'
+          bg='primary.600'
+          color='white'
+          fontWeight='medium'
+          _hover={{ bg: 'primary.700' }}
+          _active={{ bg: 'primary.800' }}>
           Change Password
         </Button>
-
-        {/* Delete Account Button */}
-        <Button onClick={onDeleteModalOpen} colorScheme='red' className='w-full mt-6'>
+        <Button
+          onClick={() => setIsDeleteDialogOpen(true)}
+          w='full'
+          bg='red.600'
+          color='white'
+          fontWeight='medium'
+          _hover={{ bg: 'red.700' }}
+          _active={{ bg: 'red.800' }}>
           Delete Account
         </Button>
-
-        {/* Logout Button */}
         <Button
           onClick={handleLogout}
-          isLoading={isLogoutLoading} // Logout-specific loading state
+          isLoading={isLogoutLoading}
           loadingText='Logging out...'
-          colorScheme='gray'
-          className='w-full mt-6'>
+          w='full'
+          bg='gray.600'
+          color='white'
+          fontWeight='medium'
+          _hover={{ bg: 'gray.700' }}
+          _active={{ bg: 'gray.800' }}>
           Logout
         </Button>
-
-        {/* Change Password Modal */}
-        <Modal isOpen={isPasswordModalOpen} onClose={onPasswordModalClose}>
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Change Password</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <FormControl isInvalid={!!error}>
-                <FormLabel htmlFor='currentPassword'>Current Password</FormLabel>
-                <Input
-                  id='currentPassword'
-                  type='password'
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder='Enter current password'
-                  className='mb-4'
-                />
-                <FormLabel htmlFor='newPassword'>New Password</FormLabel>
-                <Input
-                  id='newPassword'
-                  type='password'
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder='Enter new password'
-                  className='mb-4'
-                />
-                <FormLabel htmlFor='confirmPassword'>Confirm New Password</FormLabel>
-                <Input
-                  id='confirmPassword'
-                  type='password'
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder='Confirm new password'
-                  className='mb-4'
-                />
-                {error && <FormErrorMessage>{error}</FormErrorMessage>}
-              </FormControl>
-            </ModalBody>
-            <ModalFooter>
-              <Button
-                onClick={handlePasswordChange}
-                isLoading={isPasswordLoading}
-                colorScheme='blue'
-                className='w-full'>
-                Change Password
-              </Button>
-              <Button variant='ghost' onClick={onPasswordModalClose}>
-                Cancel
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-
-        {/* Delete Account Modal */}
-        <Modal isOpen={isDeleteModalOpen} onClose={onDeleteModalClose}>
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Delete Account</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <FormControl isInvalid={!!error}>
-                <FormLabel>Enter your password to confirm account deletion</FormLabel>
-                <Input
-                  type='password'
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder='Enter your password'
-                />
-                {error && <FormErrorMessage>{error}</FormErrorMessage>}
-              </FormControl>
-            </ModalBody>
-            <ModalFooter>
-              <Button colorScheme='red' isLoading={isDeleteLoading} onClick={handleDeleteAccount}>
-                Confirm Deletion
-              </Button>
-              <Button variant='ghost' onClick={onDeleteModalClose}>
-                Cancel
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
       </div>
+
+      {/* Change Password Dialog */}
+      <AlertDialog
+        isOpen={isPasswordDialogOpen}
+        onClose={() => setIsPasswordDialogOpen(false)}
+        title='Change Password'
+        body={
+          <VStack spacing={3} align='stretch'>
+            <FormControl isInvalid={!!error}>
+              <FormLabel>Current Password</FormLabel>
+              <Input
+                type='password'
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder='Enter current password'
+                variant='filled'
+                bg='gray.100'
+                rounded='md'
+              />
+            </FormControl>
+            <FormControl isInvalid={!!error}>
+              <FormLabel>New Password</FormLabel>
+              <Input
+                type='password'
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder='Enter new password'
+                variant='filled'
+                bg='gray.100'
+                rounded='md'
+              />
+            </FormControl>
+            <FormControl isInvalid={!!error}>
+              <FormLabel>Confirm New Password</FormLabel>
+              <Input
+                type='password'
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder='Confirm new password'
+                variant='filled'
+                bg='gray.100'
+                rounded='md'
+              />
+            </FormControl>
+            {error && <FormErrorMessage>{error}</FormErrorMessage>}
+          </VStack>
+        }
+        footer={
+          <Button
+            onClick={handlePasswordChange}
+            isLoading={isPasswordLoading}
+            w='full'
+            bg='primary.600'
+            color='white'
+            fontWeight='medium'
+            _hover={{ bg: 'primary.700' }}
+            _active={{ bg: 'primary.800' }}>
+            Change Password
+          </Button>
+        }
+      />
+
+      {/* Delete Account Dialog */}
+      <AlertDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        title='Delete Account'
+        body={
+          <VStack spacing={3} align='stretch'>
+            <FormControl isInvalid={!!error}>
+              <FormLabel>Enter your password to confirm account deletion</FormLabel>
+              <Input
+                type='password'
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder='Enter your password'
+                variant='filled'
+                bg='gray.100'
+                rounded='md'
+              />
+            </FormControl>
+            {error && <FormErrorMessage>{error}</FormErrorMessage>}
+          </VStack>
+        }
+        footer={
+          <Button
+            onClick={handleDeleteAccount}
+            isLoading={isDeleteLoading}
+            w='full'
+            bg='red.600'
+            color='white'
+            fontWeight='medium'
+            _hover={{ bg: 'red.700' }}
+            _active={{ bg: 'red.800' }}>
+            Confirm Deletion
+          </Button>
+        }
+      />
     </div>
   );
 };
