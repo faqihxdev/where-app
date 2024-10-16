@@ -1,5 +1,5 @@
-// import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Provider } from 'jotai';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import App from './App.tsx';
 import './index.css';
@@ -40,7 +40,9 @@ const theme = extendTheme({
 });
 
 createRoot(document.getElementById('root')!).render(
-  <ChakraProvider theme={theme}>
-    <App />
-  </ChakraProvider>
+  <Provider>
+    <ChakraProvider theme={theme}>
+      <App />
+    </ChakraProvider>
+  </Provider>
 );
