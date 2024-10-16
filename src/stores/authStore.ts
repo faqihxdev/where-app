@@ -13,7 +13,6 @@ import { fetchUserDataAtom, userDataAtom } from './userStore';
 import { User } from '../types';
 
 export const authUserAtom = atomWithStorage<FirebaseUser | null>('authUser', null);
-export const isAuthenticatedAtom = atom((get) => get(authUserAtom) !== null);
 
 /**
  * @description Initialize the auth state and fetch user data
@@ -121,6 +120,7 @@ export const logoutAtom = atom(null, async (_, set): Promise<void> => {
     // Sign out the user and set the auth user atom to null
     await signOut(auth);
     set(authUserAtom, null);
+    set(userDataAtom, null); // Explicitly set to null when logging out
   } catch (error) {
     console.error(`[authStore/logout]: Logout error: ${error}`);
     throw error;

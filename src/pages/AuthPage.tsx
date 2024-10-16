@@ -6,7 +6,7 @@ import { showCustomToast } from '../components/CustomToast';
 import { PasswordInput } from '../components/forms/PasswordInput';
 import logo from '../assets/logo.png';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { isAuthenticatedAtom } from '../stores/authStore';
+import { authUserAtom } from '../stores/authStore';
 
 export default function AuthPage() {
   const login = useSetAtom(loginAtom);
@@ -19,15 +19,17 @@ export default function AuthPage() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const isAuthenticated = useAtomValue(isAuthenticatedAtom);
+  const authUser = useAtomValue(authUserAtom);
   const location = useLocation();
 
+  console.log('[AuthPage]: I am in AuthPage!');
+
   useEffect(() => {
-    if (isAuthenticated) {
+    if (authUser) {
       const intendedPath = (location.state as { from?: Location })?.from?.pathname || '/';
       navigate(intendedPath);
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [authUser, navigate, location]);
 
   const validateField = (field: string, value: string) => {
     let error = '';
