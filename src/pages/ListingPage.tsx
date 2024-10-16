@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom, fetchAllListingsAtom, listingsFetchedAtom } from '../stores/listingStore';
-import {
-  notificationsLoadedAtom,
-  fetchAllUserNotificationsAtom,
-} from '../stores/notificationStore';
-import { userDataAtom } from '../stores/userStore';
 import { Listing, ListingStatus, SearchParams } from '../types';
 import { MagnifyingGlassIcon, ArrowPathIcon, InboxIcon } from '@heroicons/react/24/outline';
 import { showCustomToast } from '../components/CustomToast';
@@ -27,33 +22,32 @@ const defaultSearchParams: SearchParams = {
 };
 
 export default function ListingPage() {
-  const [listings, setListings] = useAtom(listingsAtom);
+  const listings = useAtomValue(listingsAtom);
   const [listingsFetched, setListingsFetched] = useAtom(listingsFetchedAtom);
   const fetchAllListings = useSetAtom(fetchAllListingsAtom);
-  const fetchAllUserNotifications = useSetAtom(fetchAllUserNotificationsAtom);
-  const notificationsLoaded = useAtomValue(notificationsLoadedAtom);
-  const user = useAtomValue(userDataAtom);
   const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found'>('all');
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
   const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
   const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams);
   const [isLoading, setIsLoading] = useState(true);
-  const [isManualRefresh, setIsManualRefresh] = useState(false);
+
+  // Run once to handle manual browser refresh
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem('isManualRefresh', 'true');
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     console.log('[ListingPage] Refreshing listings...');
     setIsLoading(true);
     setListingsFetched(false);
     try {
-      if (user) {
-        // If notifications are not loaded, fetch them
-        if (!notificationsLoaded) {
-          await fetchAllUserNotifications(user.uid);
-        }
-        await fetchAllListings();
-      } else {
-        console.log('[ListingPage] User not logged in, skipping listings fetch');
-      }
+      await fetchAllListings();
     } catch (error) {
       console.error('[ListingPage] Error refreshing listings:', error);
       showCustomToast({
@@ -64,26 +58,12 @@ export default function ListingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [setListingsFetched, fetchAllListings, user, fetchAllUserNotifications, notificationsLoaded]);
-
-  // Effect to handle manual browser refresh
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      sessionStorage.setItem('isManualRefresh', 'true');
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
+  }, [setListingsFetched, fetchAllListings]);
 
   // Effect to check for manual refresh and fetch data
   useEffect(() => {
-    console.warn('useEffect for manual refresh');
+    console.log('[useEffect] for manual refresh');
     const isManualRefresh = sessionStorage.getItem('isManualRefresh') === 'true';
-    setIsManualRefresh(isManualRefresh);
     sessionStorage.removeItem('isManualRefresh');
 
     if (isManualRefresh) {
@@ -93,13 +73,10 @@ export default function ListingPage() {
 
   // Effect to fetch listings on mount or manual refresh
   useEffect(() => {
-    console.warn('useEffect fetch data');
+    console.log('[useEffect] fetch data');
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        if (user && !notificationsLoaded) {
-          await fetchAllUserNotifications(user.uid);
-        }
         await fetchAllListings();
       } catch (error) {
         console.error('[ListingPage] Error fetching listings:', error);
@@ -113,27 +90,17 @@ export default function ListingPage() {
       }
     };
 
-    console.warn(listingsFetched, notificationsLoaded, isManualRefresh);
-    if ((!listingsFetched && user) || isManualRefresh) {
+    console.log('listingsFetched: ', listingsFetched);
+    if (!listingsFetched) {
       fetchData();
     } else {
       setIsLoading(false);
     }
-  }, [
-    listings,
-    listingsFetched,
-    setListings,
-    setListingsFetched,
-    fetchAllListings,
-    fetchAllUserNotifications,
-    notificationsLoaded,
-    user,
-    isManualRefresh,
-  ]);
+  }, [listingsFetched, fetchAllListings]);
 
   // On mount, filter listings
   useEffect(() => {
-    console.warn('useEffect for on mount');
+    console.log('[useEffect] for filtering listings');
     // Filter listings based on active tab and search params
     const filtered = Object.values(listings).filter(
       (listing) =>
@@ -229,6 +196,14 @@ export default function ListingPage() {
       refreshingContent={<RefreshContent />}>
       <div className='min-h-full bg-white p-4 relative'>
         <div className='max-w-4xl mx-auto space-y-4'>
+          {/* Page Title */}
+          <div className='flex items-center mb-4'>
+            <h1 className='text-xl font-semibold ml-4'>
+              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Listings
+            </h1>
+          </div>
+
+          {/* Tabs */}
           <div className='flex justify-between mb-4 space-x-2'>
             <div className='flex grow rounded-md bg-gray-100 p-1.5' role='group'>
               <button
@@ -273,8 +248,10 @@ export default function ListingPage() {
             </div>
           </div>
 
+          {/* Active Filters */}
           <ActiveFilters searchParams={searchParams} onRemoveFilter={handleRemoveFilter} />
 
+          {/* Listings */}
           {isLoading ? (
             <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex justify-center items-center'>
               <LoadingSpinner />
