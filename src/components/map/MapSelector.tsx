@@ -21,9 +21,9 @@ import { reverseGeocode } from '../../utils/utils';
 
 // Create custom icon
 const customIcon = new L.Icon({
-  iconUrl: '/marker.png', // Update this line
-  iconSize: [30, 37],
-  iconAnchor: [15, 37],
+  iconUrl: '/marker.svg', // Update this line
+  iconSize: [24, 24],
+  iconAnchor: [12, 24],
 });
 
 interface MapSelectorProps {
