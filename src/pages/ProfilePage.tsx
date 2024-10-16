@@ -131,8 +131,10 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className='min-h-full bg-white p-4'>
+      <button onClick={() => navigate('/random')}>Go to random page</button>
+
       {/* Page Title */}
-      <div className='flex items-center mb-6'>
+      <div className='flex items-center mb-4'>
         <button
           onClick={() => navigate('/')}
           className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>

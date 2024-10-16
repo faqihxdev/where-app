@@ -171,7 +171,6 @@ const ViewListingPage: React.FC = () => {
 
         {/* Listing Information Section */}
         <div className='space-y-4'>
-
           {/* Image Carousel */}
           <div className='w-full overflow-hidden border border-gray-200 rounded-lg'>
             {listingImages.length > 0 && (
@@ -190,7 +189,7 @@ const ViewListingPage: React.FC = () => {
           </div>
 
           <h2 className='text-xl font-semibold'>{listing.title}</h2>
-          
+
           {/* User Information */}
           <div className='flex items-center p-2 bg-gray-100 rounded-lg'>
             <Avatar

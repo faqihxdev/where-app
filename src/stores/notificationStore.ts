@@ -55,7 +55,7 @@ export const addNotificationAtom = atom(
         newNotification.type
       );
 
-      // Check if the notification already exists in the Recoil state
+      // Check if the notification already exists client side
       const existingNotification = existingNotifications[notificationId];
       if (existingNotification) {
         console.log(

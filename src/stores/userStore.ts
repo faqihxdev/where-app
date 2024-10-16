@@ -33,15 +33,18 @@ export const fetchUserDataAtom = atom(null, async (_, set, uid: string): Promise
         createdAt: (userData.createdAt as Timestamp).toDate(),
       };
 
+      console.log('[userStore/fetchUserData]: Set userData to fetchedUser');
       set(userDataAtom, fetchedUser);
       return fetchedUser;
     } else {
       console.error(`[userStore/fetchUserData]: No user document found for uid: ${uid}`);
+      console.log('[userStore/fetchUserData]: Set userData to null');
       set(userDataAtom, null);
       return null;
     }
   } catch (error) {
     console.error(`[userStore/fetchUserData]: Error fetching user data: ${error}`);
+    console.log('[userStore/fetchUserData]: Set userData to null');
     set(userDataAtom, null);
     throw error;
   }
@@ -66,6 +69,7 @@ export const updateUserAtom = atom(
       try {
         console.log('🔥 [userStore/updateUserAtom]');
         await setDoc(doc(db, 'Users', currentUser.uid), updatedUser, { merge: true });
+        console.log('[userStore/updateUserAtom]: Set userData to updatedUser');
         set(userDataAtom, updatedUser);
         return updatedUser;
       } catch (error) {
@@ -96,7 +100,7 @@ export const fetchListingUserAtom = atom(
       // If the user document exists, set the user data in the listing users atom
       if (userDoc.exists()) {
         const userData = userDoc.data() as User;
-        console.log(`[userStore/fetchListingUserAtom]: User data fetched: ${userData}`);
+        console.log('[userStore/fetchListingUserAtom]: User data fetched:', { userData });
         set(listingUsersAtom, (prev) => ({ ...prev, [userId]: userData }));
         return userData;
       }
