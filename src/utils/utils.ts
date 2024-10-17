@@ -1,5 +1,6 @@
 import nlp from 'compromise';
 import { eng } from 'stopword';
+import { Listing } from '../types';
 
 /**
  * @description Checks if two coordinates are within a specified distance of each other and calculates the actual distance
@@ -47,6 +48,29 @@ export const doMarkersOverlap = (
     marker1.radius + marker2.radius + 2 * buffer
   );
   return withinDistance;
+};
+
+/**
+ * @description Calculates the average marker location for a given listing
+ * @param listing The listing object containing markers
+ * @returns An array with two numbers representing the average latitude and longitude, or null if no markers exist
+ */
+export const getAverageMarkerLocation = (listing: Listing): [number, number] | null => {
+  if (!listing.markers || listing.markers.length === 0) {
+    return null;
+  }
+
+  const totalMarkers = listing.markers.length;
+  const sum = listing.markers.reduce(
+    (acc, marker) => {
+      acc[0] += marker.latitude;
+      acc[1] += marker.longitude;
+      return acc;
+    },
+    [0, 0]
+  );
+
+  return [sum[0] / totalMarkers, sum[1] / totalMarkers];
 };
 
 /**
@@ -164,4 +188,26 @@ export const cosineSimilarity = (text1: string, text2: string): number => {
   const cosineSim = dotProduct / (magnitude1 * magnitude2);
 
   return cosineSim;
+};
+
+/**
+ * @description Generate a 20-character ID based on input string
+ * @param {string} input - The input string to generate the ID from
+ * @returns {string} - A 20-character ID
+ */
+export const generateId = (input: string): string => {
+  const hash = input.split('').reduce((acc, char) => {
+    const charCode = char.charCodeAt(0);
+    return ((acc << 5) - acc + charCode) | 0;
+  }, 0);
+
+  const hashPart1 = Math.abs(hash).toString(36).padStart(6, '0');
+  const hashPart2 = Math.abs(hash * 31)
+    .toString(36)
+    .padStart(6, '0'); // Using a prime number to create variation
+  const hashPart3 = Math.abs(hash * 59)
+    .toString(36)
+    .padStart(8, '0'); // Using another prime number
+
+  return `${hashPart1}${hashPart2}${hashPart3}`.slice(0, 20);
 };

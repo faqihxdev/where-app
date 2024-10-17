@@ -94,7 +94,6 @@ export interface Listing {
   markers: Marker[]; // The markers of the listing
 }
 
-
 export interface Match {
   id: string; // The document id of the match in the Matches collection
   listingId1: string; // The document id of the first listing in the Listings collection
@@ -158,5 +157,3 @@ export interface SearchParams {
   sortOrder: 'ascending' | 'descending'; // The order to sort the listings by
   location: { name: string; lat: number; lng: number; radius: number } | null; // The location to search for listings within
 }
-
-
