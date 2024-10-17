@@ -149,24 +149,24 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
               name={getDisplayName(listing.userId)}
               src={getAvatarUrl(getDisplayName(listing.userId))}
             />
-            <span className='text-xs font-medium'>{getDisplayName(listing.userId)}</span>
+            <span className='text-xs font-medium truncate w-[calc(100%-100px)]'>
+              {getDisplayName(listing.userId)}
+            </span>
           </div>
           <h4 className='font-semibold text-sm mb-1 mt-2 truncate'>{listing.title}</h4>
           <p className='text-xs text-gray-600 line-clamp-2'>{listing.description}</p>
         </div>
       </div>
-      <div className='flex justify-between items-center p-2 bg-gray-100'>
-        <div className='text-gray-700 font-medium text-xs'>
+      <div className='flex items-center p-2 bg-gray-100'>
+        <div className='text-gray-700 font-medium text-xs flex-grow overflow-hidden mr-2'>
           <p>
             <span>{formatDate(listing.createdAt)}</span>
           </p>
-          <p>
-            {listing.markers.length > 0
-              ? truncateWithEllipsis(getMarkerName(listing.markers[0].id), 30)
-              : 'No location'}
+          <p className='truncate'>
+            {listing.markers.length > 0 ? getMarkerName(listing.markers[0].id) : 'No location'}
           </p>
         </div>
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-2 flex-shrink-0'>
           <Button
             onClick={handleViewClick}
             size='sm'

@@ -43,7 +43,8 @@ const MainLayout: React.FC = () => {
         location.pathname === '/inbox' ||
         location.pathname === '/resolve' ||
         (location.pathname.startsWith('/view/') && from === 'inbox') ||
-        (location.pathname.startsWith('/edit/') && from === 'inbox')
+        (location.pathname.startsWith('/edit/') && from === 'inbox') ||
+        (location.pathname.startsWith('/resolve/') && from === 'inbox')
       );
     }
     return location.pathname.startsWith(tab.path);
