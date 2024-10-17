@@ -33,7 +33,7 @@ import {
   updateMarkerAtom,
 } from './markerStore';
 import { fetchListingUserAtom } from './userStore';
-import { addMatchAtom, matchesAtom } from './matchStore';
+import { addMatchAtom, deleteMatchAtom, matchesAtom } from './matchStore';
 import {
   addNotificationAtom,
   notificationsLoadedAtom,
@@ -91,6 +91,18 @@ export const fetchAllListingsAtom = atom(null, async (_, set): Promise<Record<st
           if (imageDoc) {
             listing.images[type]!.data = imageDoc.data;
           }
+        }
+      }
+
+      // Fetch the resolve image if it's not already loaded
+      if (listing.resolveImage) {
+        const resolveImageDoc = await set(getImageAtom, listing.resolveImage.id);
+        if (resolveImageDoc) {
+          listing.resolveImage = {
+            id: resolveImageDoc.id,
+            listingId: listing.id,
+            data: resolveImageDoc.data,
+          };
         }
       }
 
@@ -162,6 +174,18 @@ export const fetchListingByIdAtom = atom(
           }
         }
 
+        // Fetch the resolve image if it's not already loaded
+        if (listing.resolveImage) {
+          const resolveImageDoc = await set(getImageAtom, listing.resolveImage.id);
+          if (resolveImageDoc) {
+            listing.resolveImage = {
+              id: resolveImageDoc.id,
+              listingId: listing.id,
+              data: resolveImageDoc.data,
+            };
+          }
+        }
+
         // Fetch the listing user
         await set(fetchListingUserAtom, listing.userId);
 
@@ -228,6 +252,18 @@ export const fetchListingsByUserIdAtom = atom(
             if (imageDoc) {
               listing.images[type]!.data = imageDoc.data;
             }
+          }
+        }
+
+        // Fetch the resolve image if it's not already loaded
+        if (listing.resolveImage) {
+          const resolveImageDoc = await set(getImageAtom, listing.resolveImage.id);
+          if (resolveImageDoc) {
+            listing.resolveImage = {
+              id: resolveImageDoc.id,
+              listingId: listing.id,
+              data: resolveImageDoc.data,
+            };
           }
         }
 
@@ -400,6 +436,8 @@ export const updateListingAtom = atom(
       // Get the original images
       const updatedImages: ListingImages = originalListing.images;
 
+      // Handle image updates
+      // If action is 'keep', do nothing
       for (const [type, update] of Object.entries(imageUpdates) as [
         ImageType,
         { action: 'add' | 'delete' | 'keep'; file?: File },
@@ -423,11 +461,9 @@ export const updateListingAtom = atom(
             delete updatedImages[type];
           }
         }
-        // If action is 'keep', do nothing
       }
 
       // Handle marker updates
-
       // Update existing markers or add new markers
       const updatedMarkerIds = await Promise.all(
         updatedListing.markers.map(async (marker) => {
@@ -498,6 +534,11 @@ export const updateListingAtom = atom(
         images: listingImageIds,
       };
 
+      // Check if resolve image exists
+      if (updatedListing.resolveImage) {
+        listingUpdate.resolveImageId = updatedListing.resolveImage.id;
+      }
+
       console.log('🔥 [listingStore/updateListingAtom] ');
       await updateDoc(doc(db, 'Listings', id), listingUpdate);
 
@@ -522,7 +563,6 @@ export const updateListingAtom = atom(
 );
 
 /**
- * @TODO Add the functionality to delete the associated match
  * @description Delete a listing from Firestore & delete the associated images
  * @param {string} listingId - The ID of the listing to delete
  * @returns {Promise<void>} - A promise that resolves when the listing is deleted
@@ -537,6 +577,7 @@ export const deleteListingAtom = atom(null, async (get, set, listingId: string):
     if (listing.images.main.id) await set(deleteImageAtom, listing.images.main.id);
     if (listing.images.alt1?.id) await set(deleteImageAtom, listing.images.alt1.id);
     if (listing.images.alt2?.id) await set(deleteImageAtom, listing.images.alt2.id);
+    if (listing.resolveImage?.id) await set(deleteImageAtom, listing.resolveImage.id);
 
     // Delete associated markers
     if (listing.markers.length > 0) {
@@ -545,7 +586,13 @@ export const deleteListingAtom = atom(null, async (get, set, listingId: string):
       }
     }
 
-    // TODO: Delete associated match
+    // Delete associated match
+    const existingMatch = Object.values(get(matchesAtom)).find(
+      (match) => match.listingId1 === listingId || match.listingId2 === listingId
+    );
+    if (existingMatch) {
+      await set(deleteMatchAtom, existingMatch.id);
+    }
 
     // Delete the listing document
     console.log('🔥 [listingStore/deleteListingAtom]');
@@ -564,28 +611,29 @@ export const deleteListingAtom = atom(null, async (get, set, listingId: string):
 });
 
 /**
- * @description Set the status of a listing to expired
- * @param {string} listingId - The ID of the listing to set to expired
- * @returns {Promise<void>} - A promise that resolves when the listing is set to expired
+ * @description Set the status of a listing
+ * @param {string} listingId - The ID of the listing to update
+ * @param {ListingStatus} status - The new status to set
+ * @returns {Promise<void>} - A promise that resolves when the listing status is updated
  */
-const setListingStatusToExpiredAtom = atom(
+const setListingStatusAtom = atom(
   null,
-  async (_, set, listingId: string): Promise<void> => {
-    console.log(`[listingStore/setListingStatusToExpiredAtom]: listingId: ${listingId}`);
+  async (_, set, listingId: string, status: ListingStatus): Promise<void> => {
+    console.log(`[listingStore/setListingStatusAtom]: listingId: ${listingId}, status: ${status}`);
     try {
-      // Update the listing status to expired
-      console.log('🔥 [listingStore/setListingStatusToExpiredAtom]');
+      // Update the listing status
+      console.log('🔥 [listingStore/setListingStatusAtom]');
       await updateDoc(doc(db, 'Listings', listingId), {
-        status: ListingStatus.expired,
+        status: status,
       });
 
       // Update the client-side state
       set(listingsAtom, (prev) => ({
         ...prev,
-        [listingId]: { ...prev[listingId], status: ListingStatus.expired },
+        [listingId]: { ...prev[listingId], status: status },
       }));
     } catch (error) {
-      console.error(`[listingStore/setListingStatusToExpiredAtom]: error: ${error}`);
+      console.error(`[listingStore/setListingStatusAtom]: error: ${error}`);
       throw error;
     }
   }
@@ -614,6 +662,9 @@ const convertListingDBToListing = (listingDB: ListingDB, markers: Marker[]): Lis
       : undefined,
   },
   markers,
+  resolveImage: listingDB.resolveImageId
+    ? { id: listingDB.resolveImageId, listingId: listingDB.id, data: '' }
+    : undefined,
 });
 
 /**
@@ -634,7 +685,7 @@ const matchExpiryCheckAtom = atom(null, async (get, set, listings: Listing[]): P
   for (const listing of listings) {
     if (listing.expiresAt < new Date()) {
       // Set the listing status to expired
-      await set(setListingStatusToExpiredAtom, listing.id);
+      await set(setListingStatusAtom, listing.id, ListingStatus.expired);
 
       // Notify the user that their listing has expired
       await set(addNotificationAtom, {
@@ -749,51 +800,4 @@ const isMatch = (listing1: Listing, listing2: Listing): boolean => {
 
   // All conditions are satisfied
   return true;
-};
-
-// FOR JACOB's MAP FUNCTION
-// Function to fetch all listings and their markers
-export const fetchListingsWithMarkers = async (): Promise<Listing[]> => {
-  try {
-    // Fetch all listings
-    const listingsSnapshot = await getDocs(collection(db, 'Listings'));
-    const listings = listingsSnapshot.docs.map((listingDoc) => ({
-      id: listingDoc.id,
-      ...listingDoc.data(),
-    })) as ListingDB[];
-
-    const listingsWithMarkers = await Promise.all(
-      listings.map(async (listing) => {
-        // Fetch associated markers for each listing
-        const markers = await Promise.all(
-          (listing.markerIds || []).map(async (markerId: string) => {
-            const markerDoc = await getDoc(doc(db, 'Markers', markerId));
-            return markerDoc.exists()
-              ? ({ id: markerDoc.id, ...markerDoc.data() } as Marker)
-              : null;
-          })
-        );
-
-        return {
-          ...listing,
-          type: listing.type,
-          userId: listing.userId,
-          title: listing.title,
-          description: listing.description,
-          status: listing.status,
-          category: listing.category,
-          createdAt: listing.createdAt.toDate(),
-          updatedAt: listing.updatedAt.toDate(),
-          expiresAt: listing.expiresAt.toDate(),
-          images: { main: { id: listing.images.mainId, listingId: listing.id, data: '' } },
-          markers: markers.filter((marker): marker is Marker => marker !== null),
-        } as Listing;
-      })
-    );
-
-    return listingsWithMarkers;
-  } catch (error) {
-    console.error('Error fetching listings and markers:', error);
-    throw error;
-  }
 };

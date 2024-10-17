@@ -8,7 +8,13 @@ import { Listing, ListingStatus } from '../types';
 import { Button, Avatar } from '@chakra-ui/react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PullToRefresh from 'react-simple-pull-to-refresh';
-import { ArrowPathIcon, ArrowLeftIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowPathIcon,
+  ArrowLeftIcon,
+  CalendarIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from '@heroicons/react/24/outline';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import MapSelector from '../components/map/MapSelector';
@@ -29,6 +35,7 @@ const ViewListingPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [isResolveImageOpen, setIsResolveImageOpen] = useState(false);
 
   // Fetch listing data on load or on refresh
   const fetchListingData = useCallback(
@@ -236,8 +243,36 @@ const ViewListingPage: React.FC = () => {
             <p className='text-gray-700'>{listing.description}</p>
           </div>
 
+          {/* Resolve Image Accordion */}
+          {listing.status === ListingStatus.resolved && listing.resolveImage && (
+            <div className='mt-4'>
+              <button
+                onClick={() => setIsResolveImageOpen(!isResolveImageOpen)}
+                className='w-full flex justify-between items-center py-3 px-4 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors'>
+                <span className='font-semibold'>View Claimant</span>
+                {isResolveImageOpen ? (
+                  <ChevronUpIcon className='h-5 w-5 stroke-2' />
+                ) : (
+                  <ChevronDownIcon className='h-5 w-5 stroke-2' />
+                )}
+              </button>
+              <div
+                className={`transition-all duration-300 ease-in-out ${
+                  isResolveImageOpen
+                    ? 'mt-2 max-h-[1000px] opacity-100'
+                    : 'mt-0 max-h-0 opacity-0 overflow-hidden'
+                }`}>
+                <img
+                  src={listing.resolveImage.data}
+                  alt='Resolve Image'
+                  className='w-full h-auto rounded-md border border-gray-200'
+                />
+              </div>
+            </div>
+          )}
+
           {/* Map */}
-          <div>
+          <div className='mt-4'>
             <h3 className='text-lg font-semibold mb-2'>Location</h3>
             <MapSelector
               mode='view'

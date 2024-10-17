@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Webcam from 'react-webcam';
-import { useSetAtom, useAtomValue } from 'jotai';
+import { useSetAtom, useAtomValue, useAtom } from 'jotai';
 import { updateListingAtom, listingsAtom } from '../stores/listingStore';
 import { updateMatchAtom, matchesAtom, fetchMatchByIdAtom } from '../stores/matchStore';
 import { Match, MatchStatus, Listing, ListingStatus } from '../types';
@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { showCustomToast } from '../components/CustomToast';
 import MatchCard from '../components/MatchCard';
+import { compressImage, addImageAtom } from '../stores/imageStore';
 
 const ResolvePage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,8 +22,9 @@ const ResolvePage: React.FC = () => {
   const updateListing = useSetAtom(updateListingAtom);
   const updateMatch = useSetAtom(updateMatchAtom);
   const fetchMatchById = useSetAtom(fetchMatchByIdAtom);
+  const addImage = useSetAtom(addImageAtom);
   const matches = useAtomValue(matchesAtom);
-  const listings = useAtomValue(listingsAtom);
+  const [listings, setListings] = useAtom(listingsAtom);
 
   const [match, setMatch] = useState<Match | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,10 +45,11 @@ const ResolvePage: React.FC = () => {
     try {
       let fetchedMatch = matches[matchId];
       if (!fetchedMatch) {
-        fetchedMatch = await fetchMatchById(matchId);
-      }
-      if (!fetchedMatch) {
-        throw new Error('Match not found');
+        const result = await fetchMatchById(matchId);
+        if (result === null) {
+          throw new Error('Match not found');
+        }
+        fetchedMatch = result;
       }
       setMatch(fetchedMatch);
     } catch (err) {
@@ -82,32 +85,56 @@ const ResolvePage: React.FC = () => {
     }
 
     try {
+      setIsLoading(true);
+
+      // Compress the image
+      const compressedFile = await compressImage(imgFile);
+
+      // Convert the compressed file to base64
+      const base64Image = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(compressedFile);
+      });
+
+      // Upload the image to Firestore
+      const imageId = await addImage(base64Image, match.listingId1);
+
+      // Update both listings
+      const listingIds = [match.listingId1, match.listingId2];
+      const updatedListings: Record<string, Listing> = {};
+
+      for (const listingId of listingIds) {
+        const listing = listings[listingId];
+        if (!listing) {
+          throw new Error(`Listing not found: ${listingId}`);
+        }
+
+        const updatedListing: Listing = {
+          ...listing,
+          status: ListingStatus.resolved,
+          resolveImage: { id: imageId, listingId, data: base64Image },
+        };
+
+        await updateListing({
+          updatedListing,
+          imageUpdates: {},
+        });
+
+        updatedListings[listingId] = updatedListing;
+      }
+
+      // Update the match status
       await updateMatch(match.id, {
         status: MatchStatus.resolved,
         updatedAt: new Date(),
       });
 
-      const imageUpdates = {
-        alt1: {
-          action: 'add' as const,
-          file: imgFile,
-        },
-      };
-
-      const listing = listings[match.listingId1] || listings[match.listingId2];
-      if (!listing) {
-        throw new Error('Listing not found');
-      }
-
-      const updatedListing: Listing = {
-        ...listing,
-        status: ListingStatus.resolved,
-      };
-
-      await updateListing({
-        updatedListing: updatedListing,
-        imageUpdates: imageUpdates,
-      });
+      // Update local state
+      setListings((prev: Record<string, Listing>) => ({
+        ...prev,
+        ...updatedListings,
+      }));
 
       showCustomToast({
         title: 'Success',
@@ -125,6 +152,8 @@ const ResolvePage: React.FC = () => {
         color: 'danger',
       });
       console.error('[ResolvePage]: Error resolving listing:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

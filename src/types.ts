@@ -92,6 +92,7 @@ export interface Listing {
   expiry?: Date; // <-- Add this line to define the expiry property
   images: ListingImages; // The images of the listing
   markers: Marker[]; // The markers of the listing
+  resolveImage?: ImageDB; // The resolve image of the listing
 }
 
 export interface Match {
@@ -138,6 +139,7 @@ export interface ListingDB {
     alt2Id?: string; // The document id of the second alternative image in the Images collection
   };
   markerIds: string[]; // The document ids of the markers in the Markers collection
+  resolveImageId?: string; // The document id of the resolve image in the Images collection
 }
 
 export interface ImageDB {
