@@ -13,6 +13,7 @@ import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import MapSelector from '../components/map/MapSelector';
 import { format } from 'date-fns';
+import { getAverageMarkerLocation } from '../utils/utils';
 
 const ViewListingPage: React.FC = () => {
   const { listingId } = useParams<{ listingId: string }>();
@@ -239,10 +240,11 @@ const ViewListingPage: React.FC = () => {
           <div>
             <h3 className='text-lg font-semibold mb-2'>Location</h3>
             <MapSelector
-              mode='filter'
+              mode='view'
               initialMarkers={listing.markers}
               onMarkersChange={() => {}}
               showRemoveButton={false}
+              defaultLocation={getAverageMarkerLocation(listing)}
             />
           </div>
         </div>

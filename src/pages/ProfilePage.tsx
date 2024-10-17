@@ -20,7 +20,7 @@ import {
   deleteUser,
   reauthenticateWithCredential,
 } from 'firebase/auth';
-import { ArrowLeftIcon, CalendarIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { CalendarIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import AlertDialog from '../components/AlertDialog';
 
@@ -130,21 +130,29 @@ const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className='min-h-full bg-white p-4'>
-      <button onClick={() => navigate('/random')}>Go to random page</button>
-
-      {/* Page Title */}
-      <div className='flex items-center mb-4'>
-        <button
-          onClick={() => navigate('/')}
-          className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
-          <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
-        </button>
-        <h1 className='text-xl font-semibold ml-4'>Profile</h1>
+    <div className='min-h-full bg-white p-4 flex flex-col'>
+      {/* Page Title and Logout Button */}
+      <div className='flex items-center justify-between mb-8'>
+        <div className='flex items-center'>
+          <h1 className='text-xl font-semibold'>Your Profile</h1>
+        </div>
+        <Button
+          onClick={handleLogout}
+          isLoading={isLogoutLoading}
+          loadingText='Logging out...'
+          bg='transparent'
+          border='2px solid'
+          borderColor='gray.300'
+          color='gray.500'
+          fontWeight='medium'
+          _hover={{ bg: 'gray.100' }}
+          _active={{ bg: 'gray.200' }}>
+          Logout
+        </Button>
       </div>
 
       {/* User Information */}
-      <div className='flex flex-col items-center mb-8'>
+      <div className='flex flex-col items-center mb-6'>
         <Avatar
           size='2xl'
           name={userData?.preferences?.name || ''}
@@ -169,7 +177,7 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className='space-y-4 max-w-md mx-auto'>
+      <div className='space-y-4 flex-grow'>
         <Button
           onClick={() => setIsPasswordDialogOpen(true)}
           w='full'
@@ -180,27 +188,21 @@ const ProfilePage: React.FC = () => {
           _active={{ bg: 'primary.800' }}>
           Change Password
         </Button>
+      </div>
+
+      {/* Delete Account Button */}
+      <div className='mt-auto pt-4'>
         <Button
           onClick={() => setIsDeleteDialogOpen(true)}
           w='full'
-          bg='red.600'
-          color='white'
+          bg='transparent'
+          border='2px solid'
+          borderColor='red.300'
+          color='red.500'
           fontWeight='medium'
-          _hover={{ bg: 'red.700' }}
-          _active={{ bg: 'red.800' }}>
+          _hover={{ bg: 'red.100' }}
+          _active={{ bg: 'red.200' }}>
           Delete Account
-        </Button>
-        <Button
-          onClick={handleLogout}
-          isLoading={isLogoutLoading}
-          loadingText='Logging out...'
-          w='full'
-          bg='gray.600'
-          color='white'
-          fontWeight='medium'
-          _hover={{ bg: 'gray.700' }}
-          _active={{ bg: 'gray.800' }}>
-          Logout
         </Button>
       </div>
 

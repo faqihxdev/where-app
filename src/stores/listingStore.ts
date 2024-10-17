@@ -41,14 +41,14 @@ import {
 } from './notificationStore';
 import { cosineSimilarity, doMarkersOverlap } from '../utils/utils';
 
-// The listings atom is used to store the listings in the client-side state
+// Store the listings in the client-side state
 export const listingsAtom = atomWithStorage<Record<string, Listing>>('listings', {});
 
-// The listingsFetched atom is used to store the boolean value indicating if the listings have been fetched from Firestore
-export const listingsFetchedAtom = atomWithStorage<boolean>('listingsFetched', false);
+// Store the boolean value indicating if the listings have been fetched from Firestore
+export const listingsFetchedAtom = atom<boolean>(false);
 
-// Add this new atom at the top of the file with other atom declarations
-export const userListingsFetchedAtom = atomWithStorage<boolean>('userListingsFetched', false);
+// Store the boolean value indicating if the user's listings have been fetched from Firestore
+export const userListingsFetchedAtom = atom<boolean>(false);
 
 /**
  * @description Fetch all listings from Firestore
@@ -644,8 +644,6 @@ const matchExpiryCheckAtom = atom(null, async (get, set, listings: Listing[]): P
         type: NotificationType.expiry,
         listingId: listing.id,
       });
-
-      // TODO: Push Notification to the user
     }
   }
 
@@ -665,7 +663,7 @@ const matchExpiryCheckAtom = atom(null, async (get, set, listings: Listing[]): P
       if (!existingMatch) {
         // If no existing match, check for a new match
         if (isMatch(listing1, listing2)) {
-          console.warn('[listingStore/matchExpiryCheck] New match found', listing1, listing2);
+          console.warn('[listingStore/matchExpiryCheck] New match found', { listing1, listing2 });
           const newMatch: Omit<Match, 'id'> = {
             listingId1: listing1.id,
             listingId2: listing2.id,
@@ -691,8 +689,6 @@ const matchExpiryCheckAtom = atom(null, async (get, set, listings: Listing[]): P
               listingId: userId === listing1.userId ? listing1.id : listing2.id,
             });
           }
-
-          // TODO: Push Notification to the users
 
           console.log(
             `[listingStore/matchExpiryCheck] New match found: ${listing1.id} & ${listing2.id}`

@@ -198,7 +198,7 @@ export default function ListingPage() {
         <div className='max-w-4xl mx-auto space-y-4'>
           {/* Page Title */}
           <div className='flex items-center mb-4'>
-            <h1 className='text-xl font-semibold ml-4'>
+            <h1 className='text-xl font-semibold'>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Listings
             </h1>
           </div>
