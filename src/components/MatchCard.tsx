@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useCallback } from 'react';
 import { Match, MatchStatus, Listing } from '../types';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { listingsAtom } from '../stores/listingStore';
 import { updateMatchAtom } from '../stores/matchStore';
 import { userDataAtom } from '../stores/userStore';
-import { MapPinIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import {
+  MapPinIcon,
+  ClockIcon,
+  XCircleIcon,
+  ArrowTopRightOnSquareIcon,
+} from '@heroicons/react/24/outline';
 import { Button, useDisclosure } from '@chakra-ui/react';
 import { format, formatDistanceStrict } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -15,14 +20,15 @@ import { listingUsersAtom } from '../stores/userStore';
 
 interface MatchCardProps {
   match: Match;
+  showActions?: boolean;
+  onResolve?: (matchId: string) => void;
 }
 
-const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
+const MatchCard: React.FC<MatchCardProps> = ({ match, showActions = true, onResolve }) => {
   const listings = useAtomValue(listingsAtom);
   const updateMatch = useSetAtom(updateMatchAtom);
   const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [actionType, setActionType] = useState<'resolve' | 'reject'>('resolve');
   const listingUsers = useAtomValue(listingUsersAtom);
   const currentUser = useAtomValue(userDataAtom);
 
@@ -57,21 +63,21 @@ const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
   };
 
   const calculateDistance = () => {
-    if (
-      currentUserListing?.markers?.length > 0 &&
-      otherUserListing?.markers?.length > 0 &&
-      currentUserListing.markers[0] &&
-      otherUserListing.markers[0]
-    ) {
-      const [, distance] = areCoordinatesWithinDistance(
-        {
-          lat: currentUserListing.markers[0].latitude,
-          lng: currentUserListing.markers[0].longitude,
-        },
-        { lat: otherUserListing.markers[0].latitude, lng: otherUserListing.markers[0].longitude },
-        Infinity
-      );
-      return Math.round(distance);
+    if (currentUserListing?.markers?.length > 0 && otherUserListing?.markers?.length > 0) {
+      let minDistance = Infinity;
+
+      for (const marker1 of currentUserListing.markers) {
+        for (const marker2 of otherUserListing.markers) {
+          const [, distance] = areCoordinatesWithinDistance(
+            { lat: marker1.latitude, lng: marker1.longitude },
+            { lat: marker2.latitude, lng: marker2.longitude },
+            Infinity
+          );
+          minDistance = Math.min(minDistance, distance);
+        }
+      }
+
+      return Math.round(minDistance);
     }
     return null;
   };
@@ -91,28 +97,23 @@ const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
   const distance = calculateDistance();
   const timeDifference = calculateTimeDifference();
 
-  const handleViewListing = (listing: Listing) => {
-    navigate(`/view/${listing.id}?from=inbox`);
-  };
+  const handleViewListing = useCallback(
+    (listing: Listing) => {
+      const updateMatchStatus = async () => {
+        if (match.status === MatchStatus.new) {
+          try {
+            await updateMatch(match.id, { status: MatchStatus.viewed });
+          } catch (error) {
+            console.error('[MatchCard/handleViewListing]: Error updating match status:', error);
+          }
+        }
+      };
 
-  const handleResolveMatch = async () => {
-    try {
-      await updateMatch(match.id, { status: MatchStatus.resolved });
-      onClose();
-      showCustomToast({
-        title: 'Match Resolved',
-        description: 'The match has been successfully resolved.',
-        color: 'success',
-      });
-    } catch (error) {
-      console.error('[MatchCard/handleResolveMatch]: ', error);
-      showCustomToast({
-        title: 'Error',
-        description: 'Failed to resolve the match. Please try again.',
-        color: 'danger',
-      });
-    }
-  };
+      updateMatchStatus();
+      navigate(`/view/${listing.id}?from=inbox`);
+    },
+    [match, updateMatch, navigate]
+  );
 
   const handleRejectMatch = async () => {
     try {
@@ -133,17 +134,16 @@ const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
     }
   };
 
-  const handleActionClick = (action: 'resolve' | 'reject') => {
-    setActionType(action);
-    onOpen();
+  const handleResolveMatch = () => {
+    if (onResolve) {
+      onResolve(match.id);
+    } else {
+      navigate(`/resolve/${match.id}?from=inbox`);
+    }
   };
 
-  const handleConfirmAction = () => {
-    if (actionType === 'resolve') {
-      handleResolveMatch();
-    } else {
-      handleRejectMatch();
-    }
+  const handleRejectClick = () => {
+    onOpen();
   };
 
   const renderListing = (listing: Listing | undefined, isCurrentUserListing: boolean) => {
@@ -165,32 +165,30 @@ const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
         <div
           className='p-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-between cursor-pointer hover:bg-gray-200 transition-colors duration-200'
           onClick={() => handleViewListing(listing)}>
-          <div className='flex items-center space-x-2 flex-grow'>
+          <div className='flex items-center space-x-2 w-full'>
             {listing.images.main.data ? (
               <img
                 src={listing.images.main.data}
                 alt={listing.title}
-                className='w-16 h-16 object-cover rounded-md'
+                className='w-16 h-16 object-cover rounded-md flex-shrink-0'
               />
             ) : (
-              <div className='w-20 h-20 bg-gray-200 flex items-center justify-center'>
+              <div className='w-16 h-16 bg-gray-200 flex items-center justify-center flex-shrink-0'>
                 <span className='text-gray-400 text-xs'>No Image</span>
               </div>
             )}
-            <div className='flex-grow min-w-0 p-2'>
+            <div className='flex-grow min-w-0'>
               <h4 className='font-semibold text-sm mb-1 truncate'>{listing.title}</h4>
               <div className='flex items-center'>
                 <span
-                  className={`text-[10px] font-medium px-1.5 rounded-full mr-1 ${
+                  className={`text-[10px] font-medium px-1.5 rounded-full mr-1 flex-shrink-0 ${
                     listing.type === 'lost'
                       ? 'text-red-600 bg-red-100'
                       : 'text-blue-600 bg-blue-100'
                   }`}>
                   {listing.type === 'lost' ? 'Lost' : 'Found'}
                 </span>
-                <p className='text-xs text-gray-600 truncate flex-grow pr-2'>
-                  {listing.description}
-                </p>
+                <p className='text-xs text-gray-600 truncate'>{listing.description}</p>
               </div>
             </div>
           </div>
@@ -206,6 +204,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
     }
     return 'Unknown User';
   };
+
+  const isMatchActionable =
+    match.status !== MatchStatus.resolved && match.status !== MatchStatus.rejected;
 
   return (
     <div className='bg-white rounded-lg outline outline-1 outline-gray-200 overflow-hidden'>
@@ -261,46 +262,37 @@ const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
       </div>
 
       {/* Match Actions */}
-      <div className='bg-gray-100 px-4 py-3 sm:px-6 flex justify-end items-center space-x-2'>
-        <Button
-          size='sm'
-          fontWeight='medium'
-          colorScheme='green'
-          leftIcon={<CheckCircleIcon className='h-4 w-4' />}
-          onClick={() => handleActionClick('resolve')}
-          isDisabled={
-            match.status === MatchStatus.resolved || match.status === MatchStatus.rejected
-          }>
-          Resolve
-        </Button>
-        <Button
-          size='sm'
-          fontWeight='medium'
-          colorScheme='red'
-          leftIcon={<XCircleIcon className='h-4 w-4' />}
-          onClick={() => handleActionClick('reject')}
-          isDisabled={
-            match.status === MatchStatus.resolved || match.status === MatchStatus.rejected
-          }>
-          Reject
-        </Button>
-      </div>
+      {showActions && isMatchActionable && (
+        <div className='bg-gray-100 px-4 py-3 sm:px-6 flex justify-end items-center space-x-2'>
+          <Button
+            size='sm'
+            fontWeight='medium'
+            colorScheme='green'
+            leftIcon={<ArrowTopRightOnSquareIcon className='h-4 w-4' />}
+            onClick={handleResolveMatch}>
+            Resolve
+          </Button>
+          <Button
+            size='sm'
+            fontWeight='medium'
+            colorScheme='red'
+            leftIcon={<XCircleIcon className='h-4 w-4' />}
+            onClick={handleRejectClick}>
+            Reject
+          </Button>
+        </div>
+      )}
 
       <AlertDialog
         isOpen={isOpen}
         onClose={onClose}
-        title={actionType === 'resolve' ? 'Resolve Match' : 'Reject Match'}
-        body={
-          <p>Are you sure you want to {actionType} this match? This action cannot be undone.</p>
-        }
+        title='Reject Match'
+        body={<p>Are you sure you want to reject this match? This action cannot be undone.</p>}
         footer={
           <>
             <Button onClick={onClose}>Cancel</Button>
-            <Button
-              colorScheme={actionType === 'resolve' ? 'green' : 'red'}
-              onClick={handleConfirmAction}
-              ml={3}>
-              {actionType === 'resolve' ? 'Resolve' : 'Reject'}
+            <Button colorScheme='red' onClick={handleRejectMatch} ml={3}>
+              Reject
             </Button>
           </>
         }
