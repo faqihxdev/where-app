@@ -81,7 +81,7 @@ function App() {
     };
 
     fetchNotifications();
-  }, [userData, fetchAllUserNotifications, notificationsLoaded]);
+  }, [userData, notificationsLoaded, fetchAllUserNotifications]);
 
   // If auth is still initializing, show loading spinner
   if (isInitializing || !authUser) {
@@ -113,7 +113,7 @@ function App() {
           <Route path='/view/:listingId' element={<ViewListingPage />} />
           <Route path='/edit/:listingId' element={<EditListingPage />} />
           <Route path='/resolve' element={<ResolvePage />} />
-          <Route path='/resolve/:id1/:id2' element={<ResolvePage />} />
+          <Route path='/resolve/:matchId' element={<ResolvePage />} />
           <Route path='/random' element={<RandomPage />} />
         </Route>
         <Route path='*' element={<NotFoundPage />} />

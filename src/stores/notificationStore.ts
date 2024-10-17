@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { Notification } from '../types';
 import { Timestamp } from 'firebase/firestore/lite';
+import { generateId } from '../utils/utils';
 
 // Store user notifications in AtomStorage
 export const userNotificationsAtom = atomWithStorage<Record<string, Notification>>(
@@ -21,7 +22,7 @@ export const userNotificationsAtom = atomWithStorage<Record<string, Notification
 );
 
 // Store notificationsLoaded in AtomStorage
-export const notificationsLoadedAtom = atomWithStorage<boolean>('notificationsLoaded', false);
+export const notificationsLoadedAtom = atom<boolean>(false);
 
 /**
  * @description Add a new notification to Firestore and update the userNotifications atom
@@ -40,19 +41,11 @@ export const addNotificationAtom = atom(
     );
 
     const existingNotifications = get(userNotificationsAtom);
-    if (Object.keys(existingNotifications).length === 0) {
-      console.warn(
-        '[notificationStore/addNotificationAtom]: Existing notifications are empty. This might be an error.'
-      );
-    }
 
     try {
       // Generate a hash-based notification ID asynchronously
-      const notificationId = await generateNotificationId(
-        newNotification.userId,
-        newNotification.title,
-        newNotification.message,
-        newNotification.type
+      const notificationId = generateId(
+        `${newNotification.userId}|${newNotification.title}|${newNotification.message}|${newNotification.type}`
       );
 
       // Check if the notification already exists client side
@@ -279,35 +272,3 @@ export const deleteNotificationsAtom = atom(null, async (_, set, notificationIds
     throw error;
   }
 });
-
-/* ########## HELPER FUNCTIONS ########## */
-
-/**
- * @description Generate a 20-character ID
- * @param {string} userId - The ID of the user
- * @param {string} title - The title of the notification
- * @param {string} message - The message of the notification
- * @param {string} type - The type of the notification
- * @returns {string} - A 20-character ID
- */
-const generateNotificationId = async (
-  userId: string,
-  title: string,
-  message: string,
-  type: string
-): Promise<string> => {
-  const combinedString = `${userId}|${title}|${message}|${type}`;
-  const encoder = new TextEncoder();
-  const data = encoder.encode(combinedString);
-
-  // Generate the SHA-256 hash using Web Crypto API
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-
-  // Convert the buffer to a base64 string
-  const hashArray = Array.from(new Uint8Array(hashBuffer)); // Convert buffer to byte array
-  const hashString = hashArray.map((byte) => byte.toString(16).padStart(2, '0')).join(''); // Convert bytes to hex
-  const base64Hash = btoa(hashString); // Convert hex to base64
-
-  // Truncate the base64-encoded string to 20 characters
-  return base64Hash.substring(0, 20);
-};

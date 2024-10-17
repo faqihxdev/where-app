@@ -130,12 +130,12 @@ const MapPage: React.FC = () => {
       className: 'custom-icon',
       html: renderToStaticMarkup(
         <div className='relative'>
-          <img src='/marker-user.svg' alt='User location' className='w-8 h-8' />
-          <span className='animate-ping absolute -bottom-3 left-0 h-8 w-8 rounded-full bg-blue-600 -z-10'></span>
+          <img src='/marker-user.svg' alt='User location' className='w-7 h-7' />
+          <span className='animate-ping absolute -bottom-3 left-0 h-7 w-7 rounded-full bg-blue-600 -z-10'></span>
         </div>
       ),
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
+      iconSize: [28, 28],
+      iconAnchor: [14, 28],
     });
 
     return (
@@ -182,11 +182,13 @@ const MapPage: React.FC = () => {
                         {/* Listing Image */}
                         <div className='relative p-2'>
                           {listing.images.main.data && (
-                            <img
-                              src={listing.images.main.data}
-                              alt={listing.title}
-                              className='w-full h-24 object-cover rounded-lg'
-                            />
+                            <div className='w-full h-24 rounded-lg overflow-hidden border border-gray-200'>
+                              <img
+                                src={listing.images.main.data}
+                                alt={listing.title}
+                                className='w-full h-full object-cover'
+                              />
+                            </div>
                           )}
                         </div>
 
