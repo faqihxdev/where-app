@@ -1,142 +1,91 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Webcam from 'react-webcam';
 import { useSetAtom, useAtomValue } from 'jotai';
-import { Box, Button, VStack, Image, useToast, Center, Heading } from '@chakra-ui/react';
-import {
-  updateListingAtom,
-  fetchListingByIdAtom,
-  listingsAtom,
-} from '../../src/stores/listingStore';
-import { updateMatchAtom, fetchMatchesByUserAtom } from '../stores/matchStore';
-import { useParams } from 'react-router-dom';
+import { updateListingAtom, listingsAtom } from '../stores/listingStore';
+import { updateMatchAtom, matchesAtom, fetchMatchByIdAtom } from '../stores/matchStore';
 import { Match, MatchStatus, Listing, ListingStatus } from '../types';
+import {
+  ArrowLeftIcon,
+  CameraIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from '@heroicons/react/24/outline';
+import { showCustomToast } from '../components/CustomToast';
+import MatchCard from '../components/MatchCard';
 
-const WebcamCapture: React.FC = () => {
+const ResolvePage: React.FC = () => {
   const navigate = useNavigate();
-  const { id1, id2 } = useParams<{ id1: string; id2: string }>();
-  console.log(id1, id2);
-  // boilerplate
-  const fetchMatchesByUser = useSetAtom(fetchMatchesByUserAtom);
-  const updateMatch = useSetAtom(updateMatchAtom);
+  const { matchId } = useParams<{ matchId: string }>();
   const updateListing = useSetAtom(updateListingAtom);
-  const fetchListingById = useSetAtom(fetchListingByIdAtom);
-  const [listing, setListing] = useState<Listing | null>(null);
-  const [matches, setMatches] = useState<Match[]>([]);
+  const updateMatch = useSetAtom(updateMatchAtom);
+  const fetchMatchById = useSetAtom(fetchMatchByIdAtom);
+  const matches = useAtomValue(matchesAtom);
   const listings = useAtomValue(listingsAtom);
 
-  // TODO: limit to only finders taking picture
-  // get listing and match first
-  const fetchListingData = useCallback(async () => {
-    if (!id1) return;
-
-    try {
-      if (!listings[id1]) {
-        await fetchListingById(id1);
-      }
-      const fetchedListing = listings[id1];
-      if (fetchedListing) {
-        setListing(fetchedListing);
-      } else {
-        console.error('Listing not found');
-        // Handle the case when listing is not found
-      }
-    } catch (error) {
-      console.error('Error fetching listing data:', error);
-      // Handle the error
-    }
-  }, [id1, listings, fetchListingById]);
-
-  useEffect(() => {
-    fetchListingData();
-  }, [fetchListingData]);
-
-  const fetchMatchesData = useCallback(async () => {
-    if (!listing) return;
-
-    try {
-      const fetchedMatches = await fetchMatchesByUser(listing.userId);
-      setMatches(fetchedMatches);
-    } catch (error) {
-      console.error('Error fetching matches:', error);
-      // Handle the error
-    }
-  }, [listing, fetchMatchesByUser]);
-
-  useEffect(() => {
-    if (listing) {
-      fetchMatchesData();
-    }
-  }, [listing, fetchMatchesData]);
-  // console.log(`listing = ${JSON.stringify(listing)}`);
-  // console.log(`matches = ${JSON.stringify(matches)}`);
-  const match = Object.values(matches).find(
-    (match) => match.listingId1 === id2 || match.listingId2 === id2
-  );
-  console.log(`match = ${JSON.stringify(match)}`);
+  const [match, setMatch] = useState<Match | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const webcamRef = useRef<Webcam>(null);
   const [imgFile, setImgFile] = useState<File | null>(null);
-  const [imgSrc, setImgSrc] = useState<string | null>(null); // solely for previewing the image
-  const toast = useToast();
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+
+  const [isMatchCardOpen, setIsMatchCardOpen] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    if (!matchId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      let fetchedMatch = matches[matchId];
+      if (!fetchedMatch) {
+        fetchedMatch = await fetchMatchById(matchId);
+      }
+      if (!fetchedMatch) {
+        throw new Error('Match not found');
+      }
+      setMatch(fetchedMatch);
+    } catch (err) {
+      console.error('[ResolvePage]: Error fetching data:', err);
+      setError('An error occurred while fetching the data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [matchId, matches, fetchMatchById]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
-      // Convert B64 to a File object
-      function dataURIToBlob(dataURI: string): Blob {
-        // Split the data URI to extract the MIME type and the base64 data
-        const [typeInfo, base64] = dataURI.split(',');
-
-        // Extract the MIME type
-        const mimeMatch = typeInfo.match(/:(.*?);/);
-        const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
-
-        // Decode the base64 data
-        const binaryString = atob(base64);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-
-        for (let i = 0; i < len; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-
-        // Create and return the Blob with the correct MIME type
-        return new Blob([bytes], { type: mime });
-      }
-      function createFileFromDataURI(dataURI: string, fileName: string): File {
-        const blob = dataURIToBlob(dataURI);
-        return new File([blob], fileName, { type: blob.type });
-      }
-      const file = createFileFromDataURI(imageSrc, 'image.jpg');
+      const blob = dataURIToBlob(imageSrc);
+      const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
       setImgFile(file);
       setImgSrc(imageSrc);
-      console.log(imageSrc); // copy into base64 decoder to check
     }
   }, [webcamRef]);
 
   const uploadImage = async () => {
-    if (!imgFile) {
-      toast({
-        title: 'No image captured',
-        status: 'warning',
-        duration: 3000,
-        isClosable: true,
+    if (!imgFile || !match) {
+      showCustomToast({
+        title: 'Error',
+        description: 'No image captured or match data missing',
+        color: 'danger',
       });
       return;
     }
 
     try {
-      // Update the match status to resolved
-      const updatedMatch = {
+      await updateMatch(match.id, {
         status: MatchStatus.resolved,
         updatedAt: new Date(),
-      };
-      try {
-        updateMatch(match.id, updatedMatch);
-      } catch (error) {
-        console.log(error);
-      }
+      });
 
       const imageUpdates = {
         alt1: {
@@ -144,69 +93,155 @@ const WebcamCapture: React.FC = () => {
           file: imgFile,
         },
       };
-      // Create updated Partial<Listing> object with image
+
+      const listing = listings[match.listingId1] || listings[match.listingId2];
+      if (!listing) {
+        throw new Error('Listing not found');
+      }
+
       const updatedListing: Listing = {
         ...listing,
         status: ListingStatus.resolved,
       };
 
-      updateListing({
+      await updateListing({
         updatedListing: updatedListing,
         imageUpdates: imageUpdates,
       });
 
-      console.log('listing updated');
-
-      toast({
-        title: 'Image uploaded successfully',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
+      showCustomToast({
+        title: 'Success',
+        description: 'Listing resolved successfully',
+        color: 'success',
       });
+
       setTimeout(() => {
         navigate('/');
-      }, 3500); // Delay slightly longer than the toast duration
+      }, 2000);
     } catch (error) {
-      toast({
-        title: 'Upload failed',
-        description: 'There was an error uploading the image.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
+      showCustomToast({
+        title: 'Error',
+        description: 'Failed to resolve listing',
+        color: 'danger',
       });
-      console.log(error);
+      console.error('[ResolvePage]: Error resolving listing:', error);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className='flex justify-center items-center h-screen'>
+        <div className='animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500'></div>
+      </div>
+    );
+  }
+
+  if (error || !match) {
+    return (
+      <div className='flex flex-col items-center justify-center h-screen'>
+        <p className='text-xl font-bold mb-4'>{error || 'An error occurred'}</p>
+        <button
+          onClick={() => navigate('/')}
+          className='flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
+          <ArrowLeftIcon className='h-5 w-5 mr-2' />
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <Center h='100vh'>
-      <VStack spacing={4}>
-        <Heading>Take a picture with you and the item!</Heading>
-        <Box boxShadow='md' p={4} borderRadius='md'>
-          <Webcam
-            audio={false}
-            ref={webcamRef}
-            screenshotFormat='image/jpeg'
-            width={640}
-            height={480}
-          />
-        </Box>
-        <Button colorScheme='blue' onClick={capture}>
-          Capture photo
-        </Button>
-        {imgFile && (
-          <Box>
-            <Image src={imgSrc} alt='captured' boxSize='300px' objectFit='cover' />
-            <Center mt={2}>
-              <Button colorScheme='green' mt={2} onClick={uploadImage}>
-                Resolve Listing
-              </Button>
-            </Center>
-          </Box>
+    <div className='bg-white p-4'>
+      <div>
+        <div className='mb-4'>
+          <div className='flex items-center justify-between mb-4'>
+            <div className='flex items-center'>
+              <button
+                onClick={() => navigate('/inbox')}
+                className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
+                <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
+              </button>
+              <h1 className='text-xl font-semibold ml-4'>Resolve Listing</h1>
+            </div>
+          </div>
+        </div>
+
+        {/* Info About Resolving */}
+        <div className='bg-gray-100 rounded-lg p-4 mb-4'>
+          <h2 className='font-semibold mb-2'>Why Take a Photo?</h2>
+          <p className='text-sm text-gray-700 mb-2'>
+            Taking a photo helps verify the identity of the person claiming the item and provides a
+            record of the item being returned.
+          </p>
+        </div>
+
+        {/* Match Card Toggle View */}
+        <div>
+          <button
+            onClick={() => setIsMatchCardOpen(!isMatchCardOpen)}
+            className='w-full flex justify-between items-center py-3 px-4 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors'>
+            <span className='font-semibold'>View Match</span>
+            {isMatchCardOpen ? (
+              <ChevronUpIcon className='h-5 w-5 stroke-2' />
+            ) : (
+              <ChevronDownIcon className='h-5 w-5 stroke-2' />
+            )}
+          </button>
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              isMatchCardOpen
+                ? 'mt-2 max-h-[1000px] opacity-100'
+                : 'mt-0 max-h-0 opacity-0 overflow-hidden'
+            }`}>
+            {match && <MatchCard match={match} showActions={false} />}
+          </div>
+        </div>
+
+        <div className='mt-4'>
+          <div className='rounded-md overflow-hidden mb-4 border border-gray-200'>
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat='image/jpeg'
+              width='100%'
+              height='auto'
+            />
+          </div>
+          <button
+            onClick={capture}
+            className='w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
+            <CameraIcon className='h-5 w-5 mr-2 stroke-2' />
+            Capture Photo
+          </button>
+        </div>
+
+        {imgSrc && (
+          <div className='mt-4'>
+            <h2 className='text-lg font-semibold mb-4'>Preview</h2>
+            <img src={imgSrc} alt='captured' className='rounded-md mb-4 border border-gray-200' />
+            <button
+              onClick={uploadImage}
+              className='w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
+              <CheckIcon className='h-5 w-5 mr-2 stroke-[2.5]' />
+              Resolve Listing
+            </button>
+          </div>
         )}
-      </VStack>
-    </Center>
+      </div>
+    </div>
   );
 };
 
-export default WebcamCapture;
+export default ResolvePage;
+
+// Helper function to convert data URI to Blob
+function dataURIToBlob(dataURI: string): Blob {
+  const byteString = atob(dataURI.split(',')[1]);
+  const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], { type: mimeString });
+}

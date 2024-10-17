@@ -8,12 +8,14 @@ import {
   query,
   where,
   Timestamp,
-  addDoc,
   doc,
+  setDoc,
   updateDoc,
   deleteDoc,
+  getDoc,
   or,
 } from 'firebase/firestore';
+import { generateId } from '../utils/utils';
 
 // This matches atom is used to store the matches client-side
 export const matchesAtom = atomWithStorage<Record<string, Match>>('matches', {});
@@ -24,19 +26,22 @@ export const matchesAtom = atomWithStorage<Record<string, Match>>('matches', {})
  * @returns {Promise<Match>} - A promise that resolves to the new match
  */
 export const addMatchAtom = atom(null, async (_, set, newMatch: Omit<Match, 'id'>) => {
-  console.log(`[matchStore/addMatchAtom]: Adding match: ${newMatch}`);
+  console.log(`[matchStore/addMatchAtom]: Adding match:`, { newMatch });
 
   try {
-    // Check if the match already exists in Firestore
-    const q = query(
-      collection(db, 'Matches'),
-      where('listingId1', '==', newMatch.listingId1),
-      where('listingId2', '==', newMatch.listingId2)
+    // Generate a hash-based match ID
+    const matchId = generateId(
+      `${newMatch.listingId1}|${newMatch.listingId2}|${newMatch.userId1}|${newMatch.userId2}`
     );
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      console.log(`[matchStore/addMatchAtom]: Match already exists: ${newMatch}`);
-      return;
+
+    // Check if the match already exists in Firestore
+    const docRef = doc(db, 'Matches', matchId);
+    const docSnapshot = await getDoc(docRef);
+
+    if (docSnapshot.exists()) {
+      console.log(`[matchStore/addMatchAtom]: Match already exists with ID: ${matchId}`);
+      const existingMatch = docSnapshot.data() as Match;
+      return existingMatch;
     }
 
     // Create a new match object to add to Firestore
@@ -50,12 +55,12 @@ export const addMatchAtom = atom(null, async (_, set, newMatch: Omit<Match, 'id'
       updatedAt: new Date(),
     };
 
-    // Add the new match to Firestore
+    // Add the new match to Firestore using the generated ID
     console.log('🔥 [matchStore/addMatchAtom]');
-    const docRef = await addDoc(collection(db, 'Matches'), newMatchToAdd);
+    await setDoc(docRef, newMatchToAdd);
 
     // Update the matches atom
-    const match: Match = { id: docRef.id, ...newMatch };
+    const match: Match = { id: matchId, ...newMatchToAdd };
     set(matchesAtom, (prev) => ({ ...prev, [match.id]: match }));
     return match;
   } catch (error) {
@@ -167,3 +172,47 @@ export const deleteMatchAtom = atom(null, async (_, set, matchId: string) => {
     throw error;
   }
 });
+
+// Add this new atom
+export const fetchMatchByIdAtom = atom(
+  null,
+  async (get, set, matchId: string): Promise<Match | null> => {
+    console.log(`[matchStore/fetchMatchById]: Fetching match with ID: ${matchId}`);
+    try {
+      // Check if the match is already in the atom
+      const matches = get(matchesAtom);
+      if (matches[matchId]) {
+        return matches[matchId];
+      }
+
+      // If not in the atom, fetch from Firestore
+      console.log('🔥 [matchStore/fetchMatchById]');
+      const docRef = doc(db, 'Matches', matchId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const match: Match = {
+          id: docSnap.id,
+          listingId1: data.listingId1,
+          listingId2: data.listingId2,
+          userId1: data.userId1,
+          userId2: data.userId2,
+          status: data.status,
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt.toDate(),
+        };
+
+        // Update the matches atom
+        set(matchesAtom, (prev) => ({ ...prev, [match.id]: match }));
+
+        return match;
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`[matchStore/fetchMatchById]: Error fetching match: ${error}`);
+      throw error;
+    }
+  }
+);
