@@ -23,7 +23,6 @@ import {
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import LoadingSpinner from './LoadingSpinner';
-import { truncateWithEllipsis } from '../utils/utils';
 import { ListingStatus } from '../types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AlertDialog from './AlertDialog';

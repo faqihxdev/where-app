@@ -317,7 +317,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onBlur={(e) => handleBlur('description', e.target.value)}
-              placeholder='Describe the item and any contact info'
+              placeholder='Enter Details & Contact Info'
               variant='filled'
               bg='gray.100'
             />
