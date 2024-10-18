@@ -83,8 +83,10 @@ function App() {
     fetchNotifications();
   }, [userData, notificationsLoaded, fetchAllUserNotifications]);
 
+  console.log('[App]:', isInitializing, authUser);
+
   // If auth is still initializing, show loading spinner
-  if (isInitializing || !authUser) {
+  if (isInitializing) {
     return (
       <div className='h-screen w-screen flex items-center justify-center'>
         <LoadingSpinner />
