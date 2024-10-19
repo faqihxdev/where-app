@@ -134,6 +134,9 @@ export const updateUserNameAtom = atom(
         await setDoc(doc(db, 'Users', currentUser.uid), updatedUser, { merge: true });
         console.log('[userStore/updateUserNameAtom]: Set userData to updatedUser');
         set(userDataAtom, updatedUser);
+
+        // Update the listing users atom
+        set(listingUsersAtom, (prev) => ({ ...prev, [currentUser.uid]: updatedUser }));
         return updatedUser;
       } catch (error) {
         console.error(`[userStore/updateUserNameAtom]: Error updating user name: ${error}`);

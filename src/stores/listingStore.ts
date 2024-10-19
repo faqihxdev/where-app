@@ -384,6 +384,9 @@ export const addListingAtom = atom(
         markerIds,
       });
 
+      // Update the listing users atom
+      await set(fetchListingUserAtom, newListing.userId);
+
       // Create the full Listing object
       const listing: Listing = {
         id: listingId,
