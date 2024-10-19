@@ -17,7 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
-import MapSelector from '../components/map/MapSelector';
+import MapSelector from '../components/MapSelector';
 import { format } from 'date-fns';
 import { getAverageMarkerLocation } from '../utils/utils';
 
@@ -201,14 +201,17 @@ const ViewListingPage: React.FC = () => {
           {/* User Information */}
           <div className='flex items-center p-2 bg-gray-100 rounded-lg'>
             <Avatar
-              size='sm'
+              size='md'
               name={listingUser?.preferences?.name || listingUser?.email}
               src={getAvatarUrl(listingUser?.preferences?.name || listingUser?.email)}
               mr={2}
             />
-            <span className='text-sm font-medium'>
-              {listingUser?.preferences?.name || listingUser?.email}
-            </span>
+            <div className='flex flex-col ml-2'>
+              <span className='text-sm font-medium'>
+                {listingUser?.preferences?.name || listingUser?.email}
+              </span>
+              <span className='text-sm text-gray-500'>{listingUser?.email}</span>
+            </div>
           </div>
 
           {/* Additional Details */}
