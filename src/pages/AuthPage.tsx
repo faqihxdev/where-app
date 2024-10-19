@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { loginAtom, registerAtom } from '../stores/authStore';
+import { loginAtom, registerAtom, checkEmailExistsAtom } from '../stores/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FormControl, FormLabel, FormErrorMessage, Input, Button } from '@chakra-ui/react';
 import { showCustomToast } from '../components/CustomToast';
@@ -11,6 +11,7 @@ import { authUserAtom } from '../stores/authStore';
 export default function AuthPage() {
   const login = useSetAtom(loginAtom);
   const register = useSetAtom(registerAtom);
+  const checkEmailExists = useSetAtom(checkEmailExistsAtom);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -100,21 +101,38 @@ export default function AuthPage() {
         });
         navigate('/');
       } else {
-        await register({ email, password, displayName });
-        showCustomToast({
-          title: 'Registration Successful',
-          description: 'Your account has been created.',
-          color: 'success',
-        });
-        navigate('/');
+        const emailExists = await checkEmailExists(email);
+        if (emailExists) {
+          showCustomToast({
+            title: 'Registration Failed',
+            description: 'An account with this email already exists.',
+            color: 'danger',
+          });
+        } else {
+          await register({ email, password, displayName });
+          showCustomToast({
+            title: 'Registration Successful',
+            description: 'Please check your email to verify your account.',
+            color: 'success',
+          });
+          navigate('/verify-email');
+        }
       }
     } catch (error) {
       console.error('[AuthPage] Authentication error:', error);
-      showCustomToast({
-        title: 'Authentication Failed',
-        description: 'Please check your credentials and try again.',
-        color: 'danger',
-      });
+      if (error instanceof Error && error.message === 'Email not verified') {
+        showCustomToast({
+          title: 'Login Failed',
+          description: 'Please verify your email before logging in.',
+          color: 'warning',
+        });
+      } else {
+        showCustomToast({
+          title: 'Authentication Failed',
+          description: 'Please check your credentials and try again.',
+          color: 'danger',
+        });
+      }
     } finally {
       setIsLoading(false);
     }

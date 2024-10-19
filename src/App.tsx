@@ -18,6 +18,7 @@ import EditListingPage from './pages/EditListingPage';
 import NotFoundPage from './pages/NotFoundPage';
 import RandomPage from './pages/randomPage';
 import ResolvePage from './pages/ResolvePage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import { User } from './types';
 
 function PrivateRoute({
@@ -36,6 +37,11 @@ function PrivateRoute({
   // If user is not authenticated, redirect to auth page
   if (!authUser) {
     return <Navigate to='/auth' state={{ from: location }} replace />;
+  }
+
+  // If user is not verified, redirect to verify email page
+  if (!authUser.emailVerified) {
+    return <Navigate to='/verify-email' state={{ from: location }} replace />;
   }
 
   // If user data is not loaded, show loading spinner
@@ -97,7 +103,13 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path='/auth' element={<AuthPage />} />
+        <Route path='/auth' element={authUser ? <Navigate to='/' replace /> : <AuthPage />} />
+        <Route
+          path='/verify-email'
+          element={
+            authUser && !authUser.emailVerified ? <VerifyEmailPage /> : <Navigate to='/' replace />
+          }
+        />
         <Route
           element={
             <PrivateRoute
