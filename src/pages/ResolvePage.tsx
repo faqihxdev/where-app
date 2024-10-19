@@ -2,9 +2,12 @@ import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Webcam from 'react-webcam';
 import { useSetAtom, useAtomValue, useAtom } from 'jotai';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { userDataAtom } from '../stores/userStore';
 import { updateListingAtom, listingsAtom } from '../stores/listingStore';
 import { updateMatchAtom, matchesAtom, fetchMatchByIdAtom } from '../stores/matchStore';
-import { Match, MatchStatus, Listing, ListingStatus } from '../types';
+import { addNotificationAtom } from '../stores/notificationStore';
+import { Match, MatchStatus, Listing, ListingStatus, NotificationType } from '../types';
 import {
   ArrowLeftIcon,
   CameraIcon,
@@ -22,8 +25,10 @@ const ResolvePage: React.FC = () => {
   const updateListing = useSetAtom(updateListingAtom);
   const updateMatch = useSetAtom(updateMatchAtom);
   const fetchMatchById = useSetAtom(fetchMatchByIdAtom);
+  const addNotification = useSetAtom(addNotificationAtom);
   const addImage = useSetAtom(addImageAtom);
   const matches = useAtomValue(matchesAtom);
+  const userData = useAtomValue(userDataAtom);
   const [listings, setListings] = useAtom(listingsAtom);
 
   const [match, setMatch] = useState<Match | null>(null);
@@ -142,6 +147,32 @@ const ResolvePage: React.FC = () => {
         color: 'success',
       });
 
+      // Send notification to both users
+      const isCurrentUserFirst = match.userId1 === userData?.uid;
+      const [otherUserId, otherListingId] = isCurrentUserFirst
+        ? [match.userId2, match.listingId2]
+        : [match.userId1, match.listingId1];
+
+      const [currentUserId, currentListingId] = isCurrentUserFirst
+        ? [match.userId1, match.listingId1]
+        : [match.userId2, match.listingId2];
+
+      // Send notification to the other user
+      await addNotification({
+        userId: otherUserId,
+        title: 'Listing Resolved',
+        message: `One of your listings titled ${listings[otherListingId].title} has been resolved by ${userData?.preferences?.name}`,
+        type: NotificationType.resolve,
+      });
+
+      // Send notification to the current user
+      await addNotification({
+        userId: currentUserId,
+        title: 'Listing Resolved',
+        message: `Your listing titled ${listings[currentListingId].title} has been resolved`,
+        type: NotificationType.resolve,
+      });
+
       setTimeout(() => {
         navigate('/');
       }, 2000);
@@ -160,7 +191,7 @@ const ResolvePage: React.FC = () => {
   if (isLoading) {
     return (
       <div className='flex justify-center items-center h-screen'>
-        <div className='animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500'></div>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -168,11 +199,11 @@ const ResolvePage: React.FC = () => {
   if (error || !match) {
     return (
       <div className='flex flex-col items-center justify-center h-screen'>
-        <p className='text-xl font-bold mb-4'>{error || 'An error occurred'}</p>
+        <p className='text-xl font-semibold mb-4'>{error || 'An error occurred'}</p>
         <button
           onClick={() => navigate('/')}
           className='flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
-          <ArrowLeftIcon className='h-5 w-5 mr-2' />
+          <ArrowLeftIcon className='h-5 w-5 mr-2 stroke-2' />
           Go Back
         </button>
       </div>
