@@ -2,7 +2,13 @@ import React, { useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { getAvatarUrl, userDataAtom } from '../stores/userStore';
-import { logoutAtom } from '../stores/authStore';
+import {
+  authUserAtom,
+  logoutAtom,
+  changePasswordAtom,
+  deleteAccountAtom,
+  sendVerificationEmailAtom,
+} from '../stores/authStore';
 import { showCustomToast } from '../components/CustomToast';
 import {
   Button,
@@ -14,13 +20,11 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import {
-  getAuth,
-  updatePassword,
-  EmailAuthProvider,
-  deleteUser,
-  reauthenticateWithCredential,
-} from 'firebase/auth';
-import { CalendarIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+  CalendarIcon,
+  EnvelopeIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
+} from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import AlertDialog from '../components/AlertDialog';
 
@@ -28,6 +32,7 @@ const ProfilePage: React.FC = () => {
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [isLogoutLoading, setIsLogoutLoading] = useState(false);
+  const [isVerifyLoading, setIsVerifyLoading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,7 +41,11 @@ const ProfilePage: React.FC = () => {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const userData = useAtomValue(userDataAtom);
+  const authUser = useAtomValue(authUserAtom);
   const logout = useSetAtom(logoutAtom);
+  const changePassword = useSetAtom(changePasswordAtom);
+  const deleteAccount = useSetAtom(deleteAccountAtom);
+  const sendVerificationEmail = useSetAtom(sendVerificationEmailAtom);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -69,31 +78,25 @@ const ProfilePage: React.FC = () => {
 
     try {
       setIsPasswordLoading(true);
-      const auth = getAuth();
-      const user = auth.currentUser;
-
-      if (user && currentPassword) {
-        const credential = EmailAuthProvider.credential(user.email!, currentPassword);
-        await reauthenticateWithCredential(user, credential);
-        await updatePassword(user, newPassword);
-
-        showCustomToast({
-          title: 'Password Changed Successfully',
-          description: 'Your password has been updated.',
-          color: 'success',
-        });
-
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-        setError('');
-        setIsPasswordDialogOpen(false);
-      } else {
-        setError('User is not authenticated.');
-      }
+      await changePassword({ currentPassword, newPassword });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setError('');
+      setIsPasswordDialogOpen(false);
+      showCustomToast({
+        title: 'Password Changed Successfully',
+        description: 'Your password has been updated.',
+        color: 'success',
+      });
     } catch (error) {
       console.error('[ProfilePage/handlePasswordChange]: ', error);
       setError('Password change failed. Please try again.');
+      showCustomToast({
+        title: 'Password Change Failed',
+        description: 'An error occurred while changing your password.',
+        color: 'danger',
+      });
     } finally {
       setIsPasswordLoading(false);
     }
@@ -102,30 +105,45 @@ const ProfilePage: React.FC = () => {
   const handleDeleteAccount = async () => {
     try {
       setIsDeleteLoading(true);
-      const auth = getAuth();
-      const user = auth.currentUser;
-
-      if (user && deletePassword) {
-        const credential = EmailAuthProvider.credential(user.email!, deletePassword);
-        await reauthenticateWithCredential(user, credential);
-        await deleteUser(user);
-
-        showCustomToast({
-          title: 'Account Deleted',
-          description: 'Your account has been deleted successfully.',
-          color: 'success',
-        });
-
-        navigate('/auth');
-      } else {
-        setError('User is not authenticated.');
-      }
+      await deleteAccount(deletePassword);
+      showCustomToast({
+        title: 'Account Deleted',
+        description: 'Your account has been deleted successfully.',
+        color: 'success',
+      });
+      navigate('/auth');
     } catch (error) {
       console.error('[ProfilePage/handleDeleteAccount]: ', error);
       setError('Account deletion failed. Please try again.');
+      showCustomToast({
+        title: 'Account Deletion Failed',
+        description: 'An error occurred while deleting your account.',
+        color: 'danger',
+      });
     } finally {
       setIsDeleteLoading(false);
       setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleSendVerificationEmail = async () => {
+    try {
+      setIsVerifyLoading(true);
+      await sendVerificationEmail();
+      showCustomToast({
+        title: 'Verification Email Sent',
+        description: 'Please check your email to verify your account.',
+        color: 'success',
+      });
+    } catch (error) {
+      console.error('[ProfilePage/handleSendVerificationEmail]: ', error);
+      showCustomToast({
+        title: 'Verification Email Failed',
+        description: 'An error occurred while sending the verification email.',
+        color: 'danger',
+      });
+    } finally {
+      setIsVerifyLoading(false);
     }
   };
 
@@ -164,6 +182,17 @@ const ProfilePage: React.FC = () => {
           <div className='flex items-center mb-2'>
             <EnvelopeIcon className='w-5 h-5 mr-2 text-gray-600 stroke-2' />
             <p className='text-sm text-gray-600'>{userData?.email}</p>
+            <div
+              className={`ml-2 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                authUser?.emailVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+              {authUser?.emailVerified ? (
+                <CheckCircleIcon className='w-3 h-3 stroke-2' />
+              ) : (
+                <ExclamationCircleIcon className='w-3 h-3 stroke-2' />
+              )}
+              {authUser?.emailVerified ? 'Verified' : 'Not Verified'}
+            </div>
           </div>
           {userData?.createdAt && (
             <div className='flex items-center'>
@@ -178,6 +207,22 @@ const ProfilePage: React.FC = () => {
 
       {/* Action Buttons */}
       <div className='space-y-4 flex-grow'>
+        {!authUser?.emailVerified && (
+          <Button
+            onClick={handleSendVerificationEmail}
+            isLoading={isVerifyLoading}
+            loadingText='Sending...'
+            w='full'
+            bg='transparent'
+            border='2px solid'
+            borderColor='blue.300'
+            color='blue.500'
+            fontWeight='medium'
+            _hover={{ bg: 'blue.100' }}
+            _active={{ bg: 'blue.200' }}>
+            Verify Email
+          </Button>
+        )}
         <Button
           onClick={() => setIsPasswordDialogOpen(true)}
           w='full'
