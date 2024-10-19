@@ -15,9 +15,15 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '../firebaseConfig';
-import { doc, setDoc } from 'firebase/firestore';
-import { fetchUserDataAtom, userDataAtom } from './userStore';
+import { deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { fetchUserDataAtom, listingUsersAtom, userDataAtom } from './userStore';
 import { User } from '../types';
+import { listingsAtom } from './listingStore';
+import { deleteListingAtom } from './listingStore';
+import { deleteNotificationsAtom, userNotificationsAtom } from './notificationStore';
+import { matchesAtom } from './matchStore';
+import { imagesAtom } from './imageStore';
+import { markersAtom } from './markerStore';
 
 export const authUserAtom = atomWithStorage<FirebaseUser | null>('authUser', null);
 
@@ -198,7 +204,7 @@ export const changePasswordAtom = atom(
  * @param {string} password - The password of the user
  * @returns {Promise<void>} - A promise that resolves when the account is deleted
  */
-export const deleteAccountAtom = atom(null, async (_, __, password: string): Promise<void> => {
+export const deleteAccountAtom = atom(null, async (get, set, password: string): Promise<void> => {
   console.log('[authStore/deleteAccount]: Called');
   try {
     const user = auth.currentUser;
@@ -206,6 +212,36 @@ export const deleteAccountAtom = atom(null, async (_, __, password: string): Pro
 
     const credential = EmailAuthProvider.credential(user.email, password);
     await reauthenticateWithCredential(user, credential);
+
+    // Delete all associated listing with the current user
+    const listings = Object.values(get(listingsAtom));
+    for (const listing of listings) {
+      if (listing.userId === user.uid) {
+        await set(deleteListingAtom, listing.id);
+      }
+    }
+
+    // Delete all associated notifications with the current user
+    const notifications = Object.values(get(userNotificationsAtom));
+    await set(
+      deleteNotificationsAtom,
+      notifications.map((notification) => notification.id)
+    );
+
+    // Delete the user in User collection
+    await deleteDoc(doc(db, 'Users', user.uid));
+
+    // Set all atoms to null
+    set(authUserAtom, null);
+    set(imagesAtom, {});
+    set(listingsAtom, {});
+    set(markersAtom, {});
+    set(matchesAtom, {});
+    set(userNotificationsAtom, {});
+    set(userDataAtom, null);
+    set(listingUsersAtom, {});
+
+    // Delete the user from Firebase
     await deleteUser(user);
   } catch (error) {
     console.error('[authStore/deleteAccount]: ', error);
