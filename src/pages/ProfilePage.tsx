@@ -10,15 +10,7 @@ import {
   sendVerificationEmailAtom,
 } from '../stores/authStore';
 import { showCustomToast } from '../components/CustomToast';
-import {
-  Button,
-  Input,
-  FormControl,
-  FormLabel,
-  FormErrorMessage,
-  Avatar,
-  VStack,
-} from '@chakra-ui/react';
+import { Button, Avatar, VStack } from '@chakra-ui/react';
 import {
   CalendarIcon,
   EnvelopeIcon,
@@ -27,6 +19,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import AlertDialog from '../components/AlertDialog';
+import { PasswordInput } from '../components/forms/PasswordInput';
+import { FirebaseError } from 'firebase/app';
 
 const ProfilePage: React.FC = () => {
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
@@ -37,7 +31,7 @@ const ProfilePage: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const userData = useAtomValue(userDataAtom);
@@ -47,6 +41,44 @@ const ProfilePage: React.FC = () => {
   const deleteAccount = useSetAtom(deleteAccountAtom);
   const sendVerificationEmail = useSetAtom(sendVerificationEmailAtom);
   const navigate = useNavigate();
+
+  const validateField = (field: string, value: string) => {
+    let error = '';
+    switch (field) {
+      case 'currentPassword':
+        if (!value) {
+          error = 'Current password is required';
+        }
+        break;
+      case 'newPassword':
+        if (!value) {
+          error = 'New password is required';
+        } else if (value.length < 8) {
+          error = 'Password must be at least 8 characters';
+        } else if (value.length > 64) {
+          error = 'Password cannot exceed 64 characters';
+        }
+        break;
+      case 'confirmPassword':
+        if (!value) {
+          error = 'Confirm password is required';
+        } else if (value !== newPassword) {
+          error = "Passwords don't match";
+        }
+        break;
+      case 'deletePassword':
+        if (!value) {
+          error = 'Password is required to delete account';
+        }
+        break;
+    }
+    return error;
+  };
+
+  const handleBlur = (field: string, value: string) => {
+    const error = validateField(field, value);
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
 
   const handleLogout = async () => {
     try {
@@ -71,8 +103,14 @@ const ProfilePage: React.FC = () => {
   };
 
   const handlePasswordChange = async () => {
-    if (newPassword !== confirmPassword) {
-      setError('New password and confirmation do not match.');
+    const newErrors = {
+      currentPassword: validateField('currentPassword', currentPassword),
+      newPassword: validateField('newPassword', newPassword),
+      confirmPassword: validateField('confirmPassword', confirmPassword),
+    };
+    setErrors(newErrors);
+
+    if (Object.values(newErrors).some((error) => error !== '')) {
       return;
     }
 
@@ -82,7 +120,7 @@ const ProfilePage: React.FC = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setError('');
+      setErrors({});
       setIsPasswordDialogOpen(false);
       showCustomToast({
         title: 'Password Changed Successfully',
@@ -90,19 +128,36 @@ const ProfilePage: React.FC = () => {
         color: 'success',
       });
     } catch (error) {
-      console.error('[ProfilePage/handlePasswordChange]: ', error);
-      setError('Password change failed. Please try again.');
-      showCustomToast({
-        title: 'Password Change Failed',
-        description: 'An error occurred while changing your password.',
-        color: 'danger',
-      });
+      if ((error as FirebaseError).code === 'auth/invalid-credential') {
+        setErrors((prev) => ({
+          ...prev,
+          currentPassword: 'Current password is incorrect',
+        }));
+        showCustomToast({
+          title: 'Password Change Failed',
+          description: 'Current password is incorrect',
+          color: 'danger',
+        });
+      } else {
+        showCustomToast({
+          title: 'Password Change Failed',
+          description: 'An error occurred while changing your password.',
+          color: 'danger',
+        });
+      }
     } finally {
       setIsPasswordLoading(false);
     }
   };
 
   const handleDeleteAccount = async () => {
+    const error = validateField('deletePassword', deletePassword);
+    setErrors((prev) => ({ ...prev, deletePassword: error }));
+
+    if (error) {
+      return;
+    }
+
     try {
       setIsDeleteLoading(true);
       await deleteAccount(deletePassword);
@@ -114,7 +169,6 @@ const ProfilePage: React.FC = () => {
       navigate('/auth');
     } catch (error) {
       console.error('[ProfilePage/handleDeleteAccount]: ', error);
-      setError('Account deletion failed. Please try again.');
       showCustomToast({
         title: 'Account Deletion Failed',
         description: 'An error occurred while deleting your account.',
@@ -258,43 +312,30 @@ const ProfilePage: React.FC = () => {
         title='Change Password'
         body={
           <VStack spacing={3} align='stretch'>
-            <FormControl isInvalid={!!error}>
-              <FormLabel>Current Password</FormLabel>
-              <Input
-                type='password'
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder='Enter current password'
-                variant='filled'
-                bg='gray.100'
-                rounded='md'
-              />
-            </FormControl>
-            <FormControl isInvalid={!!error}>
-              <FormLabel>New Password</FormLabel>
-              <Input
-                type='password'
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder='Enter new password'
-                variant='filled'
-                bg='gray.100'
-                rounded='md'
-              />
-            </FormControl>
-            <FormControl isInvalid={!!error}>
-              <FormLabel>Confirm New Password</FormLabel>
-              <Input
-                type='password'
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder='Confirm new password'
-                variant='filled'
-                bg='gray.100'
-                rounded='md'
-              />
-            </FormControl>
-            {error && <FormErrorMessage>{error}</FormErrorMessage>}
+            <PasswordInput
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              onBlur={(e) => handleBlur('currentPassword', e.target.value)}
+              error={errors.currentPassword}
+              label='Current Password'
+              placeholder='Enter current password'
+            />
+            <PasswordInput
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              onBlur={(e) => handleBlur('newPassword', e.target.value)}
+              error={errors.newPassword}
+              label='New Password'
+              placeholder='Enter new password'
+            />
+            <PasswordInput
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onBlur={(e) => handleBlur('confirmPassword', e.target.value)}
+              error={errors.confirmPassword}
+              label='Confirm New Password'
+              placeholder='Confirm new password'
+            />
           </VStack>
         }
         footer={
@@ -319,19 +360,14 @@ const ProfilePage: React.FC = () => {
         title='Delete Account'
         body={
           <VStack spacing={3} align='stretch'>
-            <FormControl isInvalid={!!error}>
-              <FormLabel>Enter your password to confirm account deletion</FormLabel>
-              <Input
-                type='password'
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                placeholder='Enter your password'
-                variant='filled'
-                bg='gray.100'
-                rounded='md'
-              />
-            </FormControl>
-            {error && <FormErrorMessage>{error}</FormErrorMessage>}
+            <PasswordInput
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              onBlur={(e) => handleBlur('deletePassword', e.target.value)}
+              error={errors.deletePassword}
+              label='Enter your password to confirm account deletion'
+              placeholder='Enter your password'
+            />
           </VStack>
         }
         footer={
