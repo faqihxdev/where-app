@@ -31,7 +31,7 @@ export const showCustomToast = ({ title, description, color }: CustomToastProps)
         borderRadius='md'
         boxShadow='lg'>
         <Box>
-          <Text fontWeight='bold' color='white'>
+          <Text fontWeight='semibold' color='white'>
             {title}
           </Text>
           {description && <Text color='white'>{description}</Text>}

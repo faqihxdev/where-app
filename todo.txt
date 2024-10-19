@@ -16,7 +16,4 @@
 - Deleting main image submits edit listing (lol wth)
 
 # TMP My TODO
-- Fix the multiple rendering for the home page
-- Resolve Image
-- Notify on resolve
 - Filter out resolve in listing and map
