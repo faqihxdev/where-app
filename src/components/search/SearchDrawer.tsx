@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import { SearchParams, Marker } from '../../types';
 import SearchForm from './SearchForm';
-import MapSelector from '../map/MapSelector';
+import MapSelector from '../MapSelector';
 
 interface SearchDrawerProps {
   isOpen: boolean;

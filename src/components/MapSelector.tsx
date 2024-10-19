@@ -17,8 +17,8 @@ import {
 } from '@chakra-ui/react';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { MapPinIcon as MapPinIconSolid } from '@heroicons/react/24/solid';
-import { Marker as MarkerType } from '../../types';
-import { reverseGeocode } from '../../utils/utils';
+import { Marker as MarkerType } from '../types';
+import { reverseGeocode } from '../utils/utils';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 // Create custom icon

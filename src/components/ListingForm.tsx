@@ -20,7 +20,7 @@ import {
 import { showCustomToast } from './CustomToast';
 import { Listing, ListingCategory, ListingStatus, Marker, ImageType } from '../types';
 import { compressImage } from '../stores/imageStore';
-import MapSelector from './map/MapSelector';
+import MapSelector from './MapSelector';
 
 interface ListingFormProps {
   initialData?: Partial<Listing>;
