@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { getAvatarUrl, userDataAtom } from '../stores/userStore';
+import { getAvatarUrl, userDataAtom, updateUserNameAtom } from '../stores/userStore';
 import {
   authUserAtom,
   logoutAtom,
@@ -10,12 +10,13 @@ import {
   sendVerificationEmailAtom,
 } from '../stores/authStore';
 import { showCustomToast } from '../components/CustomToast';
-import { Button, Avatar, VStack } from '@chakra-ui/react';
+import { Button, Avatar, VStack, Input } from '@chakra-ui/react';
 import {
   CalendarIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
+  PencilIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import AlertDialog from '../components/AlertDialog';
@@ -41,6 +42,10 @@ const ProfilePage: React.FC = () => {
   const deleteAccount = useSetAtom(deleteAccountAtom);
   const sendVerificationEmail = useSetAtom(sendVerificationEmailAtom);
   const navigate = useNavigate();
+  const [isEditNameDialogOpen, setIsEditNameDialogOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [isNameLoading, setIsNameLoading] = useState(false);
+  const updateUserName = useSetAtom(updateUserNameAtom);
 
   const validateField = (field: string, value: string) => {
     let error = '';
@@ -201,6 +206,46 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const validateName = (name: string) => {
+    if (!name) {
+      return 'Name is required';
+    } else if (name.length < 3) {
+      return 'Name must be at least 3 characters long';
+    } else if (name.length > 15) {
+      return 'Name cannot exceed 15 characters';
+    }
+    return '';
+  };
+
+  const handleNameChange = async () => {
+    const error = validateName(newName);
+    setErrors((prev) => ({ ...prev, newName: error }));
+
+    if (error) {
+      return;
+    }
+
+    try {
+      setIsNameLoading(true);
+      await updateUserName(newName);
+      setIsEditNameDialogOpen(false);
+      showCustomToast({
+        title: 'Name Updated',
+        description: 'Your display name has been updated successfully.',
+        color: 'success',
+      });
+    } catch (error) {
+      console.error('[ProfilePage/handleNameChange]: ', error);
+      showCustomToast({
+        title: 'Name Update Failed',
+        description: 'An error occurred while updating your display name.',
+        color: 'danger',
+      });
+    } finally {
+      setIsNameLoading(false);
+    }
+  };
+
   return (
     <div className='min-h-full bg-white p-4 flex flex-col'>
       {/* Page Title and Logout Button */}
@@ -231,7 +276,14 @@ const ProfilePage: React.FC = () => {
           src={getAvatarUrl(userData?.preferences?.name || '')}
           mb={4}
         />
-        <h2 className='text-2xl font-semibold mb-4'>{userData?.preferences?.name || 'User'}</h2>
+        <div className='flex items-center mb-4'>
+          <h2 className='text-2xl font-semibold'>{userData?.preferences?.name || 'User'}</h2>
+          <button
+            onClick={() => setIsEditNameDialogOpen(true)}
+            className='bg-gray-100 ml-2 p-1.5 rounded-md hover:bg-gray-200 transition-colors duration-200'>
+            <PencilIcon className='w-5 h-5 text-gray-600 stroke-2' />
+          </button>
+        </div>
         <div className='bg-gray-100 p-4 rounded-lg w-full max-w-md'>
           <div className='flex items-center mb-2'>
             <EnvelopeIcon className='w-5 h-5 mr-2 text-gray-600 stroke-2' />
@@ -381,6 +433,40 @@ const ProfilePage: React.FC = () => {
             _hover={{ bg: 'red.700' }}
             _active={{ bg: 'red.800' }}>
             Confirm Deletion
+          </Button>
+        }
+      />
+
+      {/* Edit Name Dialog */}
+      <AlertDialog
+        isOpen={isEditNameDialogOpen}
+        onClose={() => setIsEditNameDialogOpen(false)}
+        title='Edit Display Name'
+        body={
+          <div className='space-y-1'>
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onBlur={(e) =>
+                setErrors((prev) => ({ ...prev, newName: validateName(e.target.value) }))
+              }
+              placeholder='Enter new display name'
+              isInvalid={!!errors.newName}
+            />
+            {errors.newName && <p className='text-red-500 text-sm'>{errors.newName}</p>}
+          </div>
+        }
+        footer={
+          <Button
+            onClick={handleNameChange}
+            isLoading={isNameLoading}
+            w='full'
+            bg='primary.600'
+            color='white'
+            fontWeight='medium'
+            _hover={{ bg: 'primary.700' }}
+            _active={{ bg: 'primary.800' }}>
+            Update Name
           </Button>
         }
       />

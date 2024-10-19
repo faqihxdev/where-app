@@ -112,6 +112,38 @@ export const fetchListingUserAtom = atom(
   }
 );
 
+/**
+ * @description Update the user's name in Firestore
+ * @param {string} newName - The new display name
+ * @returns {Promise<User | null>} - A promise that resolves when the user data is updated
+ */
+export const updateUserNameAtom = atom(
+  null,
+  async (get, set, newName: string): Promise<User | null> => {
+    console.log(`[userStore/updateUserNameAtom]: newName: ${newName}`);
+
+    const currentUser = get(userDataAtom);
+
+    if (currentUser) {
+      const updatedUser = {
+        ...currentUser,
+        preferences: { ...currentUser.preferences, name: newName },
+      };
+      try {
+        console.log('🔥 [userStore/updateUserNameAtom]');
+        await setDoc(doc(db, 'Users', currentUser.uid), updatedUser, { merge: true });
+        console.log('[userStore/updateUserNameAtom]: Set userData to updatedUser');
+        set(userDataAtom, updatedUser);
+        return updatedUser;
+      } catch (error) {
+        console.error(`[userStore/updateUserNameAtom]: Error updating user name: ${error}`);
+        throw error;
+      }
+    }
+    return null;
+  }
+);
+
 /* ########## HELPER FUNCTIONS ########## */
 
 /**
