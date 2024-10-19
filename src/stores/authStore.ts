@@ -12,6 +12,7 @@ import {
   deleteUser,
   reauthenticateWithCredential,
   fetchSignInMethodsForEmail,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '../firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
@@ -152,13 +153,39 @@ export const changePasswordAtom = atom(
   ): Promise<void> => {
     console.log('[authStore/changePassword]: Called');
     try {
+      // Ensure user is authenticated
       const user = auth.currentUser;
-      if (!user || !user.email) throw new Error('User not authenticated');
+      if (!user || !user.email) {
+        console.error('[authStore/changePassword]: User not authenticated');
+        throw new Error('User not authenticated');
+      }
 
+      console.log('[authStore/changePassword]: Called');
+
+      // Create credential for reauthentication
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-      await updatePassword(user, newPassword);
+
+      // Reauthenticate user
+      try {
+        await reauthenticateWithCredential(user, credential);
+      } catch (error) {
+        console.error('[authStore/changePassword]: Reauthentication error', error);
+        if (error instanceof Error && error.message.includes('auth/wrong-password')) {
+          throw error;
+        }
+        throw error;
+      }
+
+      // Update password
+      try {
+        await updatePassword(user, newPassword);
+        console.log('[authStore/changePassword]: Password updated successfully');
+      } catch (error) {
+        console.error('[authStore/changePassword]: Update password error', error);
+        throw error;
+      }
     } catch (error) {
+      // Catch any other errors
       console.error('[authStore/changePassword]: ', error);
       throw error;
     }
@@ -217,3 +244,21 @@ export const checkEmailExistsAtom = atom(null, async (_, __, email: string): Pro
     throw error;
   }
 });
+
+/**
+ * @description Send a password reset email to the user
+ * @param {string} email - The email of the user
+ * @returns {Promise<void>} - A promise that resolves when the email is sent
+ */
+export const sendPasswordResetEmailAtom = atom(
+  null,
+  async (_, __, email: string): Promise<void> => {
+    console.log('[authStore/sendPasswordResetEmail]: Called');
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('[authStore/sendPasswordResetEmail]: ', error);
+      throw error;
+    }
+  }
+);

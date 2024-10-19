@@ -1,17 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { loginAtom, registerAtom, checkEmailExistsAtom } from '../stores/authStore';
+import {
+  loginAtom,
+  registerAtom,
+  checkEmailExistsAtom,
+  sendPasswordResetEmailAtom,
+} from '../stores/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FormControl, FormLabel, FormErrorMessage, Input, Button } from '@chakra-ui/react';
+import {
+  FormControl,
+  FormLabel,
+  FormErrorMessage,
+  Input,
+  Button,
+  Link,
+  VStack,
+} from '@chakra-ui/react';
 import { showCustomToast } from '../components/CustomToast';
 import { PasswordInput } from '../components/forms/PasswordInput';
 import logo from '../assets/logo.png';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { authUserAtom } from '../stores/authStore';
+import AlertDialog from '../components/AlertDialog';
 
 export default function AuthPage() {
   const login = useSetAtom(loginAtom);
   const register = useSetAtom(registerAtom);
   const checkEmailExists = useSetAtom(checkEmailExistsAtom);
+  const sendPasswordResetEmail = useSetAtom(sendPasswordResetEmailAtom);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,8 +37,9 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const authUser = useAtomValue(authUserAtom);
   const location = useLocation();
-
-  console.log('[AuthPage]: I am in AuthPage!');
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetEmailSending, setIsResetEmailSending] = useState(false);
 
   useEffect(() => {
     if (authUser) {
@@ -36,6 +52,7 @@ export default function AuthPage() {
     let error = '';
     switch (field) {
       case 'email':
+      case 'resetEmail':
         if (!value) {
           error = 'Email is required';
         } else if (!/\S+@\S+\.\S+/.test(value)) {
@@ -138,8 +155,36 @@ export default function AuthPage() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const error = validateField('resetEmail', resetEmail);
+    if (error) {
+      setErrors((prev) => ({ ...prev, resetEmail: error }));
+      return;
+    }
+
+    setIsResetEmailSending(true);
+    try {
+      await sendPasswordResetEmail(resetEmail);
+      setIsForgotPasswordOpen(false);
+      showCustomToast({
+        title: 'Password Reset Email Sent',
+        description: 'Please check your email for instructions to reset your password.',
+        color: 'success',
+      });
+    } catch (error) {
+      console.error('[AuthPage] Password reset error:', error);
+      showCustomToast({
+        title: 'Password Reset Failed',
+        description: 'An error occurred while sending the password reset email. Please try again.',
+        color: 'danger',
+      });
+    } finally {
+      setIsResetEmailSending(false);
+    }
+  };
+
   return (
-    <div className='min-h-screen bg-gray-100 flex flex-col justify-center p-4'>
+    <div className='min-h-screen bg-gray-100 flex flex-col justify-center items-center p-4'>
       <div className='w-full max-w-md mx-auto bg-white rounded-lg p-6'>
         <div className='flex flex-col items-center mb-8'>
           <img src={logo} alt='logo' className='w-16 h-16' />
@@ -236,6 +281,54 @@ export default function AuthPage() {
           </div>
         </form>
       </div>
+
+      {isLogin && (
+        <div className='mt-4 text-center'>
+          <Link
+            color='primary.600'
+            onClick={() => setIsForgotPasswordOpen(true)}
+            fontSize='sm'
+            fontWeight='medium'>
+            Forgot Password?
+          </Link>
+        </div>
+      )}
+
+      <AlertDialog
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+        title='Reset Password'
+        body={
+          <VStack spacing={3} align='stretch'>
+            <FormControl isInvalid={!!errors.resetEmail}>
+              <FormLabel>Email address</FormLabel>
+              <Input
+                type='email'
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                onBlur={(e) => handleBlur('resetEmail', e.target.value)}
+                placeholder='Enter your email'
+              />
+              <FormErrorMessage>{errors.resetEmail}</FormErrorMessage>
+            </FormControl>
+          </VStack>
+        }
+        footer={
+          <Button
+            onClick={handleForgotPassword}
+            isLoading={isResetEmailSending}
+            loadingText='Sending...'
+            w='full'
+            bg='primary.600'
+            color='white'
+            fontWeight='medium'
+            _hover={{ bg: 'primary.700' }}
+            _active={{ bg: 'primary.800' }}
+            isDisabled={!!errors.resetEmail}>
+            Send Reset Email
+          </Button>
+        }
+      />
     </div>
   );
 }

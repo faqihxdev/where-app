@@ -23,7 +23,7 @@ const AlertDialog: React.FC<AlertDialogProps> = ({ isOpen, onClose, title, body,
     <ChakraAlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose} isCentered>
       <AlertDialogOverlay>
         <AlertDialogContent m={4}>
-          <AlertDialogHeader fontSize='lg' fontWeight='bold'>
+          <AlertDialogHeader fontSize='lg' fontWeight='semibold' pb={2}>
             {title}
           </AlertDialogHeader>
 
