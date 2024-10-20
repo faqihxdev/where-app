@@ -1,9 +1,9 @@
 import React from 'react';
 import { useSetAtom } from 'jotai';
-import { Notification } from '../../types';
+import { Notification } from '../types';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { Menu, MenuButton, MenuList, MenuItem, Button } from '@chakra-ui/react';
-import { markNotificationsAtom } from '../../stores/notificationStore';
+import { markNotificationsAtom } from '../stores/notificationStore';
 
 interface NotificationRowProps {
   notification: Notification;
@@ -55,16 +55,14 @@ const NotificationRow: React.FC<NotificationRowProps> = ({ notification, onOpenD
         notification.status === 'read' ? 'bg-gray-50' : ''
       }`}
       onClick={handleClick}>
-      <div className='flex-grow'>
+      <div className='flex-grow overflow-hidden'>
         <h3
-          className={`font-semibold ${notification.status === 'read' ? 'text-gray-600' : 'text-black'}`}>
+          className={`font-semibold text-sm ${notification.status === 'read' ? 'text-gray-600' : 'text-black'}`}>
           {notification.title}
         </h3>
         <p
-          className={`text-sm ${notification.status === 'read' ? 'text-gray-500' : 'text-gray-700'}`}>
-          {notification.message.length > 100
-            ? `${notification.message.substring(0, 100)}...`
-            : notification.message}
+          className={`text-sm truncate pr-2 ${notification.status === 'read' ? 'text-gray-500' : 'text-gray-700'}`}>
+          {notification.message}
         </p>
       </div>
       <Menu>
