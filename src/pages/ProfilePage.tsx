@@ -20,7 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import AlertDialog from '../components/AlertDialog';
-import { PasswordInput } from '../components/forms/PasswordInput';
+import { PasswordInput } from '../components/PasswordInput';
 import { FirebaseError } from 'firebase/app';
 
 const ProfilePage: React.FC = () => {

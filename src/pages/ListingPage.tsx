@@ -62,7 +62,6 @@ export default function ListingPage() {
 
   // Effect to check for manual refresh and fetch data
   useEffect(() => {
-    console.log('[useEffect] for manual refresh');
     const isManualRefresh = sessionStorage.getItem('isManualRefresh') === 'true';
     sessionStorage.removeItem('isManualRefresh');
 
@@ -73,7 +72,6 @@ export default function ListingPage() {
 
   // Effect to fetch listings on mount or manual refresh
   useEffect(() => {
-    console.log('[useEffect] fetch data');
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -90,7 +88,6 @@ export default function ListingPage() {
       }
     };
 
-    console.log('listingsFetched: ', listingsFetched);
     if (!listingsFetched) {
       fetchData();
     } else {
@@ -100,7 +97,6 @@ export default function ListingPage() {
 
   // On mount, filter listings
   useEffect(() => {
-    console.log('[useEffect] for filtering listings');
     // Filter listings based on active tab and search params
     const filtered = Object.values(listings).filter(
       (listing) =>

@@ -16,7 +16,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { showCustomToast } from '../components/CustomToast';
-import { PasswordInput } from '../components/forms/PasswordInput';
+import { PasswordInput } from '../components/PasswordInput';
 import logo from '../assets/logo.png';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { authUserAtom } from '../stores/authStore';
