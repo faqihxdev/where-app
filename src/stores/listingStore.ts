@@ -686,7 +686,8 @@ const matchExpiryCheckAtom = atom(null, async (get, set, listings: Listing[]): P
 
   // For every listing, check if it has expired
   for (const listing of listings) {
-    if (listing.expiresAt < new Date()) {
+    // Check if the listing has expired & status is not resolved or expired
+    if (listing.expiresAt < new Date() && listing.status === ListingStatus.active) {
       // Set the listing status to expired
       await set(setListingStatusAtom, listing.id, ListingStatus.expired);
 
