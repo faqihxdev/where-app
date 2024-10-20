@@ -15,8 +15,8 @@ import {
 import { Listing, Notification } from '../types';
 import ListingCard from '../components/ListingCard';
 import MatchCard from '../components/MatchCard';
-import NotificationRow from '../components/notifications/NotificationRow';
-import NotificationDrawer from '../components/notifications/NotificationDrawer';
+import NotificationRow from '../components/NotificationRow';
+import AlertDialog from '../components/AlertDialog';
 import { InboxIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PullToRefresh from 'react-simple-pull-to-refresh';
@@ -155,6 +155,27 @@ const InboxPage: React.FC = () => {
     }
   };
 
+  const handleMarkAsRead = useCallback(
+    async (notificationId: string) => {
+      try {
+        await markNotifications([notificationId], 'read');
+        showCustomToast({
+          title: 'Notification Marked as Read',
+          description: 'The notification has been marked as read.',
+          color: 'success',
+        });
+      } catch (error) {
+        console.error('[InboxPage] Error marking notification as read:', error);
+        showCustomToast({
+          title: 'Error',
+          description: 'Failed to mark notification as read. Please try again.',
+          color: 'danger',
+        });
+      }
+    },
+    [markNotifications]
+  );
+
   const PullDownContent = () => (
     <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
       <ArrowPathIcon className='w-5 h-5 animate-spin' />
@@ -248,9 +269,35 @@ const InboxPage: React.FC = () => {
           )}
         </section>
       </div>
-      <NotificationDrawer
-        notification={selectedNotification}
+      <AlertDialog
+        isOpen={!!selectedNotification}
         onClose={() => setSelectedNotification(null)}
+        title={selectedNotification?.title || ''}
+        body={
+          <div>
+            <p className='text-sm text-gray-500'>{selectedNotification?.message}</p>
+          </div>
+        }
+        footer={
+          <div className='flex justify-end space-x-2 w-full'>
+            <Button
+              onClick={() => {
+                if (selectedNotification) {
+                  handleMarkAsRead(selectedNotification.id);
+                }
+                setSelectedNotification(null);
+              }}
+              size='md'
+              fontWeight='medium'
+              bg='primary.600'
+              color='white'
+              _hover={{ bg: 'primary.700' }}
+              _active={{ bg: 'primary.800' }}>
+              Mark as Read
+            </Button>
+            <Button onClick={() => setSelectedNotification(null)}>Close</Button>
+          </div>
+        }
       />
     </div>
   );
