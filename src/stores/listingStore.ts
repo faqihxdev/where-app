@@ -192,6 +192,9 @@ export const fetchListingByIdAtom = atom(
         // Update the listingsAtom with the new listing
         set(listingsAtom, { ...get(listingsAtom), [listingId]: listing });
 
+        // Check if listing has expired
+        await set(checkSetExpiry, [listing]);
+
         return listing;
       }
 
@@ -271,6 +274,9 @@ export const fetchListingsByUserIdAtom = atom(
         listings.push(listing);
         existingListings[doc.id] = listing;
       }
+
+      // Check if listing have expired
+      await set(checkSetExpiry, listings);
 
       // Update the listingsAtom with the new listings
       set(listingsAtom, existingListings);
@@ -685,22 +691,7 @@ const matchExpiryCheckAtom = atom(null, async (get, set, listings: Listing[]): P
   }
 
   // For every listing, check if it has expired
-  for (const listing of listings) {
-    // Check if the listing has expired & status is not resolved or expired
-    if (listing.expiresAt < new Date() && listing.status === ListingStatus.active) {
-      // Set the listing status to expired
-      await set(setListingStatusAtom, listing.id, ListingStatus.expired);
-
-      // Notify the user that their listing has expired
-      await set(addNotificationAtom, {
-        userId: listing.userId,
-        title: 'Listing Expired',
-        message: 'Your listing has expired',
-        type: NotificationType.expiry,
-        listingId: listing.id,
-      });
-    }
-  }
+  await set(checkSetExpiry, listings);
 
   // For every listing, check if it has a match
   for (let i = 0; i < listings.length; i++) {
@@ -739,7 +730,9 @@ const matchExpiryCheckAtom = atom(null, async (get, set, listings: Listing[]): P
             await set(addNotificationAtom, {
               userId,
               title: 'New Match',
-              message: 'You have a new match',
+              message: `Your listing "${
+                userId === listing1.userId ? listing1.title : listing2.title
+              }" has a new match`,
               type: NotificationType.match,
               listingId: userId === listing1.userId ? listing1.id : listing2.id,
             });
@@ -750,6 +743,47 @@ const matchExpiryCheckAtom = atom(null, async (get, set, listings: Listing[]): P
           );
         }
       }
+    }
+  }
+});
+
+const checkSetExpiry = atom(null, async (_, set, listings: Listing[]): Promise<void> => {
+  // Check if the listing has expired & status is not resolved or expired
+  for (const listing of listings) {
+    if (listing.expiresAt < new Date() && listing.status !== ListingStatus.resolved) {
+      // Set the listing status to expired
+      await set(setListingStatusAtom, listing.id, ListingStatus.expired);
+
+      // Notify the user that their listing has expired
+      await set(addNotificationAtom, {
+        userId: listing.userId,
+        title: 'Listing Expired',
+        message: `Your listing "${listing.title}" has expired`,
+        type: NotificationType.expiry,
+        listingId: listing.id,
+      });
+    }
+
+    // Delete the listing if status is expired and expiresAt is 30 days ago
+    if (listing.expiresAt < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
+      // Delete the listing
+      await set(deleteListingAtom, listing.id);
+
+      // Update the client-side state
+      set(listingsAtom, (prev) => {
+        const newListings = { ...prev };
+        delete newListings[listing.id];
+        return newListings;
+      });
+
+      // Notify the user that their listing has been deleted
+      await set(addNotificationAtom, {
+        userId: listing.userId,
+        title: 'Listing Deleted',
+        message: `Your listing "${listing.title}" has been deleted because it expired 30 days ago`,
+        type: NotificationType.expiry,
+        listingId: listing.id,
+      });
     }
   }
 });
@@ -783,20 +817,17 @@ const isMatch = (listing1: Listing, listing2: Listing): boolean => {
   );
 
   if (!markersOverlap) {
-    console.log(
-      "[listingStore/isMatch] Markers Don't Overlap:",
-      listing1.markers,
-      listing2.markers
-    );
+    console.log("[listingStore/isMatch] Markers Don't Overlap");
     return false;
   }
 
-  // Condition 5: Cosine similarity > 0.8
+  // Condition 5: Cosine similarity > 0.7
   const combinedText1 = `${listing1.title}`;
   const combinedText2 = `${listing2.title}`;
   const similarity = cosineSimilarity(combinedText1, combinedText2);
 
-  if (similarity < 0.8) {
+  if (similarity < 0.7) {
+    console.log('[listingStore/isMatch] Cosine Similarity < 0.7:', similarity);
     return false;
   }
 
