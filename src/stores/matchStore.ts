@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import { generateId } from '../utils/utils';
 
-// This matches atom is used to store the matches client-side
+// Store the matches client-side
 export const matchesAtom = atomWithStorage<Record<string, Match>>('matches', {});
 
 /**
@@ -173,7 +173,11 @@ export const deleteMatchAtom = atom(null, async (_, set, matchId: string) => {
   }
 });
 
-// Add this new atom
+/**
+ * @description Fetch a match by its ID
+ * @param {string} matchId - The ID of the match to fetch
+ * @returns {Promise<Match | null>} - A promise that resolves to the match or null if it doesn't exist
+ */
 export const fetchMatchByIdAtom = atom(
   null,
   async (get, set, matchId: string): Promise<Match | null> => {

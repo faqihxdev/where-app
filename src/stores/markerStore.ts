@@ -4,7 +4,7 @@ import { Marker } from '../types';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, doc, getDoc, deleteDoc, updateDoc, getDocs } from 'firebase/firestore';
 
-// This marker atom is used to store the markers client-side
+// Store the markers client-side
 export const markersAtom = atomWithStorage<Record<string, Marker>>('markers', {});
 
 /**
@@ -164,6 +164,10 @@ export const deleteMarkerAtom = atom(null, async (get, set, markerId: string): P
   }
 });
 
+/**
+ * @description Fetch all markers from Firestore
+ * @returns {Promise<Record<string, Marker>>} - A promise that resolves to the fetched markers
+ */
 export const fetchAllMarkersAtom = atom(null, async (_, set): Promise<Record<string, Marker>> => {
   console.log('[markerStore/fetchAllMarkersAtom]: Fetching all markers');
   try {

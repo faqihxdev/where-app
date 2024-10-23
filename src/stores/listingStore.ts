@@ -747,6 +747,11 @@ const matchExpiryCheckAtom = atom(null, async (get, set, listings: Listing[]): P
   }
 });
 
+/**
+ * @description Check if the listings have expired & set the status to expired
+ * @param {Listing[]} listings - The listings to check
+ * @returns {Promise<void>} - A promise that resolves when the listings are checked
+ */
 const checkSetExpiry = atom(null, async (_, set, listings: Listing[]): Promise<void> => {
   // Check if the listing has expired & status is not resolved or expired
   for (const listing of listings) {

@@ -25,6 +25,7 @@ import { matchesAtom } from './matchStore';
 import { imagesAtom } from './imageStore';
 import { markersAtom } from './markerStore';
 
+// Store the auth user from Firebase
 export const authUserAtom = atomWithStorage<FirebaseUser | null>('authUser', null);
 
 /**
@@ -134,10 +135,10 @@ export const registerAtom = atom(
 export const logoutAtom = atom(null, async (_, set): Promise<void> => {
   console.log('[authStore/logout]: Called');
   try {
-    // Sign out the user and set the auth user atom to null
+    // Sign out the user and set the auth user atom and user data atom to null
     await signOut(auth);
     set(authUserAtom, null);
-    set(userDataAtom, null); // Explicitly set to null when logging out
+    set(userDataAtom, null);
   } catch (error) {
     console.error(`[authStore/logout]: Logout error: ${error}`);
     throw error;
@@ -191,7 +192,6 @@ export const changePasswordAtom = atom(
         throw error;
       }
     } catch (error) {
-      // Catch any other errors
       console.error('[authStore/changePassword]: ', error);
       throw error;
     }
@@ -199,7 +199,6 @@ export const changePasswordAtom = atom(
 );
 
 /**
- * @TODO Remove all associated listings, matches, images, etc.
  * @description Delete the account of the user
  * @param {string} password - The password of the user
  * @returns {Promise<void>} - A promise that resolves when the account is deleted

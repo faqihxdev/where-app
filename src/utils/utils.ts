@@ -1,7 +1,7 @@
 import nlp from 'compromise';
 import { eng } from 'stopword';
 import { Listing } from '../types';
-import { PoliceStationFeature } from '../pages/MapPage';
+import { PoliceStationFeature } from '../types';
 
 /**
  * @description Checks if two coordinates are within a specified distance of each other and calculates the actual distance
@@ -94,25 +94,6 @@ export const reverseGeocode = async (lat: number, lon: number): Promise<string> 
     console.error('Error fetching address:', error);
     return 'Unknown location';
   }
-};
-
-/**
- * @description Truncates a string to a specified length and adds an ellipsis if necessary
- * @param input The input string to truncate
- * @param maxLength The maximum length of the output string
- * @returns The truncated string with an ellipsis if it exceeds the maxLength
- */
-export const truncateWithEllipsis = (input: string, maxLength: number): string => {
-  if (input.length <= maxLength) {
-    return input;
-  }
-
-  // Ensure maxLength is large enough to fit the ellipsis
-  if (maxLength <= 3) {
-    return '...'.substring(0, maxLength);
-  }
-
-  return input.substring(0, maxLength - 3) + '...';
 };
 
 /**

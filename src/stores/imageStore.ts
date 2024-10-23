@@ -1,16 +1,17 @@
 import { db } from '../firebaseConfig';
-import { collection, addDoc, getDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, getDoc, doc, deleteDoc } from 'firebase/firestore';
 import imageCompression from 'browser-image-compression';
 import { ImageDB } from '../types';
 import { atomWithStorage } from 'jotai/utils';
 import { atom } from 'jotai';
+
 // Store the images in client side
 export const imagesAtom = atomWithStorage<Record<string, ImageDB>>('images', {});
 
 /**
  * @description Add a new image to Firestore
  * @param {string} imageData - The base64 data of the image
- * @param {string} listingId - The ID of the listing this image belongs to
+ * @param {string} listingId - The ID of the listing the image belongs to
  * @returns {Promise<string>} - A promise that resolves with the image id when the image is added
  */
 export const addImageAtom = atom(
@@ -69,33 +70,6 @@ export const getImageAtom = atom(
       return null;
     } catch (error) {
       console.error(`[imageStore/getImageAtom]: ${error}`);
-      throw error;
-    }
-  }
-);
-
-/**
- * TODO: UNUSED
- * @description Update an image in Firestore
- * @param {string} imageId - The ID of the image to update
- * @param {string} newData - The new data of the image
- * @returns {Promise<void>} - A promise that resolves when the image is updated
- */
-export const updateImageAtom = atom(
-  null,
-  async (get, set, imageId: string, newData: string): Promise<void> => {
-    console.log(`[imageStore/updateImageAtom]: Updating image: ${imageId}`);
-    try {
-      // Update the image in the Images collection
-      console.log('🔥[imageStore/updateImageAtom]');
-      const docRef = doc(db, 'Images', imageId);
-      await updateDoc(docRef, { data: newData });
-
-      // Update the images atom with the new image
-      const existingImage = get(imagesAtom)[imageId];
-      set(imagesAtom, (prev) => ({ ...prev, [imageId]: { ...existingImage, data: newData } }));
-    } catch (error) {
-      console.error('[imageStore/updateImageAtom]: ', error);
       throw error;
     }
   }

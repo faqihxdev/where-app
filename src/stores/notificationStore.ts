@@ -77,7 +77,7 @@ export const addNotificationAtom = atom(
         newNotificationToAdd.matchId = newNotification.matchId;
       }
 
-      // Check Firestore to see if a document with this ID already exists
+      // Check Firestore to see if a document with the ID already exists
       const docRef = doc(db, 'Notifications', notificationId);
       const docSnapshot = await getDoc(docRef);
 
@@ -96,7 +96,7 @@ export const addNotificationAtom = atom(
         return existingFirestoreNotification;
       } else {
         // Add the new notification to Firestore using the generated ID
-        await setDoc(docRef, newNotificationToAdd); // Uses `setDoc` to create/update a doc with a custom ID
+        await setDoc(docRef, newNotificationToAdd);
 
         // Update the userNotifications atom with the new notification
         const notification: Notification = { id: notificationId, ...newNotificationToAdd };
@@ -129,8 +129,6 @@ export const fetchAllUserNotificationsAtom = atom(null, async (_, set, userId: s
     const querySnapshot = await getDocs(q);
 
     const notifications: Record<string, Notification> = {};
-    // const currentTime = new Date();
-
     querySnapshot.forEach((doc) => {
       const notificationData = doc.data() as Omit<
         Notification,
