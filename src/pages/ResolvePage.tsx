@@ -48,6 +48,8 @@ const ResolvePage: React.FC = () => {
   const [webcamHeight, setWebcamHeight] = useState<number>(0);
   const webcamContainerRef = useRef<HTMLDivElement>(null);
 
+  const [key, setKey] = useState(0);
+
   useEffect(() => {
     const getCameras = async () => {
       try {
@@ -229,6 +231,34 @@ const ResolvePage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    // This effect will run when the component mounts or when the key changes
+    return () => {
+      // Cleanup function to stop all media tracks when component unmounts
+      if (webcamRef.current && webcamRef.current.video) {
+        const stream = webcamRef.current.video.srcObject as MediaStream;
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      }
+    };
+  }, [key]);
+
+  // Function to reinitialize the Webcam component
+  const reinitializeWebcam = useCallback(() => {
+    setKey((prevKey) => prevKey + 1);
+  }, []);
+
+  useEffect(() => {
+    // Add event listener for when the page becomes visible
+    document.addEventListener('visibilitychange', reinitializeWebcam);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('visibilitychange', reinitializeWebcam);
+    };
+  }, [reinitializeWebcam]);
+
   if (isLoading) {
     return (
       <div className='flex justify-center items-center h-screen'>
@@ -304,6 +334,7 @@ const ResolvePage: React.FC = () => {
             className='rounded-md overflow-hidden mb-4 border border-gray-200 relative'
             style={{ height: `${webcamHeight}px` }}>
             <Webcam
+              key={key}
               audio={false}
               ref={webcamRef}
               screenshotFormat='image/jpeg'
@@ -314,6 +345,7 @@ const ResolvePage: React.FC = () => {
                 aspectRatio: 1,
               }}
               style={{ objectFit: 'cover' }}
+              onUserMediaError={reinitializeWebcam}
             />
             {cameras.length > 1 && (
               <button
