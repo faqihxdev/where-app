@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -7,12 +7,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { listingsAtom, listingsFetchedAtom } from '../stores/listingStore';
 import { listingUsersAtom, getAvatarUrl } from '../stores/userStore';
+import { fetchPoliceStations } from '../utils/utils';
 import { ExclamationCircleIcon, MagnifyingGlassCircleIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import policeStationsData from '../assets/police-stations.json';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-interface PoliceStationFeature {
+export interface PoliceStationFeature {
   type: 'Feature';
   properties: {
     Name: string;
@@ -66,6 +67,19 @@ const MapPage: React.FC = () => {
   const [policeStations, setPoliceStations] = useState<PoliceStationFeature[]>([]);
   const navigate = useNavigate();
   const listingUsers = useAtomValue(listingUsersAtom);
+
+  // Check if policeStationsData exists, if not fetch it
+  const fetchPoliceStationsData = useCallback(async () => {
+    if (!policeStationsData) {
+      await fetchPoliceStations().then((data) => {
+        setPoliceStations(data);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPoliceStationsData();
+  }, [fetchPoliceStationsData]);
 
   useEffect(() => {
     // Fetch user location

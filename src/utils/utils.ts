@@ -1,6 +1,7 @@
 import nlp from 'compromise';
 import { eng } from 'stopword';
 import { Listing } from '../types';
+import { PoliceStationFeature } from '../pages/MapPage';
 
 /**
  * @description Checks if two coordinates are within a specified distance of each other and calculates the actual distance
@@ -211,3 +212,46 @@ export const generateId = (input: string): string => {
 
   return `${hashPart1}${hashPart2}${hashPart3}`.slice(0, 20);
 };
+
+/**
+ * @description Fetches the police stations data from the API and maps it to the PoliceStationFeature interface
+ * @returns An array of PoliceStationFeature objects
+ */
+export async function fetchPoliceStations(): Promise<PoliceStationFeature[]> {
+  const apiUrl =
+    'https://api-open.data.gov.sg/v1/public/api/datasets/d_c69e6d27d72f765fabfbeea362299378/poll-download';
+
+  try {
+    // Fetch the dataset metadata
+    const response = await fetch(apiUrl);
+    const jsonData = await response.json();
+
+    if (jsonData.code !== 0) {
+      throw new Error(jsonData.errMsg);
+    }
+
+    // Fetch the actual dataset from the URL provided in jsonData
+    const dataResponse = await fetch(jsonData.data.url);
+    const featureCollection = await dataResponse.json();
+
+    // Map the features to the PoliceStationFeature interface
+    const policeStations: PoliceStationFeature[] = featureCollection.features.map(
+      (feature: PoliceStationFeature) => ({
+        type: feature.type,
+        properties: {
+          Name: feature.properties.Name,
+          Description: feature.properties.Description,
+        },
+        geometry: {
+          type: feature.geometry.type,
+          coordinates: feature.geometry.coordinates as [number, number, number],
+        },
+      })
+    );
+
+    return policeStations;
+  } catch (error) {
+    console.error('Error fetching police stations:', error);
+    return [];
+  }
+}
