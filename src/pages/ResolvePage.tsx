@@ -36,19 +36,19 @@ const ResolvePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const webcamRef = useRef<Webcam>(null);
-  const [imgFile, setImgFile] = useState<File | null>(null);
-  const [imgSrc, setImgSrc] = useState<string | null>(null);
-
   const [isMatchCardOpen, setIsMatchCardOpen] = useState(false);
 
+  const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
 
-  const [webcamHeight, setWebcamHeight] = useState<number>(0);
   const webcamContainerRef = useRef<HTMLDivElement>(null);
+  const webcamRef = useRef<Webcam>(null);
 
-  const [key, setKey] = useState(0);
+  const [imgFile, setImgFile] = useState<File | null>(null);
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+
+  const [isWebcamReady, setIsWebcamReady] = useState(false);
 
   useEffect(() => {
     const getCameras = async () => {
@@ -64,21 +64,25 @@ const ResolvePage: React.FC = () => {
     getCameras();
   }, []);
 
-  useEffect(() => {
-    const updateWebcamHeight = () => {
-      if (webcamContainerRef.current) {
-        const width = webcamContainerRef.current.offsetWidth;
-        setWebcamHeight(width);
-      }
-    };
-
-    updateWebcamHeight();
-    window.addEventListener('resize', updateWebcamHeight);
-
-    return () => {
-      window.removeEventListener('resize', updateWebcamHeight);
-    };
+  const startCamera = useCallback(() => {
+    setIsCameraActive(true);
   }, []);
+
+  const stopCamera = useCallback(() => {
+    if (webcamRef.current && webcamRef.current.video) {
+      const stream = webcamRef.current.video.srcObject as MediaStream;
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    }
+    setIsCameraActive(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, [stopCamera]);
 
   const switchCamera = useCallback(() => {
     setCurrentCameraIndex((prevIndex) => (prevIndex + 1) % cameras.length);
@@ -232,7 +236,9 @@ const ResolvePage: React.FC = () => {
   };
 
   useEffect(() => {
-    // This effect will run when the component mounts or when the key changes
+    // This effect will run when the component mounts
+    setIsWebcamReady(true);
+
     return () => {
       // Cleanup function to stop all media tracks when component unmounts
       if (webcamRef.current && webcamRef.current.video) {
@@ -241,21 +247,27 @@ const ResolvePage: React.FC = () => {
           stream.getTracks().forEach((track) => track.stop());
         }
       }
+      setIsWebcamReady(false);
     };
-  }, [key]);
+  }, []);
 
   // Function to reinitialize the Webcam component
   const reinitializeWebcam = useCallback(() => {
-    setKey((prevKey) => prevKey + 1);
+    setIsWebcamReady(false);
+    setTimeout(() => setIsWebcamReady(true), 0);
   }, []);
 
   useEffect(() => {
-    // Add event listener for when the page becomes visible
-    document.addEventListener('visibilitychange', reinitializeWebcam);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        reinitializeWebcam();
+      }
+    };
 
-    // Cleanup
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
-      document.removeEventListener('visibilitychange', reinitializeWebcam);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [reinitializeWebcam]);
 
@@ -329,38 +341,48 @@ const ResolvePage: React.FC = () => {
         </div>
 
         <div className='mt-4'>
-          <div
-            ref={webcamContainerRef}
-            className='rounded-md overflow-hidden mb-4 border border-gray-200 relative'
-            style={{ height: `${webcamHeight}px` }}>
-            <Webcam
-              key={key}
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat='image/jpeg'
-              width='100%'
-              height='100%'
-              videoConstraints={{
-                deviceId: cameras[currentCameraIndex]?.deviceId,
-                aspectRatio: 1,
-              }}
-              style={{ objectFit: 'cover' }}
-              onUserMediaError={reinitializeWebcam}
-            />
-            {cameras.length > 1 && (
-              <button
-                onClick={switchCamera}
-                className='absolute bottom-2 right-2 p-2 bg-white/5 text-white rounded-full'>
-                <ArrowPathIcon className='h-6 w-6 stroke-2' />
-              </button>
-            )}
-          </div>
-          <button
-            onClick={capture}
-            className='w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
-            <CameraIcon className='h-5 w-5 mr-2 stroke-2' />
-            Capture Photo
-          </button>
+          {!isCameraActive ? (
+            <button
+              onClick={startCamera}
+              className='w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
+              <CameraIcon className='h-5 w-5 mr-2 stroke-2' />
+              Start Camera
+            </button>
+          ) : (
+            <div
+              ref={webcamContainerRef}
+              className='rounded-md overflow-hidden mb-4 border border-gray-200 relative'
+              style={{ aspectRatio: '1 / 1' }}>
+              <Webcam
+                audio={false}
+                ref={webcamRef}
+                screenshotFormat='image/jpeg'
+                width='100%'
+                height='100%'
+                videoConstraints={{
+                  deviceId: cameras[currentCameraIndex]?.deviceId,
+                  aspectRatio: 1,
+                }}
+                style={{ objectFit: 'cover' }}
+              />
+              {cameras.length > 1 && (
+                <button
+                  onClick={switchCamera}
+                  className='absolute bottom-2 right-2 p-2 bg-white/20 text-white rounded-full'>
+                  <ArrowPathIcon className='h-6 w-6 stroke-2' />
+                </button>
+              )}
+            </div>
+          )}
+          {isCameraActive && (
+            <button
+              onClick={capture}
+              disabled={!isWebcamReady}
+              className='w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
+              <CameraIcon className='h-5 w-5 mr-2 stroke-2' />
+              Capture Photo
+            </button>
+          )}
         </div>
 
         {imgSrc && (
