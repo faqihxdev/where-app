@@ -14,6 +14,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { showCustomToast } from '../components/CustomToast';
 import MatchCard from '../components/MatchCard';
@@ -40,6 +41,46 @@ const ResolvePage: React.FC = () => {
   const [imgSrc, setImgSrc] = useState<string | null>(null);
 
   const [isMatchCardOpen, setIsMatchCardOpen] = useState(false);
+
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
+
+  const [webcamHeight, setWebcamHeight] = useState<number>(0);
+  const webcamContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const getCameras = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter((device) => device.kind === 'videoinput');
+        setCameras(videoDevices);
+      } catch (error) {
+        console.error('[ResolvePage]: Error getting cameras:', error);
+      }
+    };
+
+    getCameras();
+  }, []);
+
+  useEffect(() => {
+    const updateWebcamHeight = () => {
+      if (webcamContainerRef.current) {
+        const width = webcamContainerRef.current.offsetWidth;
+        setWebcamHeight(width);
+      }
+    };
+
+    updateWebcamHeight();
+    window.addEventListener('resize', updateWebcamHeight);
+
+    return () => {
+      window.removeEventListener('resize', updateWebcamHeight);
+    };
+  }, []);
+
+  const switchCamera = useCallback(() => {
+    setCurrentCameraIndex((prevIndex) => (prevIndex + 1) % cameras.length);
+  }, [cameras]);
 
   const fetchData = useCallback(async () => {
     if (!matchId) return;
@@ -258,14 +299,29 @@ const ResolvePage: React.FC = () => {
         </div>
 
         <div className='mt-4'>
-          <div className='rounded-md overflow-hidden mb-4 border border-gray-200'>
+          <div
+            ref={webcamContainerRef}
+            className='rounded-md overflow-hidden mb-4 border border-gray-200 relative'
+            style={{ height: `${webcamHeight}px` }}>
             <Webcam
               audio={false}
               ref={webcamRef}
               screenshotFormat='image/jpeg'
               width='100%'
-              height='auto'
+              height='100%'
+              videoConstraints={{
+                deviceId: cameras[currentCameraIndex]?.deviceId,
+                aspectRatio: 1,
+              }}
+              style={{ objectFit: 'cover' }}
             />
+            {cameras.length > 1 && (
+              <button
+                onClick={switchCamera}
+                className='absolute bottom-2 right-2 p-2 bg-white/5 text-white rounded-full'>
+                <ArrowPathIcon className='h-6 w-6 stroke-2' />
+              </button>
+            )}
           </div>
           <button
             onClick={capture}
