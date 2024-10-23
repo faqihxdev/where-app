@@ -64,8 +64,6 @@ function App() {
   const fetchAllUserNotifications = useSetAtom(fetchAllUserNotificationsAtom);
   const notificationsLoaded = useAtomValue(notificationsLoadedAtom);
 
-  console.log('[App]: I am in App!');
-
   // Runs once to initialize the auth state and fetch user data
   useEffect(() => {
     const initialize = async () => {
@@ -88,8 +86,6 @@ function App() {
 
     fetchNotifications();
   }, [userData, notificationsLoaded, fetchAllUserNotifications]);
-
-  console.log('[App]:', isInitializing, authUser);
 
   // If auth is still initializing, show loading spinner
   if (isInitializing) {
