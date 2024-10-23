@@ -284,7 +284,7 @@ const ProfilePage: React.FC = () => {
             <PencilIcon className='w-5 h-5 text-gray-600 stroke-2' />
           </button>
         </div>
-        <div className='bg-gray-100 p-4 rounded-lg w-full max-w-md'>
+        <div className='bg-gray-100 p-4 rounded-lg w-full'>
           <div className='flex items-center mb-2'>
             <EnvelopeIcon className='w-5 h-5 mr-2 text-gray-600 stroke-2' />
             <p className='text-sm text-gray-600'>{userData?.email}</p>

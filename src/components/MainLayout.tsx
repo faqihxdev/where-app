@@ -52,12 +52,12 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className='flex flex-col h-screen w-screen overflow-hidden'>
-      <main className='flex-grow overflow-y-auto'>
+      <main className='flex-grow overflow-y-auto w-full max-w-xl mx-auto'>
         <Outlet />
       </main>
       <nav className='bg-white border-t border-gray-100 flex-shrink-0'>
         <div className='max-w-7xl mx-auto px-8 pt-2 pb-3 sm:px-6 lg:px-8'>
-          <div className='flex justify-between'>
+          <div className='flex justify-between max-w-lg mx-auto'>
             {tabs.map((tab) => (
               <NavLink
                 key={tab.name}

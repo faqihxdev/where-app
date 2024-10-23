@@ -89,7 +89,6 @@ export interface Listing {
   createdAt: Date; // The time the listing was created
   updatedAt: Date; // The time the listing was last updated
   expiresAt: Date; // The time the listing will expire at
-  expiry?: Date; // <-- Add this line to define the expiry property
   images: ListingImages; // The images of the listing
   markers: Marker[]; // The markers of the listing
   resolveImage?: ImageDB; // The resolve image of the listing
@@ -158,4 +157,17 @@ export interface SearchParams {
   sortBy: keyof Listing; // The field to sort the listings by
   sortOrder: 'ascending' | 'descending'; // The order to sort the listings by
   location: { name: string; lat: number; lng: number; radius: number } | null; // The location to search for listings within
+}
+
+// From the police stations data used in the Map page
+export interface PoliceStationFeature {
+  type: 'Feature';
+  properties: {
+    Name: string; // Name of the police station
+    Description: string; // Description of the police station
+  };
+  geometry: {
+    type: 'Point';
+    coordinates: [number, number, number]; // Longitude, Latitude, Altitude
+  };
 }

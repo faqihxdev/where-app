@@ -200,7 +200,7 @@ const InboxPage: React.FC = () => {
               <LoadingSpinner />
             </div>
           ) : userListings.length > 0 ? (
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 gap-4'>
               {userListings.map((listing) => (
                 <ListingCard key={listing.id} listing={listing} showActions={true} />
               ))}

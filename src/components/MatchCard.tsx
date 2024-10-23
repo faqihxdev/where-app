@@ -54,7 +54,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showActions = true, onReso
       case MatchStatus.viewed:
         return 'bg-blue-100 text-blue-800';
       case MatchStatus.resolved:
-        return 'bg-green-100 text-green-800'; // Changed from purple to green
+        return 'bg-green-100 text-green-800';
       case MatchStatus.rejected:
         return 'bg-red-100 text-red-800';
       default:

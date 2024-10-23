@@ -45,8 +45,9 @@ const NotificationRow: React.FC<NotificationRowProps> = ({ notification, onOpenD
     }
   };
 
+  // If the notification is removed, don't render it
   if (notification.status === 'removed') {
-    return null; // Don't render removed notifications
+    return null;
   }
 
   return (

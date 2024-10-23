@@ -12,18 +12,7 @@ import { ExclamationCircleIcon, MagnifyingGlassCircleIcon } from '@heroicons/rea
 import { format } from 'date-fns';
 import policeStationsData from '../assets/police-stations.json';
 import { renderToStaticMarkup } from 'react-dom/server';
-
-export interface PoliceStationFeature {
-  type: 'Feature';
-  properties: {
-    Name: string;
-    Description: string;
-  };
-  geometry: {
-    type: 'Point';
-    coordinates: [number, number, number];
-  };
-}
+import { PoliceStationFeature } from '../types';
 
 const policeStationIcon = new L.Icon({
   iconUrl: '/police-station.svg',
@@ -169,7 +158,7 @@ const MapPage: React.FC = () => {
       </div>
 
       {/* Map container taking up the rest of the screen */}
-      <div className='flex-grow'>
+      <div className='flex-grow rounded-none sm:rounded-lg sm:mb-4 overflow-hidden'>
         {userLocation ? (
           <MapContainer center={userLocation} zoom={13} style={{ height: '100%', width: '100%' }}>
             <TileLayer

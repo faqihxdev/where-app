@@ -31,7 +31,7 @@ export default function ListingPage() {
   const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Run once to handle manual browser refresh
+  // Handle manual browser refresh
   useEffect(() => {
     const handleBeforeUnload = () => {
       sessionStorage.setItem('isManualRefresh', 'true');
@@ -60,7 +60,7 @@ export default function ListingPage() {
     }
   }, [setListingsFetched, fetchAllListings]);
 
-  // Effect to check for manual refresh and fetch data
+  // Check for manual refresh and fetch data
   useEffect(() => {
     const isManualRefresh = sessionStorage.getItem('isManualRefresh') === 'true';
     sessionStorage.removeItem('isManualRefresh');
@@ -70,7 +70,7 @@ export default function ListingPage() {
     }
   }, [handleRefresh]);
 
-  // Effect to fetch listings on mount or manual refresh
+  // Fetch listings on mount or manual refresh
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -191,7 +191,7 @@ export default function ListingPage() {
       pullingContent={<PullDownContent />}
       refreshingContent={<RefreshContent />}>
       <div className='min-h-full bg-white p-4 relative'>
-        <div className='max-w-4xl mx-auto space-y-4'>
+        <div className='space-y-4'>
           {/* Page Title */}
           <div className='flex items-center mb-4'>
             <h1 className='text-xl font-semibold'>
@@ -280,7 +280,7 @@ function ListingGrid({ listings }: { listings: Listing[] }) {
   }
 
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+    <div className='grid grid-cols-1 gap-4'>
       {listings.map((listing) => (
         <ListingCard key={listing.id} listing={listing} />
       ))}

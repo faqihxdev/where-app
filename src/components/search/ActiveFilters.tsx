@@ -2,7 +2,6 @@ import React from 'react';
 import { HStack } from '@chakra-ui/react';
 import { XMarkIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
 import { SearchParams, ListingKeyNames } from '../../types';
-import { truncateWithEllipsis } from '../../utils/utils';
 
 interface ActiveFiltersProps {
   searchParams: SearchParams;
@@ -63,7 +62,7 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({ searchParams, onRemoveFil
         <div className='inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700'>
           <span className='text-xs font-normal mr-2'>
             <span className='font-semibold'>Location:</span>{' '}
-            {truncateWithEllipsis(searchParams.location.name, 20)} ({searchParams.location.radius}m)
+            {searchParams.location.name.substring(0, 20)} ({searchParams.location.radius}m)
           </span>
           <button
             onClick={() => onRemoveFilter('location')}

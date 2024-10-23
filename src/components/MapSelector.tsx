@@ -21,9 +21,9 @@ import { Marker as MarkerType } from '../types';
 import { reverseGeocode } from '../utils/utils';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-// Create custom icon
+// Use custom icon
 const customIcon = new L.Icon({
-  iconUrl: '/marker.svg', // Update this line
+  iconUrl: '/marker.svg',
   iconSize: [24, 24],
   iconAnchor: [12, 24],
 });
@@ -50,9 +50,9 @@ const MapSelector: React.FC<MapSelectorProps> = ({
   const [isAddingMarker, setIsAddingMarker] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
-  // Modified useEffect to handle the new defaultLocation prop and user location
+  // Handle the new defaultLocation prop and user location
   useEffect(() => {
-    const fallbackCenter: [number, number] = [1.34616, 103.68209]; // Singapore coordinates
+    const fallbackCenter: [number, number] = [1.34616, 103.68209]; // NTU CCDS Coordinates
 
     if (defaultLocation) {
       setMapCenter(defaultLocation);

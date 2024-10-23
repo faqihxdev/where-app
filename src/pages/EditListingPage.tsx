@@ -22,7 +22,8 @@ const EditListingPage: React.FC = () => {
   const [listing, setListing] = useState<Listing | null>(null);
 
   const fetchListingData = useCallback(async () => {
-    if (!listingId) return; // If the listingId is not available, return
+    // If the listingId is not available, return
+    if (!listingId) return;
     setIsLoading(true);
 
     try {

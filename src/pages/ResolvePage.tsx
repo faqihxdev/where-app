@@ -236,13 +236,13 @@ const ResolvePage: React.FC = () => {
   };
 
   useEffect(() => {
-    // This effect will run when the component mounts
     setIsWebcamReady(true);
+    const currentWebcam = webcamRef.current;
 
     return () => {
       // Cleanup function to stop all media tracks when component unmounts
-      if (webcamRef.current && webcamRef.current.video) {
-        const stream = webcamRef.current.video.srcObject as MediaStream;
+      if (currentWebcam && currentWebcam.video) {
+        const stream = currentWebcam.video.srcObject as MediaStream;
         if (stream) {
           stream.getTracks().forEach((track) => track.stop());
         }
