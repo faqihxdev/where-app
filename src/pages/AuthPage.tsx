@@ -14,6 +14,10 @@ import {
   Button,
   Link,
   VStack,
+  Box,
+  Text,
+  OrderedList,
+  ListItem,
 } from '@chakra-ui/react';
 import { showCustomToast } from '../components/CustomToast';
 import { PasswordInput } from '../components/PasswordInput';
@@ -21,6 +25,9 @@ import logo from '../assets/logo.png';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { authUserAtom } from '../stores/authStore';
 import AlertDialog from '../components/AlertDialog';
+import { DownloadIcon } from '@chakra-ui/icons';
+import { useDisclosure } from '@chakra-ui/react';
+import ShiningButton from '../components/ShiningButton';
 
 export default function AuthPage() {
   const login = useSetAtom(loginAtom);
@@ -40,6 +47,8 @@ export default function AuthPage() {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetEmailSending, setIsResetEmailSending] = useState(false);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     if (authUser) {
@@ -47,6 +56,13 @@ export default function AuthPage() {
       navigate(intendedPath);
     }
   }, [authUser, navigate, location]);
+
+  useEffect(() => {
+    // Check if the app is installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+  }, []);
 
   const validateField = (field: string, value: string) => {
     let error = '';
@@ -183,8 +199,57 @@ export default function AuthPage() {
     }
   };
 
+  const handleInstallClick = () => {
+    if (!isInstalled) {
+      onOpen();
+    } else {
+      showCustomToast({
+        title: 'Already Installed',
+        description: 'WhereApp is already installed on your device.',
+        color: 'primary',
+      });
+    }
+  };
+
+  const getInstallInstructions = () => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      return (
+        <VStack align='start' spacing={2}>
+          <Text>To install on mobile:</Text>
+          <OrderedList pl={4}>
+            <ListItem>Tap the share button in your browser.</ListItem>
+            <ListItem>Scroll and select 'Add to Home Screen'.</ListItem>
+            <ListItem>Tap 'Add' to confirm.</ListItem>
+          </OrderedList>
+        </VStack>
+      );
+    } else {
+      return (
+        <VStack align='start' spacing={2}>
+          <Text>To install on desktop:</Text>
+          <OrderedList pl={4}>
+            <ListItem>
+              Look for the install icon in the address bar (usually on the right).
+            </ListItem>
+            <ListItem>Click the icon and follow the prompts to install.</ListItem>
+          </OrderedList>
+        </VStack>
+      );
+    }
+  };
+
   return (
-    <div className='min-h-screen bg-gray-100 flex flex-col justify-center items-center p-4'>
+    <div className='min-h-screen bg-gray-100 flex flex-col justify-center items-center p-4 relative'>
+      <Box position='absolute' top='4' left='50%' transform='translateX(-50%)'>
+        <div className='relative'>
+          <ShiningButton onClick={handleInstallClick}>
+            <DownloadIcon mr={2} />
+            Install WhereApp!
+          </ShiningButton>
+        </div>
+      </Box>
+
       <div className='w-full max-w-md mx-auto bg-white rounded-lg p-6'>
         <div className='flex flex-col items-center mb-8'>
           <img src={logo} alt='logo' className='w-16 h-16' />
@@ -326,6 +391,24 @@ export default function AuthPage() {
             _active={{ bg: 'primary.800' }}
             isDisabled={!!errors.resetEmail}>
             Send Reset Email
+          </Button>
+        }
+      />
+
+      <AlertDialog
+        isOpen={isOpen}
+        onClose={onClose}
+        title='Install WhereApp'
+        body={getInstallInstructions()}
+        footer={
+          <Button
+            onClick={onClose}
+            bg='primary.600'
+            color='white'
+            fontWeight='medium'
+            _hover={{ bg: 'primary.700' }}
+            _active={{ bg: 'primary.800' }}>
+            Got it
           </Button>
         }
       />
