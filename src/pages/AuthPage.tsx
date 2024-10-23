@@ -218,9 +218,9 @@ export default function AuthPage() {
         <VStack align='start' spacing={2}>
           <Text>To install on mobile:</Text>
           <OrderedList pl={4}>
-            <ListItem>Tap the share button in your browser.</ListItem>
-            <ListItem>Scroll and select 'Add to Home Screen'.</ListItem>
-            <ListItem>Tap 'Add' to confirm.</ListItem>
+            <ListItem>Tap the browser menu (three dots or share icon).</ListItem>
+            <ListItem>Select "Add to Home Screen."</ListItem>
+            <ListItem>Confirm to install the app.</ListItem>
           </OrderedList>
         </VStack>
       );
@@ -230,9 +230,10 @@ export default function AuthPage() {
           <Text>To install on desktop:</Text>
           <OrderedList pl={4}>
             <ListItem>
-              Look for the install icon in the address bar (usually on the right).
+              Click the install icon (a "+" or computer symbol) in the address bar.
             </ListItem>
-            <ListItem>Click the icon and follow the prompts to install.</ListItem>
+            <ListItem>Select "Install" in the pop-up.</ListItem>
+            <ListItem>App will install and be available like a regular desktop app.</ListItem>
           </OrderedList>
         </VStack>
       );
@@ -241,14 +242,16 @@ export default function AuthPage() {
 
   return (
     <div className='min-h-screen bg-gray-100 flex flex-col justify-center items-center p-4 relative'>
-      <Box position='absolute' top='4' left='50%' transform='translateX(-50%)'>
-        <div className='relative'>
-          <ShiningButton onClick={handleInstallClick}>
-            <DownloadIcon mr={2} />
-            Install WhereApp!
-          </ShiningButton>
-        </div>
-      </Box>
+      {!isInstalled && (
+        <Box position='absolute' top='4' left='50%' transform='translateX(-50%)'>
+          <div className='relative'>
+            <ShiningButton onClick={handleInstallClick}>
+              <DownloadIcon mr={2} />
+              Install WhereApp!
+            </ShiningButton>
+          </div>
+        </Box>
+      )}
 
       <div className='w-full max-w-md mx-auto bg-white rounded-lg p-6'>
         <div className='flex flex-col items-center mb-8'>
