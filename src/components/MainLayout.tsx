@@ -51,7 +51,7 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col h-screen w-screen overflow-hidden'>
+    <div className='flex flex-col h-svh w-screen overflow-hidden'>
       <main className='flex-grow overflow-y-auto w-full max-w-xl mx-auto'>
         <Outlet />
       </main>
