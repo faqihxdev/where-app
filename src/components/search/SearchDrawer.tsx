@@ -78,9 +78,9 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   };
 
   return (
-    <Drawer isOpen={isOpen} placement='bottom' onClose={onClose} size='full'>
+    <Drawer isOpen={isOpen} placement='bottom' onClose={onClose}>
       <DrawerOverlay />
-      <DrawerContent>
+      <DrawerContent className='rounded-t-lg' maxHeight='100svh' height='auto'>
         <DrawerCloseButton />
         <DrawerHeader>Search Listings</DrawerHeader>
 
