@@ -4,7 +4,7 @@ import { deleteUser } from 'firebase/auth';
 import { db, auth } from '../firebaseConfig';
 import { User, ListingDB } from '../types';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import { IconButton, Tooltip } from '@chakra-ui/react';
+import { Button, IconButton } from '@chakra-ui/react';
 import { showCustomToast } from './CustomToast';
 
 const AdminMode: React.FC = () => {
@@ -112,22 +112,28 @@ const AdminMode: React.FC = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className='container mx-auto p-4 mt-5'>
-      <h1 className='text-xl font-semibold mb-4'>Admin Mode</h1>
+    <div className='container mx-auto mt-4'>
+      <a
+        className='block mb-4'
+        href='https://console.firebase.google.com/u/0/project/whereapp-io/authentication/users'>
+        <Button w='full' fontWeight='medium' bg='primary.600' color='white'>
+          Manage Firebase Users
+        </Button>
+      </a>
       <ul className='space-y-2'>
         {users.map((user) => (
-          <li key={user.uid} className='flex items-center justify-between bg-gray-100 p-2 rounded'>
-            <span>{user.email}</span>
-            <Tooltip label='Delete user and associated data'>
-              <IconButton
-                aria-label='Delete user'
-                icon={<TrashIcon className='h-5 w-5' />}
-                onClick={() => deleteUserData(user)}
-                isLoading={deletingUser === user.uid}
-                colorScheme='red'
-                variant='ghost'
-              />
-            </Tooltip>
+          <li
+            key={user.uid}
+            className='flex items-center justify-between bg-gray-200 p-2 pl-4 rounded'>
+            <span className='break-all'>{user.email}</span>
+            <IconButton
+              aria-label='Delete user'
+              icon={<TrashIcon className='h-5 w-5' />}
+              onClick={() => deleteUserData(user)}
+              isLoading={deletingUser === user.uid}
+              colorScheme='red'
+              variant='solid'
+            />
           </li>
         ))}
       </ul>
