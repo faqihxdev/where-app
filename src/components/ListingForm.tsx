@@ -193,6 +193,11 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
       );
     });
 
+    // Check if at least one marker is provided
+    if (markers.length === 0) {
+      newErrors.location = 'At least one location must be provided';
+    }
+
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => error === '');
   };
@@ -384,6 +389,9 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
           <MapPinIcon className='w-5 h-5 mr-2 stroke-2' />
           <h1 className='font-semibold'>Location</h1>
         </div>
+        {errors.location && (
+          <div className='text-red-500 text-xs text-start mb-4 -mt-2'>{errors.location}</div>
+        )}
         <MapSelector
           mode={initialData ? 'edit' : 'create'}
           onMarkersChange={handleLocationsChange}

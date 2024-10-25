@@ -4,8 +4,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Spinner, Button, Avatar } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
-import { listingsAtom, listingsFetchedAtom } from '../stores/listingStore';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { listingsAtom, listingsFetchedAtom, fetchAllListingsAtom } from '../stores/listingStore';
 import { listingUsersAtom, getAvatarUrl } from '../stores/userStore';
 import { fetchPoliceStations } from '../utils/utils';
 import { ExclamationCircleIcon, MagnifyingGlassCircleIcon } from '@heroicons/react/24/outline';
@@ -50,9 +50,11 @@ const PopupClassHandler: React.FC = () => {
 const MapPage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
 
   const listings = useAtomValue(listingsAtom);
-  const listingsFetched = useAtomValue(listingsFetchedAtom);
+  const [listingsFetched, setListingsFetched] = useAtom(listingsFetchedAtom);
+  const fetchAllListings = useSetAtom(fetchAllListingsAtom);
   const [policeStations, setPoliceStations] = useState<PoliceStationFeature[]>([]);
   const navigate = useNavigate();
   const listingUsers = useAtomValue(listingUsersAtom);
@@ -71,28 +73,40 @@ const MapPage: React.FC = () => {
   }, [fetchPoliceStationsData]);
 
   useEffect(() => {
+    const fallbackCenter: [number, number] = [1.34616, 103.68209]; // NTU CCDS Coordinates
+
     // Fetch user location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation([latitude, longitude]);
+          setMapCenter([latitude, longitude]);
           setLoading(false);
         },
         (error) => {
           console.error('Error fetching user location:', error);
+          setMapCenter(fallbackCenter);
           setLoading(false);
         },
         { enableHighAccuracy: true }
       );
     } else {
       console.error('Geolocation is not supported by this browser.');
+      setMapCenter(fallbackCenter);
       setLoading(false);
     }
 
     // Set police stations data directly
     setPoliceStations(policeStationsData.features as PoliceStationFeature[]);
-  }, []);
+
+    // Fetch listings if not already fetched
+    if (!listingsFetched) {
+      fetchAllListings().then(() => {
+        setListingsFetched(true);
+      });
+    }
+  }, [listingsFetched, fetchAllListings, setListingsFetched]);
 
   const getColorForType = (type: string) => {
     switch (type) {
@@ -159,8 +173,8 @@ const MapPage: React.FC = () => {
 
       {/* Map container taking up the rest of the screen */}
       <div className='flex-grow rounded-none sm:rounded-lg sm:mb-4 overflow-hidden'>
-        {userLocation ? (
-          <MapContainer center={userLocation} zoom={13} style={{ height: '100%', width: '100%' }}>
+        {mapCenter ? (
+          <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -169,7 +183,7 @@ const MapPage: React.FC = () => {
             <PopupClassHandler />
 
             {/* User Location Marker */}
-            <UserLocationMarker position={userLocation} />
+            {userLocation && <UserLocationMarker position={userLocation} />}
 
             {/* Render Listings Markers */}
             {Object.values(listings).map((listing) =>
@@ -274,7 +288,7 @@ const MapPage: React.FC = () => {
             ))}
           </MapContainer>
         ) : (
-          <p className='text-center'>Unable to fetch your location.</p>
+          <p className='text-center'>Unable to load the map.</p>
         )}
       </div>
     </div>
