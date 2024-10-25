@@ -16,7 +16,6 @@ import { useEffect, useState } from 'react';
 import ViewListingPage from './pages/ViewListingPage';
 import EditListingPage from './pages/EditListingPage';
 import NotFoundPage from './pages/NotFoundPage';
-import RandomPage from './pages/randomPage';
 import ResolvePage from './pages/ResolvePage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import { User } from './types';
@@ -124,7 +123,6 @@ function App() {
           <Route path='/edit/:listingId' element={<EditListingPage />} />
           <Route path='/resolve' element={<ResolvePage />} />
           <Route path='/resolve/:matchId' element={<ResolvePage />} />
-          <Route path='/random' element={<RandomPage />} />
         </Route>
         <Route path='*' element={<NotFoundPage />} />
       </Routes>
