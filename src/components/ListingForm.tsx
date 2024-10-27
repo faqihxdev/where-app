@@ -356,7 +356,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
               fontWeight='medium'
               _hover={{ bg: 'primary.700' }}
               _active={{ bg: 'primary.800' }}
-              isDisabled={imagesPreviews.length >= 3}>
+              isDisabled={imagesPreviews.length >= 3}
+              aria-label='Add image'>
               Add
             </Button>
           </FormControl>
