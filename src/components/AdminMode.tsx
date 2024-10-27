@@ -4,7 +4,7 @@ import { deleteUser } from 'firebase/auth';
 import { db, auth } from '../firebaseConfig';
 import { User, ListingDB } from '../types';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import { Button, IconButton } from '@chakra-ui/react';
+import { IconButton } from '@chakra-ui/react';
 import { showCustomToast } from './CustomToast';
 
 const AdminMode: React.FC = () => {
@@ -113,13 +113,6 @@ const AdminMode: React.FC = () => {
 
   return (
     <div className='container mx-auto mt-4'>
-      <a
-        className='block mb-4'
-        href='https://console.firebase.google.com/u/0/project/whereapp-io/authentication/users'>
-        <Button w='full' fontWeight='medium' bg='primary.600' color='white'>
-          Manage Firebase Users
-        </Button>
-      </a>
       <ul className='space-y-2'>
         {users.map((user) => (
           <li

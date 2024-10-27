@@ -10,13 +10,14 @@ import {
   sendVerificationEmailAtom,
 } from '../stores/authStore';
 import { showCustomToast } from '../components/CustomToast';
-import { Button, Avatar, VStack, Input } from '@chakra-ui/react';
+import { Button, Avatar, VStack, Input, IconButton } from '@chakra-ui/react';
 import {
   CalendarIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
   PencilIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import AlertDialog from '../components/AlertDialog';
@@ -477,10 +478,10 @@ const ProfilePage: React.FC = () => {
 
       {/* Admin Mode Button */}
       {isAdmin && (
-        <div className='mt-4'>
+        <div className='mt-4 flex gap-2'>
           <Button
             onClick={() => setIsAdminMode(!isAdminMode)}
-            w='full'
+            flex='1'
             bg='purple.600'
             color='white'
             fontWeight='medium'
@@ -488,6 +489,21 @@ const ProfilePage: React.FC = () => {
             _active={{ bg: 'purple.800' }}>
             {isAdminMode ? 'Deactivate Admin Mode' : 'Activate Admin Mode'}
           </Button>
+          {isAdminMode && (
+            <IconButton
+              as='a'
+              href='https://console.firebase.google.com/u/0/project/whereapp-io/authentication/users'
+              target='_blank'
+              bg='primary.600'
+              _hover={{ bg: 'primary.700' }}
+              _active={{ bg: 'primary.800' }}
+              rel='noopener noreferrer'
+              aria-label='Manage Firebase Users'
+              icon={<UsersIcon className='h-5 w-5' />}
+              colorScheme='blue'
+              variant='solid'
+            />
+          )}
         </div>
       )}
 
