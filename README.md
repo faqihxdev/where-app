@@ -1,8 +1,18 @@
 # WhereApp - Lost and Found Application
 
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-10.13-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Chakra UI](https://img.shields.io/badge/Chakra_UI-2.8-319795?style=for-the-badge&logo=chakra-ui&logoColor=white)](https://chakra-ui.com/)
+[![Jotai](https://img.shields.io/badge/Jotai-2.10-black?style=for-the-badge)](https://jotai.org/)
+[![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
+[![Playwright](https://img.shields.io/badge/Playwright-1.48-45ba4b?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev/)
+
 ## What is WhereApp?
 
-WhereApp is a Progressive Web Application (PWA) designed to help people report lost items or request information about lost items. It provides both a list view and a map view for lost items, making it easier for users to locate and recover their belongings.
+WhereApp is a Progressive Web Application (PWA) designed to streamline the lost and found process. It serves as a comprehensive platform for managing and tracking lost or found items, enabling users to efficiently report missing items, post found items, and facilitate the reunion of lost belongings with their rightful owners. The application combines both list and map views to create an intuitive and effective lost and found management system.
 
 ## Why WhereApp?
 
