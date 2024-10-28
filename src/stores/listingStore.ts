@@ -826,13 +826,13 @@ const isMatch = (listing1: Listing, listing2: Listing): boolean => {
     return false;
   }
 
-  // Condition 5: Cosine similarity > 0.7
+  // Condition 5: Cosine similarity > 0.6
   const combinedText1 = `${listing1.title}`;
   const combinedText2 = `${listing2.title}`;
   const similarity = cosineSimilarity(combinedText1, combinedText2);
 
-  if (similarity < 0.7) {
-    console.log('[listingStore/isMatch] Cosine Similarity < 0.7:', similarity);
+  if (similarity < 0.6) {
+    console.log('[listingStore/isMatch] Cosine Similarity < 0.6:', similarity);
     return false;
   }
 

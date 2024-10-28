@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import policeStationsData from '../assets/police-stations.json';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PoliceStationFeature } from '../types';
+import { createTestId } from '../utils/utils';
 
 const policeStationIcon = new L.Icon({
   iconUrl: '/police-station.svg',
@@ -192,7 +193,19 @@ const MapPage: React.FC = () => {
                   {/* Listing Marker */}
                   <Marker
                     position={[marker.latitude, marker.longitude]}
-                    icon={getMarkerForType(listing.type)}>
+                    icon={getMarkerForType(listing.type)}
+                    eventHandlers={{
+                      add: (e) => {
+                        // Add data-testid to the marker element
+                        const el = e.target.getElement();
+                        if (el) {
+                          el.setAttribute(
+                            'data-testid',
+                            `listing-marker-${createTestId(listing.title)}`
+                          );
+                        }
+                      },
+                    }}>
                     {/* Listing Popup */}
                     <Popup closeButton={false} closeOnClick={true} className='listing-popup'>
                       <div className='w-56 bg-white rounded-lg overflow-hidden listing-popup'>
@@ -274,11 +287,20 @@ const MapPage: React.FC = () => {
               ))
             )}
 
+            {/* Police Station Markers */}
             {policeStations?.map((station, index) => (
               <Marker
                 key={index}
                 position={[station.geometry.coordinates[1], station.geometry.coordinates[0]]}
-                icon={policeStationIcon}>
+                icon={policeStationIcon}
+                eventHandlers={{
+                  add: (e) => {
+                    const el = e.target.getElement();
+                    if (el) {
+                      el.setAttribute('data-testid', 'police-station-marker');
+                    }
+                  },
+                }}>
                 <Popup>
                   <div>
                     <h4>{station.properties.Description}</h4>
