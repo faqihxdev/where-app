@@ -146,7 +146,8 @@ const EditListingPage: React.FC = () => {
         <h1 className='text-2xl font-semibold mb-4'>Listing not found</h1>
         <button
           onClick={() => navigate('/')}
-          className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
+          className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'
+          data-testid='back-button'>
           Go Back To Listings
         </button>
       </div>
@@ -158,7 +159,8 @@ const EditListingPage: React.FC = () => {
       <div className='flex justify-start items-center mb-4'>
         <button
           onClick={handleBack}
-          className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
+          className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'
+          data-testid='back-button'>
           <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
         </button>
         <h1 className='text-xl font-semibold ml-3'>Edit Listing</h1>

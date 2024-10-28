@@ -27,7 +27,7 @@ import { ListingStatus } from '../types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AlertDialog from './AlertDialog';
 import { showCustomToast } from './CustomToast';
-
+import { createTestId } from '../utils/utils';
 interface ListingCardProps {
   listing: Listing;
   showActions?: boolean;
@@ -101,8 +101,12 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
     }
   };
 
+  const cardTestId = createTestId(listing.title);
+
   return (
-    <div className='bg-white outline outline-1 outline-gray-200 rounded-lg overflow-hidden'>
+    <div
+      className='bg-white outline outline-1 outline-gray-200 rounded-lg overflow-hidden'
+      data-testid={`listing-card-${cardTestId}`}>
       <div className='flex'>
         <div className='w-1/3 aspect-square relative'>
           {isImageLoading ? (
@@ -125,7 +129,8 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
           {/* Status Badge */}
           {listing.status !== ListingStatus.active && (
             <div
-              className={`absolute top-0 left-0 flex rounded-br-lg items-center gap-1 px-2 py-1 text-xs font-medium whitespace-nowrap ${getStatusBadgeColor(listing.status)}`}>
+              className={`absolute top-0 left-0 flex rounded-br-lg items-center gap-1 px-2 py-1 text-xs font-medium whitespace-nowrap ${getStatusBadgeColor(listing.status)}`}
+              data-testid='listing-status-badge'>
               <span>{listing.status}</span>
             </div>
           )}
@@ -134,7 +139,9 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
           <div
             className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
               listing.type === 'found' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
-            }`}>
+            }`}
+            data-testid={`listing-type-badge-${listing.type}-${cardTestId}`}
+            aria-label={`Listing type: ${listing.type}`}>
             {listing.type === 'lost' ? (
               <ExclamationCircleIcon className='w-3 h-3 stroke-2' />
             ) : (
@@ -142,7 +149,9 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
             )}
             {listing.type === 'lost' ? 'Lost' : 'Found'}
           </div>
-          <div className='flex items-center gap-2 mb-1'>
+          <div
+            className='flex items-center gap-2 mb-1'
+            data-testid={`listing-user-info-${cardTestId}`}>
             <Avatar
               size='xs'
               name={getDisplayName(listing.userId)}
@@ -152,16 +161,24 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
               {getDisplayName(listing.userId)}
             </span>
           </div>
-          <h4 className='font-semibold text-sm mb-1 mt-2 truncate'>{listing.title}</h4>
-          <p className='text-xs text-gray-600 line-clamp-2'>{listing.description}</p>
+          <h4
+            className='font-semibold text-sm mb-1 mt-2 truncate'
+            data-testid={`listing-title-${cardTestId}`}>
+            {listing.title}
+          </h4>
+          <p
+            className='text-xs text-gray-600 line-clamp-2'
+            data-testid={`listing-description-${cardTestId}`}>
+            {listing.description}
+          </p>
         </div>
       </div>
       <div className='flex items-center p-2 bg-gray-100'>
         <div className='text-gray-700 font-medium text-xs flex-grow overflow-hidden mr-2'>
-          <p>
+          <p data-testid={`listing-date-${cardTestId}`}>
             <span>{formatDate(listing.createdAt)}</span>
           </p>
-          <p className='truncate'>
+          <p className='truncate' data-testid={`listing-location-${cardTestId}`}>
             {listing.markers.length > 0 ? getMarkerName(listing.markers[0].id) : 'No location'}
           </p>
         </div>
@@ -174,7 +191,8 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
             color='white'
             _hover={{ bg: 'primary.700' }}
             _active={{ bg: 'primary.800' }}
-            rightIcon={!showActions ? <ChevronRightIcon className='w-4 h-4' /> : undefined}>
+            rightIcon={!showActions ? <ChevronRightIcon className='w-4 h-4' /> : undefined}
+            data-testid={`listing-view-button-${cardTestId}`}>
             View
           </Button>
           {showActions && (
@@ -188,14 +206,22 @@ export default function ListingCard({ listing, showActions = false }: ListingCar
                 color='white'
                 _hover={{ bg: 'primary.700' }}
                 _active={{ bg: 'primary.800' }}
-                aria-label='Actions'>
+                aria-label='Actions'
+                data-testid={`listing-actions-${cardTestId}`}>
                 <EllipsisVerticalIcon className='w-5 h-5 stroke-2' />
               </MenuButton>
               <MenuList>
-                <MenuItem onClick={handleEditClick} icon={<PencilIcon className='h-4 w-4' />}>
+                <MenuItem
+                  onClick={handleEditClick}
+                  icon={<PencilIcon className='h-4 w-4' />}
+                  data-testid={`listing-edit-${cardTestId}`}>
                   Edit
                 </MenuItem>
-                <MenuItem onClick={onOpen} color='red.500' icon={<TrashIcon className='h-4 w-4' />}>
+                <MenuItem
+                  onClick={onOpen}
+                  color='red.500'
+                  icon={<TrashIcon className='h-4 w-4' />}
+                  data-testid={`listing-delete-${cardTestId}`}>
                   Delete
                 </MenuItem>
               </MenuList>

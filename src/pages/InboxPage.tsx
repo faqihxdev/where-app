@@ -274,7 +274,7 @@ const InboxPage: React.FC = () => {
         onClose={() => setSelectedNotification(null)}
         title={selectedNotification?.title || ''}
         body={
-          <div>
+          <div data-testid='notification-dialog'>
             <p className='text-sm text-gray-500'>{selectedNotification?.message}</p>
           </div>
         }
@@ -292,10 +292,13 @@ const InboxPage: React.FC = () => {
               bg='primary.600'
               color='white'
               _hover={{ bg: 'primary.700' }}
-              _active={{ bg: 'primary.800' }}>
+              _active={{ bg: 'primary.800' }}
+              data-testid='notification-mark-read'>
               Mark as Read
             </Button>
-            <Button onClick={() => setSelectedNotification(null)}>Close</Button>
+            <Button onClick={() => setSelectedNotification(null)} data-testid='notification-close'>
+              Close
+            </Button>
           </div>
         }
       />

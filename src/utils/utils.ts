@@ -236,3 +236,15 @@ export async function fetchPoliceStations(): Promise<PoliceStationFeature[]> {
     return [];
   }
 }
+
+/**
+ * @description Creates a test ID from a given title
+ * @param title The title to create the test ID from
+ * @returns A test ID
+ */
+export const createTestId = (title: string): string => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '') // Remove all non-alphanumeric characters
+    .trim();
+};

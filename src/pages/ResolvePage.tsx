@@ -285,7 +285,8 @@ const ResolvePage: React.FC = () => {
         <p className='text-xl font-semibold mb-4'>{error || 'An error occurred'}</p>
         <button
           onClick={() => navigate('/')}
-          className='flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'>
+          className='flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'
+          data-testid='back-button'>
           <ArrowLeftIcon className='h-5 w-5 mr-2 stroke-2' />
           Go Back
         </button>
@@ -301,7 +302,8 @@ const ResolvePage: React.FC = () => {
             <div className='flex items-center'>
               <button
                 onClick={() => navigate('/inbox')}
-                className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
+                className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'
+                data-testid='back-button'>
                 <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
               </button>
               <h1 className='text-xl font-semibold ml-4'>Resolve Listing</h1>
