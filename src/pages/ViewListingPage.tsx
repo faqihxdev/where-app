@@ -163,15 +163,19 @@ const ViewListingPage: React.FC = () => {
             <div className='flex items-center'>
               <button
                 onClick={handleBack}
-                className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'>
+                className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'
+                data-testid='back-button'>
                 <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
               </button>
-              <h1 className='text-xl font-semibold ml-4'>View Listing</h1>
+              <h1 className='text-xl font-semibold ml-4' data-testid='page-title'>
+                View Listing
+              </h1>
             </div>
             <div
               className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(
                 listing.status
-              )}`}>
+              )}`}
+              data-testid='listing-status'>
               {listing.status}
             </div>
           </div>
@@ -196,10 +200,12 @@ const ViewListingPage: React.FC = () => {
             )}
           </div>
 
-          <h2 className='text-xl font-semibold'>{listing.title}</h2>
+          <h2 className='text-xl font-semibold' data-testid='listing-title'>
+            {listing.title}
+          </h2>
 
           {/* User Information */}
-          <div className='flex items-center p-2 bg-gray-100 rounded-lg'>
+          <div className='flex items-center p-2 bg-gray-100 rounded-lg' data-testid='user-info'>
             <Avatar
               size='md'
               name={listingUser?.preferences?.name || listingUser?.email}
@@ -207,84 +213,90 @@ const ViewListingPage: React.FC = () => {
               mr={2}
             />
             <div className='flex flex-col ml-2'>
-              <span className='text-sm font-medium'>
+              <div className='text-sm font-medium' data-testid='user-name'>
                 {listingUser?.preferences?.name || listingUser?.email}
-              </span>
-              <span className='text-sm text-gray-500'>{listingUser?.email}</span>
-            </div>
-          </div>
-
-          {/* Additional Details */}
-          <div className='grid grid-cols-2 gap-4 text-sm bg-gray-100 rounded-lg p-4'>
-            <div>
-              <h3 className='font-medium text-gray-500'>Category</h3>
-              <p>{listing.category}</p>
-            </div>
-            <div>
-              <h3 className='font-medium text-gray-500'>Type</h3>
-              <p className='capitalize'>{listing.type}</p>
-            </div>
-            <div>
-              <h3 className='font-medium text-gray-500'>Created At</h3>
-              <p className='flex items-center'>
-                <CalendarIcon className='w-4 h-4 mr-1' />
-                <span>{format(listing.createdAt, 'MMM d, yyyy')}</span>
-              </p>
-            </div>
-            <div>
-              <h3 className='font-medium text-gray-500'>Expires At</h3>
-              <p className='flex items-center'>
-                <CalendarIcon className='w-4 h-4 mr-1' />
-                <span>{format(listing.expiresAt, 'MMM d, yyyy')}</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className='text-sm bg-gray-100 rounded-lg p-4'>
-            <h3 className='font-medium text-gray-500'>Description</h3>
-            <p className='text-gray-700'>{listing.description}</p>
-          </div>
-
-          {/* Resolve Image Accordion */}
-          {listing.status === ListingStatus.resolved && listing.resolveImage && (
-            <div className='mt-4'>
-              <button
-                onClick={() => setIsResolveImageOpen(!isResolveImageOpen)}
-                className='w-full flex justify-between items-center py-3 px-4 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors'>
-                <span className='font-semibold'>View Claimant</span>
-                {isResolveImageOpen ? (
-                  <ChevronUpIcon className='h-5 w-5 stroke-2' />
-                ) : (
-                  <ChevronDownIcon className='h-5 w-5 stroke-2' />
-                )}
-              </button>
-              <div
-                className={`transition-all duration-300 ease-in-out ${
-                  isResolveImageOpen
-                    ? 'mt-2 max-h-[1000px] opacity-100'
-                    : 'mt-0 max-h-0 opacity-0 overflow-hidden'
-                }`}>
-                <img
-                  src={listing.resolveImage.data}
-                  alt='Resolve Image'
-                  className='w-full h-auto rounded-md border border-gray-200'
-                />
+              </div>
+              <div className='text-sm text-gray-500' data-testid='user-email'>
+                {listingUser?.email}
               </div>
             </div>
-          )}
-
-          {/* Map */}
-          <div className='mt-4'>
-            <h3 className='text-lg font-semibold mb-2'>Location</h3>
-            <MapSelector
-              mode='view'
-              initialMarkers={listing.markers}
-              onMarkersChange={() => {}}
-              showRemoveButton={false}
-              defaultLocation={getAverageMarkerLocation(listing)}
-            />
           </div>
+        </div>
+
+        {/* Additional Details */}
+        <div className='grid grid-cols-2 gap-4 text-sm bg-gray-100 rounded-lg p-4 my-4'>
+          <div>
+            <h3 className='font-medium text-gray-500'>Category</h3>
+            <p data-testid='listing-category'>{listing.category}</p>
+          </div>
+          <div>
+            <h3 className='font-medium text-gray-500'>Type</h3>
+            <p className='capitalize' data-testid='listing-type'>
+              {listing.type}
+            </p>
+          </div>
+          <div>
+            <h3 className='font-medium text-gray-500'>Created At</h3>
+            <p className='flex items-center' data-testid='listing-created-at'>
+              <CalendarIcon className='w-4 h-4 mr-1' />
+              <span>{format(listing.createdAt, 'MMM d, yyyy')}</span>
+            </p>
+          </div>
+          <div>
+            <h3 className='font-medium text-gray-500'>Expires At</h3>
+            <p className='flex items-center' data-testid='listing-expires-at'>
+              <CalendarIcon className='w-4 h-4 mr-1' />
+              <span>{format(listing.expiresAt, 'MMM d, yyyy')}</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className='text-sm bg-gray-100 rounded-lg p-4'>
+          <h3 className='font-medium text-gray-500'>Description</h3>
+          <p className='text-gray-700' data-testid='listing-description'>
+            {listing.description}
+          </p>
+        </div>
+
+        {/* Resolve Image Accordion */}
+        {listing.status === ListingStatus.resolved && listing.resolveImage && (
+          <div className='mt-4'>
+            <button
+              onClick={() => setIsResolveImageOpen(!isResolveImageOpen)}
+              className='w-full flex justify-between items-center py-3 px-4 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors'>
+              <span className='font-semibold'>View Claimant</span>
+              {isResolveImageOpen ? (
+                <ChevronUpIcon className='h-5 w-5 stroke-2' />
+              ) : (
+                <ChevronDownIcon className='h-5 w-5 stroke-2' />
+              )}
+            </button>
+            <div
+              className={`transition-all duration-300 ease-in-out ${
+                isResolveImageOpen
+                  ? 'mt-2 max-h-[1000px] opacity-100'
+                  : 'mt-0 max-h-0 opacity-0 overflow-hidden'
+              }`}>
+              <img
+                src={listing.resolveImage.data}
+                alt='Resolve Image'
+                className='w-full h-auto rounded-md border border-gray-200'
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Map */}
+        <div className='mt-4'>
+          <h3 className='text-lg font-semibold mb-2'>Location</h3>
+          <MapSelector
+            mode='view'
+            initialMarkers={listing.markers}
+            onMarkersChange={() => {}}
+            showRemoveButton={false}
+            defaultLocation={getAverageMarkerLocation(listing)}
+          />
         </div>
       </div>
     </PullToRefresh>
