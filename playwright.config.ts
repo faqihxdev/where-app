@@ -28,7 +28,6 @@ export default defineConfig({
       use: {
         ...devices['Pixel 7'],
         baseURL: 'http://localhost:5173',
-        storageState: 'playwright/.auth/user.json',
         trace: 'on-first-retry',
       },
     },

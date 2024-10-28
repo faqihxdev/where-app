@@ -12,9 +12,6 @@ type Fixtures = {
 
 // Extend base test with custom fixtures
 export const test = base.extend<Fixtures>({
-  // Reuse signed-in state from auth.setup.ts
-  storageState: 'playwright/.auth/user.json',
-
   // Add testUser fixture
   // eslint-disable-next-line no-empty-pattern
   testUser: async ({}, use) => {
