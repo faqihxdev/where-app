@@ -13,6 +13,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ searchParams, setSearchParams }
       <FormControl>
         <FormLabel>Keyword</FormLabel>
         <Input
+          data-testid='keyword-input'
           variant='filled'
           bg='gray.100'
           placeholder='Search by title or description'
@@ -24,6 +25,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ searchParams, setSearchParams }
       <FormControl>
         <FormLabel>Category</FormLabel>
         <Select
+          data-testid='category-select'
           variant='filled'
           bg='gray.100'
           placeholder='Select category'
@@ -42,6 +44,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ searchParams, setSearchParams }
       <FormControl>
         <FormLabel>Status</FormLabel>
         <Select
+          data-testid='status-select'
           variant='filled'
           bg='gray.100'
           placeholder='Select status'
@@ -61,6 +64,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ searchParams, setSearchParams }
         <FormLabel>Sort By</FormLabel>
         <HStack>
           <Select
+            data-testid='sort-by-select'
             variant='filled'
             bg='gray.100'
             value={searchParams.sortBy}
@@ -73,6 +77,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ searchParams, setSearchParams }
             <option value='expiresAt'>Date Expired</option>
           </Select>
           <Select
+            data-testid='sort-order-select'
             variant='filled'
             bg='gray.100'
             value={searchParams.sortOrder}

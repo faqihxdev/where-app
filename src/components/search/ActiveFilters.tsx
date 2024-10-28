@@ -17,6 +17,7 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({ searchParams, onRemoveFil
             <span className='font-semibold'>Keyword:</span> {searchParams.keyword}
           </span>
           <button
+            data-testid='remove-keyword-filter'
             onClick={() => onRemoveFilter('keyword')}
             className='text-gray-500 hover:text-gray-700'>
             <XMarkIcon className='h-4 w-4' />
@@ -29,6 +30,7 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({ searchParams, onRemoveFil
             <span className='font-semibold'>Category:</span> {searchParams.category}
           </span>
           <button
+            data-testid='remove-category-filter'
             onClick={() => onRemoveFilter('category')}
             className='text-gray-500 hover:text-gray-700'>
             <XMarkIcon className='h-4 w-4' />
@@ -41,6 +43,7 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({ searchParams, onRemoveFil
             <span className='font-semibold'>Status:</span> {searchParams.status}
           </span>
           <button
+            data-testid='remove-status-filter'
             onClick={() => onRemoveFilter('status')}
             className='text-gray-500 hover:text-gray-700'>
             <XMarkIcon className='h-4 w-4' />
@@ -65,6 +68,7 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({ searchParams, onRemoveFil
             {searchParams.location.name.substring(0, 20)} ({searchParams.location.radius}m)
           </span>
           <button
+            data-testid='remove-location-filter'
             onClick={() => onRemoveFilter('location')}
             className='text-gray-500 hover:text-gray-700'
             aria-label='Remove location filter'>
