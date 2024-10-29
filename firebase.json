@@ -16,5 +16,17 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8181
+    },
+    "ui": {
+      "port": 4000,
+      "enabled": true
+    }
   }
 }
