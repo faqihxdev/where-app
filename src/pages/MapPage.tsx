@@ -12,7 +12,7 @@ import { ExclamationCircleIcon, MagnifyingGlassCircleIcon } from '@heroicons/rea
 import { format } from 'date-fns';
 import policeStationsData from '../assets/police-stations.json';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { PoliceStationFeature } from '../types';
+import { PoliceStationFeature, ListingStatus } from '../types';
 import { createTestId } from '../utils/utils';
 
 const policeStationIcon = new L.Icon({
@@ -187,105 +187,107 @@ const MapPage: React.FC = () => {
             {userLocation && <UserLocationMarker position={userLocation} />}
 
             {/* Render Listings Markers */}
-            {Object.values(listings).map((listing) =>
-              listing.markers.map((marker) => (
-                <React.Fragment key={marker.id}>
-                  {/* Listing Marker */}
-                  <Marker
-                    position={[marker.latitude, marker.longitude]}
-                    icon={getMarkerForType(listing.type)}
-                    eventHandlers={{
-                      add: (e) => {
-                        // Add data-testid to the marker element
-                        const el = e.target.getElement();
-                        if (el) {
-                          el.setAttribute(
-                            'data-testid',
-                            `listing-marker-${createTestId(listing.title)}`
-                          );
-                        }
-                      },
-                    }}>
-                    {/* Listing Popup */}
-                    <Popup closeButton={false} closeOnClick={true} className='listing-popup'>
-                      <div className='w-56 bg-white rounded-lg overflow-hidden listing-popup'>
-                        {/* Listing Image */}
-                        <div className='relative p-2'>
-                          {listing.images.main.data && (
-                            <div className='w-full h-24 rounded-lg overflow-hidden border border-gray-200'>
-                              <img
-                                src={listing.images.main.data}
-                                alt={listing.title}
-                                className='w-full h-full object-cover'
-                              />
-                            </div>
-                          )}
-                        </div>
+            {Object.values(listings)
+              .filter((listing) => listing.status === ListingStatus.active)
+              .map((listing) =>
+                listing.markers.map((marker) => (
+                  <React.Fragment key={marker.id}>
+                    {/* Listing Marker */}
+                    <Marker
+                      position={[marker.latitude, marker.longitude]}
+                      icon={getMarkerForType(listing.type)}
+                      eventHandlers={{
+                        add: (e) => {
+                          // Add data-testid to the marker element
+                          const el = e.target.getElement();
+                          if (el) {
+                            el.setAttribute(
+                              'data-testid',
+                              `listing-marker-${createTestId(listing.title)}`
+                            );
+                          }
+                        },
+                      }}>
+                      {/* Listing Popup */}
+                      <Popup closeButton={false} closeOnClick={true} className='listing-popup'>
+                        <div className='w-56 bg-white rounded-lg overflow-hidden listing-popup'>
+                          {/* Listing Image */}
+                          <div className='relative p-2'>
+                            {listing.images.main.data && (
+                              <div className='w-full h-24 rounded-lg overflow-hidden border border-gray-200'>
+                                <img
+                                  src={listing.images.main.data}
+                                  alt={listing.title}
+                                  className='w-full h-full object-cover'
+                                />
+                              </div>
+                            )}
+                          </div>
 
-                        {/* Listing Details */}
-                        <div className='relative p-2 pt-0'>
-                          <div className='flex items-center justify-between mb-1'>
-                            <div className='flex items-center gap-1 flex-grow'>
-                              <Avatar
+                          {/* Listing Details */}
+                          <div className='relative p-2 pt-0'>
+                            <div className='flex items-center justify-between mb-1'>
+                              <div className='flex items-center gap-1 flex-grow'>
+                                <Avatar
+                                  size='xs'
+                                  name={getDisplayName(listing.userId)}
+                                  src={getAvatarUrl(getDisplayName(listing.userId))}
+                                />
+                                <span className='text-xs font-medium truncate max-w-[100px]'>
+                                  {getDisplayName(listing.userId)}
+                                </span>
+                              </div>
+                              <div
+                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                                  listing.type === 'found'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                {listing.type === 'lost' ? (
+                                  <ExclamationCircleIcon className='w-3 h-3 stroke-2' />
+                                ) : (
+                                  <MagnifyingGlassCircleIcon className='w-3 h-3 stroke-2' />
+                                )}
+                                {listing.type === 'lost' ? 'Lost' : 'Found'}
+                              </div>
+                            </div>
+                            <h4 className='font-semibold text-sm mb-1 truncate'>{listing.title}</h4>
+                            <div className='text-gray-600 font-medium text-xs'>
+                              <p>{format(listing.createdAt, 'yyyy-MM-dd hh:mm a')}</p>
+                              <p className='truncate'>{marker.name}</p>
+                            </div>
+                            <div className='flex gap-2 mt-2'>
+                              <Button
+                                onClick={() => navigate(`/view/${listing.id}?from=map`)}
                                 size='xs'
-                                name={getDisplayName(listing.userId)}
-                                src={getAvatarUrl(getDisplayName(listing.userId))}
-                              />
-                              <span className='text-xs font-medium truncate max-w-[100px]'>
-                                {getDisplayName(listing.userId)}
-                              </span>
+                                flex={1}
+                                fontWeight='medium'
+                                bg='primary.600'
+                                color='white'
+                                _hover={{ bg: 'primary.700' }}
+                                _active={{ bg: 'primary.800' }}>
+                                View Details
+                              </Button>
                             </div>
-                            <div
-                              className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                                listing.type === 'found'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                              {listing.type === 'lost' ? (
-                                <ExclamationCircleIcon className='w-3 h-3 stroke-2' />
-                              ) : (
-                                <MagnifyingGlassCircleIcon className='w-3 h-3 stroke-2' />
-                              )}
-                              {listing.type === 'lost' ? 'Lost' : 'Found'}
-                            </div>
-                          </div>
-                          <h4 className='font-semibold text-sm mb-1 truncate'>{listing.title}</h4>
-                          <div className='text-gray-600 font-medium text-xs'>
-                            <p>{format(listing.createdAt, 'yyyy-MM-dd hh:mm a')}</p>
-                            <p className='truncate'>{marker.name}</p>
-                          </div>
-                          <div className='flex gap-2 mt-2'>
-                            <Button
-                              onClick={() => navigate(`/view/${listing.id}?from=map`)}
-                              size='xs'
-                              flex={1}
-                              fontWeight='medium'
-                              bg='primary.600'
-                              color='white'
-                              _hover={{ bg: 'primary.700' }}
-                              _active={{ bg: 'primary.800' }}>
-                              View Details
-                            </Button>
                           </div>
                         </div>
-                      </div>
-                    </Popup>
-                  </Marker>
+                      </Popup>
+                    </Marker>
 
-                  {/* Circle for the radius of the listing */}
-                  <Circle
-                    center={[marker.latitude, marker.longitude]}
-                    radius={marker.radius}
-                    pathOptions={{
-                      color: getColorForType(listing.type),
-                      fillColor: getColorForType(listing.type),
-                      fillOpacity: 0.1,
-                      weight: 2,
-                    }}
-                  />
-                </React.Fragment>
-              ))
-            )}
+                    {/* Circle for the radius of the listing */}
+                    <Circle
+                      center={[marker.latitude, marker.longitude]}
+                      radius={marker.radius}
+                      pathOptions={{
+                        color: getColorForType(listing.type),
+                        fillColor: getColorForType(listing.type),
+                        fillOpacity: 0.1,
+                        weight: 2,
+                      }}
+                    />
+                  </React.Fragment>
+                ))
+              )}
 
             {/* Police Station Markers */}
             {policeStations?.map((station, index) => (
