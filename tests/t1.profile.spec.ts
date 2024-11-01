@@ -40,14 +40,17 @@ test.describe('Profile Page', () => {
     const nameInput = page.getByRole('textbox');
 
     // Test validations
+    await page.waitForTimeout(1000);
     await nameInput.fill('');
     await nameInput.blur();
     await expect(page.getByText('Name is required')).toBeVisible();
 
+    await page.waitForTimeout(1000);
     await nameInput.fill('ab');
     await nameInput.blur();
     await expect(page.getByText('Name must be at least 3 characters long')).toBeVisible();
 
+    await page.waitForTimeout(1000);
     await nameInput.fill('ThisNameIsTooLongForTheSystem');
     await nameInput.blur();
     await expect(page.getByText('Name cannot exceed 15 characters')).toBeVisible();
@@ -56,14 +59,17 @@ test.describe('Profile Page', () => {
     const originalName = testUser.preferences!.name;
     const newName = 'New Name';
 
+    await page.waitForTimeout(1000);
     await nameInput.fill(newName);
     await page.getByRole('button', { name: 'Update Name' }).click();
     await expect(page.getByText(newName)).toBeVisible();
 
     await editNameButton.click();
+    await page.waitForTimeout(1000);
     await nameInput.fill(originalName!);
     await page.getByRole('button', { name: 'Update Name' }).click();
-    await expect(page.getByText(originalName!)).toBeVisible();
+    await page.waitForTimeout(1000);
+    await expect(page.getByRole('heading', { name: originalName! })).toBeVisible();
   });
 
   test('change password validation', async ({ page }) => {
