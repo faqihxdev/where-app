@@ -166,6 +166,9 @@ test.describe('Filter Listings', () => {
     // Open search drawer
     await page.getByRole('button', { name: 'Advanced search' }).click();
 
+    // Wait for 3 seconds
+    await page.waitForTimeout(3000);
+
     // Search for non-existent listing
     await page.getByRole('textbox', { name: 'Keyword' }).fill('NonexistentListing');
     await page.getByRole('button', { name: 'Apply' }).click();
