@@ -16,4 +16,4 @@
 - Deleting main image submits edit listing (lol wth)
 
 # TMP My TODO
-- Filter out resolve in listing and map
+- Upload image can still submit without image if image is uploaded and removed

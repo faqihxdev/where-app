@@ -122,7 +122,7 @@ export const fetchAllListingsAtom = atom(null, async (_, set): Promise<Record<st
 
     return listings;
   } catch (error) {
-    console.error(`[listingStore] Error fetching listings: ${error}`);
+    console.error(`[listingStore/fetchAllListingsAtom] Error fetching listings: ${error}`);
     throw error;
   }
 });
@@ -138,7 +138,7 @@ export const fetchListingByIdAtom = atom(
     console.log(`[listingStore/fetchListingByIdAtom]: Fetching listing: ${listingId}`);
     try {
       // Get the listing from the Listings collection
-      console.log('🔥[listingStore/fetchListingByIdAtom]');
+      console.log('[listingStore/fetchListingByIdAtom]');
       const docSnap = await getDoc(doc(db, 'Listings', listingId));
       let listing: Listing;
 
@@ -311,6 +311,12 @@ export const addListingAtom = atom(
     }
   ): Promise<Record<string, Listing>> => {
     const { newListing, imageFiles, markers } = params;
+
+    // If there are no image files or markers, throw an error
+    if (imageFiles.length === 0 || markers.length === 0) {
+      throw new Error('No image files or markers provided');
+    }
+
     console.log(`[listingStore/addListing]: Adding Listing: ${newListing}`);
     try {
       // Create the listing document first to get the listingId
