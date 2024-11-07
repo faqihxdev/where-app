@@ -14,6 +14,7 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   Spinner,
+  FormErrorMessage,
 } from '@chakra-ui/react';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { MapPinIcon as MapPinIconSolid } from '@heroicons/react/24/solid';
@@ -32,10 +33,26 @@ interface MapSelectorProps {
   mode: 'filter' | 'create' | 'edit' | 'view';
   initialMarkers?: Omit<MarkerType, 'id' | 'listingId'>[];
   maxMarkers?: number;
-  onMarkersChange: (markers: Omit<MarkerType, 'id' | 'listingId'>[]) => void;
+  onMarkersChange: (
+    markers: Omit<MarkerType, 'id' | 'listingId'>[],
+    errors?: { [key: string]: { name?: string; radius?: string } }
+  ) => void;
   showRemoveButton?: boolean;
   defaultLocation?: [number, number] | null | undefined;
 }
+
+// Add validation functions
+const validateLocationName = (name: string): string => {
+  if (!name || name.trim() === '') return 'Location name is required';
+  if (name.length > 255) return 'Location name must be less than 255 characters';
+  return '';
+};
+
+const validateRadius = (radius: number): string => {
+  if (!radius || radius <= 0) return 'Radius must be greater than 0';
+  if (radius > 10000) return 'Radius must be less than 10,000 meters';
+  return '';
+};
 
 const MapSelector: React.FC<MapSelectorProps> = ({
   mode,
@@ -49,6 +66,10 @@ const MapSelector: React.FC<MapSelectorProps> = ({
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [isAddingMarker, setIsAddingMarker] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: { name?: string; radius?: string } }>({});
+  const [localValues, setLocalValues] = useState<{
+    [key: string]: { name?: string; radius?: string | number };
+  }>({});
 
   // Handle the new defaultLocation prop and user location
   useEffect(() => {
@@ -89,6 +110,18 @@ const MapSelector: React.FC<MapSelectorProps> = ({
     }
   }, [initialMarkers, markers]);
 
+  // Initialize localValues when markers change
+  useEffect(() => {
+    const initialLocalValues = markers.reduce(
+      (acc, marker, index) => {
+        acc[index] = { name: marker.name, radius: marker.radius };
+        return acc;
+      },
+      {} as { [key: string]: { name?: string; radius?: string | number } }
+    );
+    setLocalValues(initialLocalValues);
+  }, [markers]);
+
   const addMarker = useCallback(
     async (lat: number, lng: number) => {
       setIsAddingMarker(true);
@@ -123,6 +156,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
   const handleMapClick = useCallback(
     (e: L.LeafletMouseEvent) => {
       if (
+        mode !== 'view' &&
         !isAddingMarker &&
         (mode === 'filter' ||
           ((mode === 'create' || mode === 'edit') && markers.length < maxMarkers))
@@ -137,17 +171,12 @@ const MapSelector: React.FC<MapSelectorProps> = ({
   const updateMarker = (index: number, updates: Partial<Omit<MarkerType, 'id' | 'listingId'>>) => {
     const updatedMarkers = markers.map((marker, i) => {
       if (i === index) {
-        const updatedMarker = { ...marker, ...updates };
-        if (updates.radius !== undefined) {
-          updatedMarker.radius =
-            isNaN(updates.radius) || updates.radius === null ? 5 : Math.max(5, updates.radius);
-        }
-        return updatedMarker;
+        return { ...marker, ...updates };
       }
       return marker;
     });
     setMarkers(updatedMarkers);
-    onMarkersChange(updatedMarkers);
+    onMarkersChange(updatedMarkers, errors);
   };
 
   const removeMarker = (index: number) => {
@@ -189,6 +218,56 @@ const MapSelector: React.FC<MapSelectorProps> = ({
     );
   };
 
+  // Handle local changes without validation
+  const handleNameChange = (index: number, value: string) => {
+    setLocalValues((prev) => ({
+      ...prev,
+      [index]: { ...prev[index], name: value },
+    }));
+  };
+
+  const handleRadiusChange = (index: number, valueString: string) => {
+    setLocalValues((prev) => ({
+      ...prev,
+      [index]: { ...prev[index], radius: valueString },
+    }));
+  };
+
+  // Validation and update on blur
+  const handleNameBlur = (index: number, name: string) => {
+    const error = validateLocationName(name);
+    const newErrors = {
+      ...errors,
+      [index]: { ...errors[index], name: error },
+    };
+    setErrors(newErrors);
+    if (!error) {
+      updateMarker(index, { name });
+    }
+    onMarkersChange(markers, newErrors);
+  };
+
+  const handleRadiusBlur = (index: number, valueString: string) => {
+    const valueNumber = parseFloat(valueString);
+    const error = validateRadius(valueNumber);
+    const newErrors = {
+      ...errors,
+      [index]: { ...errors[index], radius: error },
+    };
+    setErrors(newErrors);
+
+    if (!error) {
+      const validRadius = Math.max(5, valueNumber);
+      updateMarker(index, { radius: validRadius });
+      // Update local value to reflect the validated value
+      setLocalValues((prev) => ({
+        ...prev,
+        [index]: { ...prev[index], radius: validRadius },
+      }));
+    }
+    onMarkersChange(markers, newErrors);
+  };
+
   if (!mapCenter) {
     return (
       <div className='h-64 md:h-96 flex items-center justify-center'>
@@ -204,13 +283,13 @@ const MapSelector: React.FC<MapSelectorProps> = ({
           center={mapCenter}
           zoom={13}
           style={{ height: '100%', width: '100%' }}
-          dragging={mode !== 'view'}
-          touchZoom={mode !== 'view'}
-          doubleClickZoom={mode !== 'view'}
-          scrollWheelZoom={mode !== 'view'}
-          boxZoom={mode !== 'view'}
-          keyboard={mode !== 'view'}
-          zoomControl={mode !== 'view'}>
+          dragging={true}
+          touchZoom={true}
+          doubleClickZoom={true}
+          scrollWheelZoom={true}
+          boxZoom={true}
+          keyboard={true}
+          zoomControl={true}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -222,7 +301,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
             </React.Fragment>
           ))}
           {userLocation && <UserLocationMarker position={userLocation} />}
-          <MapEvents />
+          {mode !== 'view' && <MapEvents />}
         </MapContainer>
         {isAddingMarker && (
           <div className='absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center'>
@@ -252,7 +331,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
               spacing={4}
               align='stretch'
               className='p-4 border border-gray-200 rounded-lg'>
-              <FormControl>
+              <FormControl isInvalid={!!errors[index]?.name}>
                 <div className='flex flex-row justify-between relative'>
                   <FormLabel>Location Name</FormLabel>
                   <div className='w-full absolute text-[9px] text-right text-gray-500 bottom-[13px] right-1'>
@@ -262,28 +341,28 @@ const MapSelector: React.FC<MapSelectorProps> = ({
                 <Input
                   variant='filled'
                   bg='gray.100'
-                  value={marker.name}
-                  onChange={(e) => updateMarker(index, { name: e.target.value })}
+                  value={localValues[index]?.name ?? marker.name}
+                  onChange={(e) => handleNameChange(index, e.target.value)}
+                  onBlur={(e) => handleNameBlur(index, e.target.value)}
                 />
+                <FormErrorMessage fontSize='xs'>{errors[index]?.name}</FormErrorMessage>
               </FormControl>
-              <FormControl>
+              <FormControl isInvalid={!!errors[index]?.radius}>
                 <FormLabel>Radius (meters)</FormLabel>
                 <NumberInput
                   variant='filled'
                   bg='gray.100'
                   rounded='md'
-                  min={5}
-                  value={marker.radius}
-                  onChange={(valueString, valueNumber) => {
-                    const radius = valueString === '' ? null : valueNumber;
-                    updateMarker(index, { radius: radius as number | undefined });
-                  }}>
+                  value={localValues[index]?.radius ?? marker.radius}
+                  onChange={(valueString) => handleRadiusChange(index, valueString)}
+                  onBlur={(e) => handleRadiusBlur(index, e.target.value)}>
                   <NumberInputField />
                   <NumberInputStepper>
                     <NumberIncrementStepper />
                     <NumberDecrementStepper />
                   </NumberInputStepper>
                 </NumberInput>
+                <FormErrorMessage fontSize='xs'>{errors[index]?.radius}</FormErrorMessage>
               </FormControl>
               {(mode !== 'filter' || showRemoveButton) && (
                 <Button
