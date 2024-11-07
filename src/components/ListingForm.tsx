@@ -36,6 +36,15 @@ interface ListingFormError {
   [key: string]: string;
 }
 
+interface MarkerError {
+  name?: string;
+  radius?: string;
+}
+
+interface MarkerErrors {
+  [index: number]: MarkerError;
+}
+
 const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoading }) => {
   const [type, setType] = useState<'lost' | 'found'>(initialData?.type || 'lost');
   const [title, setTitle] = useState(initialData?.title || '');
@@ -60,6 +69,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
   const [imageUpdates, setImageUpdates] = useState<{
     [key in ImageType]?: { action: 'add' | 'delete' | 'keep'; file?: File };
   }>({});
+  const [markerErrors, setMarkerErrors] = useState<MarkerErrors>({});
 
   useEffect(() => {
     if (initialData?.images) {
@@ -173,8 +183,14 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
     }));
   };
 
-  const handleLocationsChange = (newMarkers: Omit<Marker, 'id' | 'listingId'>[]) => {
+  const handleMarkersChange = (
+    newMarkers: Omit<Marker, 'id' | 'listingId'>[],
+    errors?: MarkerErrors
+  ) => {
     setMarkers(newMarkers);
+    if (errors) {
+      setMarkerErrors(errors);
+    }
   };
 
   const validateForm = (): boolean => {
@@ -184,18 +200,16 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
       images: validateField('images', images),
     };
 
-    markers.forEach((loc, index) => {
-      newErrors[`location${index}_name`] = validateField('locationName', loc.name);
-      newErrors[`location${index}_latitude`] = validateField('latitude', loc.latitude.toString());
-      newErrors[`location${index}_longitude`] = validateField(
-        'longitude',
-        loc.longitude.toString()
-      );
-    });
-
     // Check if at least one marker is provided
     if (markers.length === 0) {
       newErrors.location = 'At least one location must be provided';
+    }
+
+    // Check if there are any marker input errors
+    const hasMarkerErrors = Object.values(markerErrors).some((error) => error.name || error.radius);
+
+    if (hasMarkerErrors) {
+      newErrors.location = 'Please fix the errors in location inputs';
     }
 
     setErrors(newErrors);
@@ -390,12 +404,14 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
           <MapPinIcon className='w-5 h-5 mr-2 stroke-2' />
           <h1 className='font-semibold'>Location</h1>
         </div>
-        {errors.location && (
-          <div className='text-red-500 text-xs text-start mb-4 -mt-2'>{errors.location}</div>
+        {(errors.location || Object.keys(markerErrors).length > 0) && (
+          <div className='text-red-500 text-xs text-start mb-4 -mt-2'>
+            {errors.location || 'Please fix the errors in location inputs'}
+          </div>
         )}
         <MapSelector
           mode={initialData ? 'edit' : 'create'}
-          onMarkersChange={handleLocationsChange}
+          onMarkersChange={handleMarkersChange}
           maxMarkers={3}
           initialMarkers={markers}
         />
