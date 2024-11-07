@@ -42,6 +42,11 @@ const PostPage: React.FC = () => {
         )
         .map((update) => update.file);
 
+      // If there are no image files and no markers, throw an error
+      if (imageFiles.length === 0 || markers.length === 0) {
+        throw new Error('No image files or markers provided');
+      }
+
       await addListing({ newListing, imageFiles, markers });
       showCustomToast({
         title: 'Listing Created',

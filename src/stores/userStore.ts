@@ -100,7 +100,6 @@ export const fetchListingUserAtom = atom(
       // If the user document exists, set the user data in the listing users atom
       if (userDoc.exists()) {
         const userData = userDoc.data() as User;
-        console.log('[userStore/fetchListingUserAtom]: User data fetched:', { userData });
         set(listingUsersAtom, (prev) => ({ ...prev, [userId]: userData }));
         return userData;
       }
