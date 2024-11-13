@@ -44,7 +44,7 @@ interface MapSelectorProps {
 // Add validation functions
 const validateLocationName = (name: string): string => {
   if (!name || name.trim() === '') return 'Location name is required';
-  if (name.length > 255) return 'Location name must be less than 255 characters';
+  if (name.length > 256) return 'Location name must be less than 256 characters';
   return '';
 };
 

@@ -103,8 +103,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoad
         if (!value || (value as string).length < 10) {
           return 'Description must be at least 10 characters long';
         }
-        if ((value as string).length > 200) {
-          return 'Description cannot exceed 200 characters';
+        if ((value as string).length > 512) {
+          return 'Description cannot exceed 512 characters';
         }
         return '';
       case 'images':
