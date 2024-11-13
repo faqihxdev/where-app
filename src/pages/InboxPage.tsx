@@ -19,7 +19,6 @@ import NotificationRow from '../components/NotificationRow';
 import AlertDialog from '../components/AlertDialog';
 import { InboxIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/LoadingSpinner';
-import PullToRefresh from 'react-simple-pull-to-refresh';
 import { showCustomToast } from '../components/CustomToast';
 import { Button } from '@chakra-ui/react';
 
@@ -38,6 +37,7 @@ const InboxPage: React.FC = () => {
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const fetchAllUserNotifications = useSetAtom(fetchAllUserNotificationsAtom);
   const markNotifications = useSetAtom(markNotificationsAtom);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const filteredNotifications = Object.values(notifications).filter(
     (notification) => notification.status !== 'removed'
@@ -128,9 +128,10 @@ const InboxPage: React.FC = () => {
 
   const handleRefresh = useCallback(async () => {
     console.log('[InboxPage] Refreshing data...');
+    setIsRefreshing(true);
     setUserListingsFetched(false);
     await Promise.all([fetchListingsData(), fetchMatchesData(), fetchNotificationsData()]);
-    return;
+    setIsRefreshing(false);
   }, [fetchListingsData, fetchMatchesData, fetchNotificationsData, setUserListingsFetched]);
 
   const handleMarkAllAsRead = async () => {
@@ -176,99 +177,103 @@ const InboxPage: React.FC = () => {
     [markNotifications]
   );
 
-  const PullDownContent = () => (
-    <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
-      <ArrowPathIcon className='w-5 h-5 animate-spin' />
-      <span>Pull down to refresh...</span>
-    </div>
-  );
-
-  const RefreshContent = () => (
-    <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
-      <ArrowPathIcon className='w-5 h-5 animate-spin' />
-      <span>Refreshing...</span>
-    </div>
-  );
-
   const InboxContent = () => (
-    <div className='min-h-full bg-white p-4'>
-      <div className='max-w-4xl mx-auto space-y-8'>
-        <section>
-          <h2 className='text-xl font-semibold mb-4'>Your Listings</h2>
-          {isListingsLoading ? (
-            <div className='flex justify-center items-center py-8'>
-              <LoadingSpinner />
-            </div>
-          ) : userListings.length > 0 ? (
-            <div className='grid grid-cols-1 gap-4'>
-              {userListings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} showActions={true} />
-              ))}
-            </div>
-          ) : (
-            <div className='flex flex-col items-center justify-center py-8'>
-              <InboxIcon className='w-12 h-12 text-blue-600 mb-2 stroke-1.5' />
-              <p className='text-gray-600 text-md font-medium'>You have no listings</p>
-            </div>
-          )}
-        </section>
-
-        <section>
-          <h2 className='text-xl font-semibold mb-4'>Matches</h2>
-          {isMatchesLoading ? (
-            <div className='flex justify-center items-center py-8'>
-              <LoadingSpinner />
-            </div>
-          ) : Object.values(matches).length > 0 ? (
-            <div className='space-y-4'>
-              {Object.values(matches).map((match) => (
-                <MatchCard key={match.id} match={match} />
-              ))}
-            </div>
-          ) : (
-            <div className='flex flex-col items-center justify-center py-8'>
-              <InboxIcon className='w-12 h-12 text-blue-600 mb-2 stroke-1.5' />
-              <p className='text-gray-600 text-md font-medium'>You have no matches</p>
-            </div>
-          )}
-        </section>
-
-        <section>
-          <div className='flex justify-between items-center mb-4'>
-            <h2 className='text-xl font-semibold'>Notifications</h2>
-            <Button
-              onClick={handleMarkAllAsRead}
-              size='sm'
-              fontWeight='medium'
-              bg='primary.600'
-              color='white'
-              _hover={{ bg: 'primary.700' }}
-              _active={{ bg: 'primary.800' }}>
-              Mark All as Read
-            </Button>
-          </div>
-          {isNotificationsLoading ? (
-            <div className='flex justify-center items-center py-8'>
-              <LoadingSpinner />
-            </div>
-          ) : filteredNotifications.length > 0 ? (
-            <div className='space-y-2'>
-              {filteredNotifications.map((notification) => (
-                <NotificationRow
-                  key={notification.id}
-                  notification={notification}
-                  onOpenDrawer={setSelectedNotification}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className='flex flex-col items-center justify-center py-8'>
-              <InboxIcon className='w-12 h-12 text-blue-600 mb-2 stroke-1.5' />
-              <p className='text-gray-600 text-md font-medium'>You have no notifications</p>
-            </div>
-          )}
-        </section>
+    <div className='h-full overflow-y-auto bg-white'>
+      <div className='sticky top-0 z-10 bg-white p-4'>
+        <div className='flex items-center justify-between'>
+          <h1 className='text-xl font-semibold'>Inbox</h1>
+          <button
+            onClick={handleRefresh}
+            className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'
+            disabled={isRefreshing}
+            aria-label='Refresh inbox'>
+            <ArrowPathIcon
+              className={`h-5 w-5 text-gray-600 stroke-2 ${isRefreshing ? 'animate-spin' : ''}`}
+            />
+          </button>
+        </div>
       </div>
+
+      <div className='p-4 pt-0'>
+        <div className='max-w-4xl mx-auto space-y-8'>
+          <section>
+            <h2 className='text-lg font-semibold mb-4'>Your Listings</h2>
+            {isListingsLoading ? (
+              <div className='flex justify-center items-center py-8'>
+                <LoadingSpinner />
+              </div>
+            ) : userListings.length > 0 ? (
+              <div className='grid grid-cols-1 gap-4'>
+                {userListings.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} showActions={true} />
+                ))}
+              </div>
+            ) : (
+              <div className='flex flex-col items-center justify-center py-8'>
+                <InboxIcon className='w-12 h-12 text-blue-600 mb-2 stroke-1.5' />
+                <p className='text-gray-600 text-md font-medium'>You have no listings</p>
+              </div>
+            )}
+          </section>
+
+          <section>
+            <h2 className='text-lg font-semibold mb-4'>Matches</h2>
+            {isMatchesLoading ? (
+              <div className='flex justify-center items-center py-8'>
+                <LoadingSpinner />
+              </div>
+            ) : Object.values(matches).length > 0 ? (
+              <div className='space-y-4'>
+                {Object.values(matches).map((match) => (
+                  <MatchCard key={match.id} match={match} />
+                ))}
+              </div>
+            ) : (
+              <div className='flex flex-col items-center justify-center py-8'>
+                <InboxIcon className='w-12 h-12 text-blue-600 mb-2 stroke-1.5' />
+                <p className='text-gray-600 text-md font-medium'>You have no matches</p>
+              </div>
+            )}
+          </section>
+
+          <section>
+            <div className='flex justify-between items-center mb-4'>
+              <h2 className='text-lg font-semibold'>Notifications</h2>
+              <Button
+                onClick={handleMarkAllAsRead}
+                size='sm'
+                fontWeight='medium'
+                bg='primary.600'
+                color='white'
+                _hover={{ bg: 'primary.700' }}
+                _active={{ bg: 'primary.800' }}>
+                Mark All as Read
+              </Button>
+            </div>
+            {isNotificationsLoading ? (
+              <div className='flex justify-center items-center py-8'>
+                <LoadingSpinner />
+              </div>
+            ) : filteredNotifications.length > 0 ? (
+              <div className='space-y-2'>
+                {filteredNotifications.map((notification) => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    onOpenDrawer={setSelectedNotification}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className='flex flex-col items-center justify-center py-8'>
+                <InboxIcon className='w-12 h-12 text-blue-600 mb-2 stroke-1.5' />
+                <p className='text-gray-600 text-md font-medium'>You have no notifications</p>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+
       <AlertDialog
         isOpen={!!selectedNotification}
         onClose={() => setSelectedNotification(null)}
@@ -306,15 +311,9 @@ const InboxPage: React.FC = () => {
   );
 
   return (
-    <PullToRefresh
-      onRefresh={handleRefresh}
-      pullDownThreshold={80}
-      maxPullDownDistance={90}
-      resistance={3}
-      pullingContent={<PullDownContent />}
-      refreshingContent={<RefreshContent />}>
+    <div className='h-full overflow-y-auto bg-white'>
       <InboxContent />
-    </PullToRefresh>
+    </div>
   );
 };
 
