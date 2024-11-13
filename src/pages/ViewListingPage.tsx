@@ -7,7 +7,6 @@ import { markersAtom, fetchMarkerByIdAtom } from '../stores/markerStore';
 import { Listing, ListingStatus } from '../types';
 import { Button, Avatar } from '@chakra-ui/react';
 import LoadingSpinner from '../components/LoadingSpinner';
-import PullToRefresh from 'react-simple-pull-to-refresh';
 import {
   ArrowPathIcon,
   ArrowLeftIcon,
@@ -36,6 +35,7 @@ const ViewListingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [isResolveImageOpen, setIsResolveImageOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Fetch listing data on load or on refresh
   const fetchListingData = useCallback(
@@ -92,7 +92,9 @@ const ViewListingPage: React.FC = () => {
   }, [fetchListingData]);
 
   const handleRefresh = async () => {
+    setIsRefreshing(true);
     await fetchListingData(true);
+    setIsRefreshing(false);
   };
 
   const handleBack = () => {
@@ -149,28 +151,31 @@ const ViewListingPage: React.FC = () => {
   );
 
   return (
-    <PullToRefresh
-      onRefresh={handleRefresh}
-      pullDownThreshold={80}
-      maxPullDownDistance={90}
-      resistance={3}
-      pullingContent={<PullDownContent />}
-      refreshingContent={<RefreshContent />}>
-      <div className='min-h-full bg-white p-4'>
-        {/* Page Title and Status */}
-        <div className='mb-4'>
-          <div className='flex items-center justify-between mb-4'>
-            <div className='flex items-center'>
-              <button
-                onClick={handleBack}
-                className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'
-                data-testid='back-button'>
-                <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
-              </button>
-              <h1 className='text-xl font-semibold ml-4' data-testid='page-title'>
-                View Listing
-              </h1>
-            </div>
+    <div className='h-full overflow-y-auto bg-white'>
+      {/* Page Title and Status */}
+      <div className='sticky top-0 z-10 bg-white p-4'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center'>
+            <button
+              onClick={handleBack}
+              className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'
+              data-testid='back-button'>
+              <ArrowLeftIcon className='h-6 w-6 text-gray-600 stroke-2' />
+            </button>
+            <h1 className='text-xl font-semibold ml-4' data-testid='page-title'>
+              View Listing
+            </h1>
+          </div>
+          <div className='flex items-center gap-2'>
+            <button
+              onClick={handleRefresh}
+              className='p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors'
+              disabled={isRefreshing}
+              aria-label='Refresh listing'>
+              <ArrowPathIcon
+                className={`h-5 w-5 text-gray-600 stroke-2 ${isRefreshing ? 'animate-spin' : ''}`}
+              />
+            </button>
             <div
               className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(
                 listing.status
@@ -180,8 +185,11 @@ const ViewListingPage: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Listing Information Section */}
+      {/* Listing Information Section */}
+      <div className='p-4 pt-0'>
+        {/* Rest of your existing content, starting from Listing Information Section */}
         <div className='space-y-4'>
           {/* Image Carousel */}
           <div className='w-full overflow-hidden border border-gray-200 rounded-lg'>
@@ -299,22 +307,8 @@ const ViewListingPage: React.FC = () => {
           />
         </div>
       </div>
-    </PullToRefresh>
+    </div>
   );
 };
 
 export default ViewListingPage;
-
-const PullDownContent = () => (
-  <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
-    <ArrowPathIcon className='w-5 h-5 animate-spin' />
-    <span>Pull down to refresh...</span>
-  </div>
-);
-
-const RefreshContent = () => (
-  <div className='flex items-center justify-center space-x-2 text-blue-600 mt-8'>
-    <ArrowPathIcon className='w-5 h-5 animate-spin' />
-    <span>Refreshing...</span>
-  </div>
-);
