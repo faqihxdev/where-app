@@ -14,6 +14,8 @@
 
 WhereApp is a Progressive Web Application (PWA) designed to streamline the lost and found process. It serves as a comprehensive platform for managing and tracking lost or found items, enabling users to efficiently report missing items, post found items, and facilitate the reunion of lost belongings with their rightful owners. The application combines both list and map views to create an intuitive and effective lost and found management system.
 
+This project is done as part of the NTU Software Engineering Smart Nation Project.
+
 ## 📸 Screenshots
 
 <img src=".github/screenshot/screenshots.png" alt="WhereApp Screenshots" width="100%">
@@ -25,6 +27,7 @@ Losing personal items can be a stressful experience. WhereApp aims to simplify t
 ## ⚙️ How it Works
 
 WhereApp allows users to:
+
 - Report lost items
 - Post found items
 - Search for lost items
@@ -35,23 +38,24 @@ WhereApp allows users to:
 WhereApp is built using the following technologies:
 
 - **Frontend:**
+
   - React
   - TypeScript
   - Jotai (for state management)
   - Tailwind CSS (for styling)
   - Chakra UI (for specific components)
   - Heroicons (for icons)
-
 - **Backend:**
+
   - Firebase (Firestore for database)
-
 - **Build & Development:**
+
   - Vite (for fast development and building)
-
 - **Deployment:**
-  - Firebase Hosting
 
+  - Firebase Hosting
 - **Progressive Web App:**
+
   - Service Workers
   - Manifest file
 
@@ -94,17 +98,18 @@ WhereApp is built using the following technologies:
 ### 🚀 Setting Up the Development Environment
 
 1. Clone the repository:
+
    ```
    git clone https://github.com/aqilakmal/Where-App.git
    cd whereapp
    ```
-
 2. Install dependencies:
+
    ```
    npm install
    ```
-
 3. Set up Firebase:
+
    - Create a Firebase project at https://console.firebase.google.com/
    - Add a web app to your Firebase project
    - Copy the Firebase configuration
@@ -117,46 +122,44 @@ WhereApp is built using the following technologies:
      VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
      VITE_FIREBASE_APP_ID=your_app_id
      ```
-
 4. Start the development server:
+
    ```
    npm run dev
    ```
-
 5. Open your browser and navigate to `http://localhost:5173` (or the port specified by Vite)
 
 ### 🔄 Development Workflow
 
 1. Create a new branch for your feature or bug fix:
+
    ```
    git checkout -b feature/your-feature-name
    ```
-
 2. Make your changes, following the project's coding standards and structure.
-
 3. Test your changes locally:
+
    - Run the development server: `npm run dev`
    - Check for any console errors or warnings
    - Ensure the feature works as expected
    - If you see uncontrollable 🔥in your devtools console, `Ctr+C` on your terminal to terminate the app
    - If you stopped it in time, you have saved the team from going bankrupt
-
 4. Lint and format your code:
+
    ```
    npm run lint
    npm run format
    ```
-
 5. Commit your changes with a descriptive commit message:
+
    ```
    git commit -m "Add feature: description of your changes"
    ```
-
 6. Push your changes to your branch:
+
    ```
    git push origin feature/your-feature-name
    ```
-
 7. Create a pull request on GitHub for review.
 
 ### ❗ Important Development Notes

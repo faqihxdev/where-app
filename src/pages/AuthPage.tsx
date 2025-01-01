@@ -28,6 +28,7 @@ import AlertDialog from '../components/AlertDialog';
 import { DownloadIcon } from '@chakra-ui/icons';
 import { useDisclosure } from '@chakra-ui/react';
 import ShiningButton from '../components/ShiningButton';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
 export default function AuthPage() {
   const login = useSetAtom(loginAtom);
@@ -282,6 +283,13 @@ export default function AuthPage() {
               Register
             </button>
           </div>
+
+          {!isLogin && (
+            <div className='mt-4 flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-md'>
+              <InformationCircleIcon className='w-5 h-5 flex-shrink-0' />
+              <p className='text-sm'>Registration is temporarily closed.</p>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -333,18 +341,34 @@ export default function AuthPage() {
               />
             )}
             <div className='pt-4'>
-              <Button
-                isLoading={isLoading}
-                loadingText={isLogin ? 'Logging in...' : 'Registering...'}
-                type='submit'
-                w='full'
-                fontWeight='normal'
-                bg='primary.600'
-                color='white'
-                _hover={{ bg: 'primary.700' }}
-                _active={{ bg: 'primary.800' }}>
-                {isLogin ? 'Login' : 'Register'}
-              </Button>
+              {!isLogin && (
+                <Button
+                  isLoading={isLoading}
+                  loadingText='Registering...'
+                  type='submit'
+                  w='full'
+                  fontWeight='normal'
+                  bg='red.600'
+                  color='white'
+                  _hover={{ bg: 'red.700' }}
+                  _active={{ bg: 'red.800' }}>
+                  Registration Closed
+                </Button>
+              )}
+              {isLogin && (
+                <Button
+                  isLoading={isLoading}
+                  loadingText='Logging in...'
+                  type='submit'
+                  w='full'
+                  fontWeight='normal'
+                  bg='primary.600'
+                  color='white'
+                  _hover={{ bg: 'primary.700' }}
+                  _active={{ bg: 'primary.800' }}>
+                  Login
+                </Button>
+              )}
             </div>
           </div>
         </form>
