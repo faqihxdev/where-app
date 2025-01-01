@@ -1,4 +1,4 @@
-# WhereApp - Lost and Found Application
+# 📱 WhereApp - Lost and Found Application
 
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -10,15 +10,19 @@
 [![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.48-45ba4b?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev/)
 
-## What is WhereApp?
+## 🤔 What is WhereApp?
 
 WhereApp is a Progressive Web Application (PWA) designed to streamline the lost and found process. It serves as a comprehensive platform for managing and tracking lost or found items, enabling users to efficiently report missing items, post found items, and facilitate the reunion of lost belongings with their rightful owners. The application combines both list and map views to create an intuitive and effective lost and found management system.
 
-## Why WhereApp?
+## 📸 Screenshots
+
+<img src=".github/screenshot/screenshots.png" alt="WhereApp Screenshots" width="100%">
+
+## 🎯 Why WhereApp?
 
 Losing personal items can be a stressful experience. WhereApp aims to simplify the process of reporting and finding lost items by providing a user-friendly platform that connects people who have lost items with those who have found them. By leveraging modern web technologies and a robust tech stack, WhereApp offers a seamless and efficient solution to a common problem.
 
-## How it Works
+## ⚙️ How it Works
 
 WhereApp allows users to:
 - Report lost items
@@ -26,7 +30,7 @@ WhereApp allows users to:
 - Search for lost items
 - View items on a map
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 WhereApp is built using the following technologies:
 
@@ -51,7 +55,7 @@ WhereApp is built using the following technologies:
   - Service Workers
   - Manifest file
 
-## Project Structure
+## 📁 Project Structure
 
 ```
   /src
@@ -79,15 +83,15 @@ WhereApp is built using the following technologies:
   └── main.tsx                  # Entry point
 ```
 
-## Development Guide
+## 👨‍💻 Development Guide
 
-### Prerequisites
+### 📋 Prerequisites
 
 - Node.js (v14 or later)
 - npm or yarn
 - Git
 
-### Setting Up the Development Environment
+### 🚀 Setting Up the Development Environment
 
 1. Clone the repository:
    ```
@@ -121,7 +125,7 @@ WhereApp is built using the following technologies:
 
 5. Open your browser and navigate to `http://localhost:5173` (or the port specified by Vite)
 
-### Development Workflow
+### 🔄 Development Workflow
 
 1. Create a new branch for your feature or bug fix:
    ```
@@ -155,7 +159,7 @@ WhereApp is built using the following technologies:
 
 7. Create a pull request on GitHub for review.
 
-### Important Development Notes
+### ❗ Important Development Notes
 
 - Use TypeScript for all new files and components.
 - Utilize Jotai for state management. Add new atoms and selectors in the appropriate files under the `/stores` directory.
