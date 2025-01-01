@@ -18,7 +18,7 @@ WhereApp is a Progressive Web Application (PWA) designed to streamline the lost 
 
 ## 📸 Screenshots
 
-<img src=".github/screenshot/screenshots.png" alt="WhereApp Screenshots" width="100%">
+<img src=".github/screenshot/demo.png" alt="WhereApp Screenshots" width="100%">
 
 ## 🌟 Features
 
@@ -41,7 +41,7 @@ WhereApp is a Progressive Web Application (PWA) designed to streamline the lost 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/aqilakmal/Where-App.git
+   git clone https://github.com/faqihxdev/where-app.git
    cd whereapp
    ```
 
